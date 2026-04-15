@@ -1,19 +1,49 @@
 'use client'
 
-import { useState, useCallback } from 'react'
-import { useTranslations } from 'next-intl'
+import { useState, useCallback, useEffect } from 'react'
+import { useTranslations, useLocale } from 'next-intl'
 import { QrScanner } from '@/components/spa/QrScanner'
 import { CheckinCard } from '@/components/spa/CheckinCard'
-import type { CheckinResult } from '@/types'
+import { formatDate } from '@/lib/utils/dates'
+import type { CheckinResult, PaymentMethod } from '@/types'
 
-type Phase = 'scanning' | 'loading' | 'result' | 'error' | 'camera_error'
+type Phase =
+  | 'scanning'
+  | 'loading'
+  | 'result'
+  | 'registering'
+  | 'renewing'
+  | 'success'
+  | 'error'
+  | 'camera_error'
+
+interface SuccessInfo {
+  title: string
+  detail: string
+}
 
 export default function ScanPage() {
   const t = useTranslations('scan')
+  const tCheck = useTranslations('checkin')
+  const locale = useLocale() as 'en' | 'es'
 
   const [phase, setPhase] = useState<Phase>('scanning')
   const [result, setResult] = useState<CheckinResult | null>(null)
   const [errorKey, setErrorKey] = useState<'client_not_found' | 'network_error'>('network_error')
+  const [successInfo, setSuccessInfo] = useState<SuccessInfo | null>(null)
+
+  const reset = useCallback(() => {
+    setResult(null)
+    setSuccessInfo(null)
+    setPhase('scanning')
+  }, [])
+
+  // Auto-reset to scanning after success
+  useEffect(() => {
+    if (phase !== 'success') return
+    const id = setTimeout(reset, 3000)
+    return () => clearTimeout(id)
+  }, [phase, reset])
 
   const handleScan = useCallback(async (uuid: string) => {
     setPhase('loading')
@@ -42,19 +72,79 @@ export default function ScanPage() {
     setPhase('camera_error')
   }, [])
 
-  const reset = useCallback(() => {
-    setResult(null)
-    setPhase('scanning')
-  }, [])
+  const handleRegisterVisit = useCallback(async () => {
+    if (!result) return
+    setPhase('registering')
+    try {
+      const res = await fetch('/api/visits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          client_id: result.client.id,
+          membership_id: result.membership?.id ?? null,
+        }),
+      })
+      if (!res.ok) {
+        setErrorKey('network_error')
+        setPhase('error')
+        return
+      }
+      const data: { visit_id: string; visited_at: string; session_type: string } = await res.json()
 
-  // Step 6 handlers — placeholder
-  const handleRegisterVisit = useCallback(() => {
-    // Implemented in Step 6
-  }, [])
+      const sessionLabels: Record<string, string> = {
+        included: tCheck('session_included'),
+        rollover: tCheck('session_rollover'),
+        additional: tCheck('session_additional'),
+        welcome_offer: tCheck('session_welcome_offer'),
+      }
+      setSuccessInfo({
+        title: tCheck('visit_registered'),
+        detail: `${tCheck('session_type_label')}: ${sessionLabels[data.session_type] ?? data.session_type}`,
+      })
+      setPhase('success')
+    } catch {
+      setErrorKey('network_error')
+      setPhase('error')
+    }
+  }, [result, tCheck])
 
-  const handleRenew = useCallback(() => {
-    // Implemented in Step 6
-  }, [])
+  const handleRenewConfirm = useCallback(async (method: PaymentMethod) => {
+    if (!result?.membership) return
+    const plan = result.membership.membership_plans
+    try {
+      const res = await fetch('/api/memberships/renew', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          client_id: result.client.id,
+          plan_id: result.membership.plan_id,
+          payment_method: method,
+          amount_usd: plan?.price_usd ?? 80,
+        }),
+      })
+      if (!res.ok) {
+        setErrorKey('network_error')
+        setPhase('error')
+        return
+      }
+      const data: { expires_at: string } = await res.json()
+      setSuccessInfo({
+        title: tCheck('renew_success'),
+        detail: `${tCheck('renew_expires')}: ${formatDate(data.expires_at, locale)}`,
+      })
+      setPhase('success')
+    } catch {
+      setErrorKey('network_error')
+      setPhase('error')
+    }
+  }, [result, tCheck, locale])
+
+  const cameraPaused =
+    phase === 'result' ||
+    phase === 'registering' ||
+    phase === 'renewing' ||
+    phase === 'success' ||
+    phase === 'error'
 
   return (
     <div className="flex h-full overflow-hidden bg-slate-900">
@@ -75,8 +165,8 @@ export default function ScanPage() {
           </div>
         )}
 
-        {/* Paused overlay (while showing result) */}
-        {(phase === 'result' || phase === 'error') && (
+        {/* Paused overlay */}
+        {cameraPaused && (
           <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
             <p className="text-slate-400 text-sm">{t('camera_paused')}</p>
           </div>
@@ -107,8 +197,31 @@ export default function ScanPage() {
               data={result}
               onScanAgain={reset}
               onRegisterVisit={handleRegisterVisit}
-              onRenew={handleRenew}
+              onRenew={() => setPhase('renewing')}
             />
+          </div>
+        )}
+
+        {phase === 'registering' && (
+          <div className="text-center space-y-4">
+            <div className="w-16 h-16 border-4 border-slate-600 border-t-green-400 rounded-full animate-spin mx-auto" />
+            <p className="text-slate-300 text-xl font-medium">{tCheck('registering')}</p>
+          </div>
+        )}
+
+        {phase === 'renewing' && result && (
+          <div className="w-full max-w-md">
+            <RenewPanel
+              result={result}
+              onConfirm={handleRenewConfirm}
+              onCancel={() => setPhase('result')}
+            />
+          </div>
+        )}
+
+        {phase === 'success' && successInfo && (
+          <div className="w-full max-w-md">
+            <SuccessPanel info={successInfo} onScanAgain={reset} />
           </div>
         )}
 
@@ -142,6 +255,152 @@ export default function ScanPage() {
         )}
 
       </div>
+    </div>
+  )
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+interface RenewPanelProps {
+  result: CheckinResult
+  onConfirm: (method: PaymentMethod) => Promise<void>
+  onCancel: () => void
+}
+
+function RenewPanel({ result, onConfirm, onCancel }: RenewPanelProps) {
+  const t = useTranslations('checkin')
+  const tPayment = useTranslations('payment')
+  const locale = useLocale() as 'en' | 'es'
+
+  const [method, setMethod] = useState<PaymentMethod | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+
+  const plan = result.membership?.membership_plans
+  const planName = plan ? (locale === 'es' ? plan.name_es : plan.name_en) : null
+  const amount = plan?.price_usd ?? 80
+
+  const METHODS: PaymentMethod[] = ['cash', 'debit', 'credit']
+  const methodKeys = {
+    cash: 'method_cash',
+    debit: 'method_debit',
+    credit: 'method_credit',
+  } as const
+
+  const handleConfirm = async () => {
+    if (!method || submitting) return
+    setSubmitting(true)
+    await onConfirm(method)
+    // component transitions away on success/error — no need to reset submitting
+  }
+
+  return (
+    <div className="w-full flex flex-col gap-6">
+      {/* Title */}
+      <div className="flex items-center gap-3">
+        <span className="flex items-center justify-center w-10 h-10 rounded-full bg-amber-500/20 text-amber-400 text-xl">
+          ↻
+        </span>
+        <span className="text-amber-400 text-lg font-semibold uppercase tracking-wide">
+          {t('renewing_title')}
+        </span>
+      </div>
+
+      {/* Client name */}
+      <h2 className="text-4xl font-bold text-white leading-tight">
+        {result.client.first_name} {result.client.last_name}
+      </h2>
+
+      {/* Plan + amount */}
+      <div className="bg-slate-800 rounded-xl p-4">
+        <p className="text-slate-400 text-xs uppercase tracking-wide mb-1">{t('renew_plan')}</p>
+        <p className="text-white text-xl font-semibold">{planName ?? '—'}</p>
+        <p className="text-amber-400 text-3xl font-bold mt-2">
+          ${amount}
+          <span className="text-base font-normal text-slate-400 ml-1">
+            {locale === 'es' ? '/mes' : '/month'}
+          </span>
+        </p>
+      </div>
+
+      {/* Payment method */}
+      <div>
+        <p className="text-slate-400 text-xs uppercase tracking-wide mb-3">{t('renew_method')}</p>
+        <div className="grid grid-cols-3 gap-3">
+          {METHODS.map((m) => (
+            <button
+              key={m}
+              onClick={() => setMethod(m)}
+              disabled={submitting}
+              className={`h-14 rounded-xl text-base font-semibold transition-colors disabled:opacity-50 ${
+                method === m
+                  ? 'bg-amber-500 text-white'
+                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+              }`}
+            >
+              {tPayment(methodKeys[m])}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex flex-col gap-3 pt-2">
+        <button
+          onClick={handleConfirm}
+          disabled={!method || submitting}
+          className="w-full h-16 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xl font-bold transition-colors"
+        >
+          {submitting ? t('renewing') : t('renew_confirm')}
+        </button>
+        <button
+          onClick={onCancel}
+          disabled={submitting}
+          className="w-full h-12 rounded-xl bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-slate-300 text-base font-medium transition-colors"
+        >
+          {t('cancel')}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+interface SuccessPanelProps {
+  info: SuccessInfo
+  onScanAgain: () => void
+}
+
+function SuccessPanel({ info, onScanAgain }: SuccessPanelProps) {
+  const t = useTranslations('scan')
+  const tCheck = useTranslations('checkin')
+  const [seconds, setSeconds] = useState(3)
+
+  useEffect(() => {
+    if (seconds <= 0) return
+    const id = setTimeout(() => setSeconds((s) => s - 1), 1000)
+    return () => clearTimeout(id)
+  }, [seconds])
+
+  return (
+    <div className="w-full flex flex-col items-center gap-6 text-center">
+      <span className="flex items-center justify-center w-20 h-20 rounded-full bg-green-500 text-white text-5xl">
+        ✓
+      </span>
+
+      <div>
+        <h2 className="text-3xl font-bold text-white mb-2">{info.title}</h2>
+        <p className="text-slate-300 text-lg">{info.detail}</p>
+      </div>
+
+      <p className="text-slate-500 text-sm">
+        {tCheck('reset_countdown')} {seconds}s…
+      </p>
+
+      <button
+        onClick={onScanAgain}
+        className="w-full h-12 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-300 text-base font-medium transition-colors"
+      >
+        {t('scan_again')}
+      </button>
     </div>
   )
 }
