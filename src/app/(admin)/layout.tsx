@@ -18,7 +18,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
         {/* Nav */}
         <nav className="flex-1 px-2 py-4 space-y-1">
-          <NavLink href="/admin" label={t('dashboard')} icon="⊞" exact />
+          <NavLink href="/admin" label={t('dashboard')} icon="⊞" />
           <NavLink href="/admin/clients" label={t('clients')} icon="👥" />
           <NavLink href="/scan" label={t('scan')} icon="⬡" />
         </nav>
@@ -40,17 +40,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   )
 }
 
-function NavLink({
-  href,
-  label,
-  icon,
-  exact = false,
-}: {
-  href: string
-  label: string
-  icon: string
-  exact?: boolean
-}) {
+function NavLink({ href, label, icon }: { href: string; label: string; icon: string }) {
   return (
     <Link
       href={href}

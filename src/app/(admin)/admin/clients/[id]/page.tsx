@@ -5,9 +5,8 @@ import {
   getClientById,
   getClientVisits,
   getClientPayments,
-  getCurrentMembership,
 } from '@/lib/supabase/queries/clients'
-import { getMembershipStatus } from '@/lib/utils/membership'
+import { getCurrentMembership } from '@/lib/utils/membership'
 import { formatDate, formatDateTime } from '@/lib/utils/dates'
 import { MembershipBadge } from '@/components/spa/MembershipBadge'
 import { Button } from '@/components/ui/button'
@@ -32,7 +31,6 @@ export default async function ClientDetailPage({ params }: Props) {
   ])
 
   const membership = getCurrentMembership(client.memberships)
-  const membershipStatus = getMembershipStatus(membership)
   const plan = membership?.membership_plans
 
   // Derive locale from client preference for display

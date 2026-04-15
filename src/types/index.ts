@@ -32,9 +32,22 @@ export interface Client extends DbClient {
   full_name: string
 }
 
-// Membership joined with its plan
-export interface MembershipWithPlan extends DbMembership {
-  plan: DbMembershipPlan
+// Membership joined with its plan (used in queries and client components)
+export type MembershipWithPlan = DbMembership & {
+  membership_plans: DbMembershipPlan | null
+}
+
+// Client row as returned by getClients() — includes nested memberships
+export type ClientListRow = DbClient & {
+  memberships: MembershipWithPlan[]
+}
+
+// Client row as returned by getClientById() — same shape, alias for clarity
+export type ClientDetail = ClientListRow
+
+// Visit row joined with its service type
+export type VisitWithService = DbVisit & {
+  service_types: { slug: string; name_en: string; name_es: string } | null
 }
 
 // ─── API response shapes ──────────────────────────────────────────────────────

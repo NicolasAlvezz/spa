@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useState } from 'react'
+import { useState, useTransition } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
 import { createClientAction, type CreateClientState } from '@/app/(admin)/admin/clients/actions'
 import { Input } from '@/components/ui/input'
@@ -24,18 +24,24 @@ export function ClientForm({ plans }: Props) {
   const tPay = useTranslations('payment')
   const locale = useLocale() as 'en' | 'es'
 
-  const [state, formAction, isPending] = useActionState<CreateClientState, FormData>(
-    createClientAction,
-    undefined
-  )
+  const [isPending, startTransition] = useTransition()
+  const [state, setState] = useState<CreateClientState>(undefined)
 
   const [isHealthcare, setIsHealthcare] = useState(false)
   const [selectedPlanId, setSelectedPlanId] = useState('')
 
   const selectedPlan = plans.find((p) => p.id === selectedPlanId)
 
+  function handleAction(formData: FormData) {
+    setState(undefined)
+    startTransition(async () => {
+      const result = await createClientAction(undefined, formData)
+      setState(result)
+    })
+  }
+
   return (
-    <form action={formAction} className="space-y-8 max-w-2xl">
+    <form action={handleAction} className="space-y-8 max-w-2xl">
       {/* ── Required fields ─────────────────────────────────────────────── */}
       <section className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
         <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">

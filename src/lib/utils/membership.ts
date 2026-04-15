@@ -1,4 +1,4 @@
-import type { DbMembership } from '@/types'
+import type { DbMembership, MembershipWithPlan } from '@/types'
 
 export type MembershipStatus = 'active' | 'expired' | 'cancelled' | 'no_membership'
 
@@ -45,4 +45,29 @@ export function calculateRollover(
   const unusedSessions = sessionsPerMonth - sessionsUsedLastMonth
   // Cap at 1 rollover (business rule)
   return Math.min(1, currentRollover + Math.max(0, unusedSessions))
+}
+
+/**
+ * Returns the "current" membership from an array:
+ * - The active one (not cancelled, not expired), or
+ * - The most recent one if none is active.
+ */
+export function getCurrentMembership(
+  memberships: MembershipWithPlan[]
+): MembershipWithPlan | null {
+  if (!memberships.length) return null
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const active = memberships.find(
+    (m) => m.status !== 'cancelled' && new Date(m.expires_at) >= today
+  )
+  if (active) return active
+
+  return (
+    [...memberships].sort(
+      (a, b) => new Date(b.expires_at).getTime() - new Date(a.expires_at).getTime()
+    )[0] ?? null
+  )
 }

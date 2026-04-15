@@ -4,10 +4,9 @@ import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
 import { MembershipBadge } from './MembershipBadge'
-import { getMembershipStatus } from '@/lib/utils/membership'
+import { getMembershipStatus, getCurrentMembership } from '@/lib/utils/membership'
 import { formatDate } from '@/lib/utils/dates'
-import { getCurrentMembership, type ClientListRow } from '@/lib/supabase/queries/clients'
-import type { MembershipStatus } from '@/types'
+import type { ClientListRow, MembershipStatus } from '@/types'
 
 interface Props {
   clients: ClientListRow[]

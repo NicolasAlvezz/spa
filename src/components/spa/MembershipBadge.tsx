@@ -1,7 +1,6 @@
 import { cn } from '@/lib/utils'
 import { getMembershipStatus } from '@/lib/utils/membership'
-import type { MembershipWithPlan } from '@/lib/supabase/queries/clients'
-import type { MembershipStatus } from '@/types'
+import type { MembershipWithPlan, MembershipStatus } from '@/types'
 
 const styles: Record<MembershipStatus, string> = {
   active: 'bg-green-100 text-green-700',
