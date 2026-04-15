@@ -129,6 +129,22 @@
     "lang_en": "Inglés",
     "lang_es": "Español"
   },
+  "scan": {
+    "instructions": "Apuntá la cámara al código QR del cliente",
+    "loading": "Cargando...",
+    "scan_again": "Escanear de nuevo",
+    "camera_paused": "Cámara pausada",
+    "camera_error": "Cámara no disponible",
+    "camera_error_body": "No se pudo acceder a la cámara. Verificá los permisos del navegador y recargá la página.",
+    "active_title": "Membresía activa",
+    "expired_title": "Membresía vencida",
+    "no_plan_title": "Sin membresía activa",
+    "no_plan_body": "Este cliente no tiene un plan activo. Consultar en recepción.",
+    "visits_this_month": "Visitas este mes",
+    "sessions_available": "Sesiones disponibles",
+    "client_not_found": "Cliente no encontrado",
+    "error_network": "Error de conexión. Verificá el internet e intentá de nuevo."
+  },
   "errors": {
     "client_not_found": "No se encontró ningún cliente con ese código QR.",
     "camera_denied": "No se pudo acceder a la cámara. Verificá los permisos del navegador.",

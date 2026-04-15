@@ -129,6 +129,22 @@
     "lang_en": "English",
     "lang_es": "Spanish"
   },
+  "scan": {
+    "instructions": "Point the camera at the client's QR code",
+    "loading": "Loading...",
+    "scan_again": "Scan again",
+    "camera_paused": "Camera paused",
+    "camera_error": "Camera not available",
+    "camera_error_body": "Could not access the camera. Check browser permissions and reload.",
+    "active_title": "Active membership",
+    "expired_title": "Expired membership",
+    "no_plan_title": "No active membership",
+    "no_plan_body": "This client has no active plan. Contact reception.",
+    "visits_this_month": "Visits this month",
+    "sessions_available": "Sessions available",
+    "client_not_found": "Client not found",
+    "error_network": "Connection error. Check your internet and try again."
+  },
   "errors": {
     "client_not_found": "No client found with that QR code.",
     "camera_denied": "Could not access the camera. Check your browser permissions.",
