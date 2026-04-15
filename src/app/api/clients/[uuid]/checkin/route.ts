@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getMembershipStatus, getCurrentMembership } from '@/lib/utils/membership'
 import type { CheckinResult, MembershipWithPlan } from '@/types'
 
@@ -9,18 +9,24 @@ export async function GET(
   _req: Request,
   { params }: { params: { uuid: string } }
 ) {
-  const supabase = await createClient()
-
-  // Admin-only
-  const { data: { user } } = await supabase.auth.getUser()
+  // Auth check — getUser() hits Supabase directly, not the stale JWT
+  const authClient = await createClient()
+  const { data: { user }, error: authError } = await authClient.auth.getUser()
   if (!user || user.app_metadata?.role !== 'admin') {
+    console.error('[checkin] unauthorized — user:', user?.id, 'role:', user?.app_metadata?.role, 'authError:', authError?.message)
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 
   const { uuid } = params
+  console.log('[checkin] uuid received:', uuid)
+
   if (!UUID_RE.test(uuid)) {
+    console.error('[checkin] invalid uuid format:', uuid)
     return NextResponse.json({ error: 'invalid_uuid' }, { status: 400 })
   }
+
+  // Use service client so RLS does not block the read (same pattern as admin queries)
+  const supabase = createServiceClient()
 
   // Client + memberships
   const { data: client, error } = await supabase
@@ -28,6 +34,8 @@ export async function GET(
     .select('id, first_name, last_name, phone, preferred_language, memberships(*, membership_plans(*))')
     .eq('id', uuid)
     .single()
+
+  console.log('[checkin] query result — client:', client?.id ?? null, 'error:', error?.message ?? null)
 
   if (error || !client) {
     return NextResponse.json({ error: 'client_not_found' }, { status: 404 })
