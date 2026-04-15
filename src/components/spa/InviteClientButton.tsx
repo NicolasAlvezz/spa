@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
+import { Smartphone, Loader2, CheckCircle2 } from 'lucide-react'
 import { linkClientToAuth, unlinkClientFromAuth } from '@/app/(admin)/admin/clients/[id]/link-auth-action'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -80,8 +81,9 @@ export function InviteClientButton({ clientId, clientEmail, isLinked }: Props) {
         size="lg"
         onClick={handleUnlink}
         disabled={isPending}
-        className="h-9 text-xs px-3 text-red-600 border-red-200 hover:bg-red-50"
+        className="h-9 text-xs px-3 text-red-600 border-red-200 hover:bg-red-50 gap-1.5"
       >
+        {isPending ? <Loader2 size={13} className="animate-spin" /> : null}
         {isPending ? '...' : t('remove_access')}
       </Button>
     )
@@ -93,9 +95,10 @@ export function InviteClientButton({ clientId, clientEmail, isLinked }: Props) {
         variant="outline"
         size="lg"
         onClick={() => setOpen(true)}
-        className="h-9 text-xs px-3"
+        className="h-9 text-xs px-3 gap-1.5"
       >
-        📱 {t('give_access')}
+        <Smartphone size={13} />
+        {t('give_access')}
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -106,8 +109,8 @@ export function InviteClientButton({ clientId, clientEmail, isLinked }: Props) {
           </DialogHeader>
 
           {success ? (
-            <div className="py-6 text-center">
-              <p className="text-2xl mb-2">✅</p>
+            <div className="py-6 text-center flex flex-col items-center gap-2">
+              <CheckCircle2 size={36} className="text-green-500" />
               <p className="text-sm font-medium text-green-700">{t('success')}</p>
             </div>
           ) : (

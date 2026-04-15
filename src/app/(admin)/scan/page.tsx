@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
+import { ScanLine, WifiOff, UserX, Loader2, CheckCircle2, Camera, RotateCcw, Star } from 'lucide-react'
 import { QrScanner } from '@/components/spa/QrScanner'
 import { CheckinCard } from '@/components/spa/CheckinCard'
 import { formatDate } from '@/lib/utils/dates'
@@ -213,17 +214,21 @@ export default function ScanPage() {
       <div className="flex-1 flex flex-col items-center justify-center px-10 py-8 overflow-hidden">
 
         {phase === 'scanning' && (
-          <div className="text-center space-y-4 select-none">
-            <div className="text-7xl mb-2">⬡</div>
-            <h1 className="text-3xl font-bold text-white">VM Integral Massage</h1>
-            <p className="text-slate-400 text-lg max-w-xs">{t('instructions')}</p>
+          <div className="text-center space-y-5 select-none">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-amber-500/10 border border-amber-500/20 mb-1">
+              <ScanLine size={36} className="text-amber-400" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-white tracking-tight">VM Integral Massage</h1>
+              <p className="text-slate-400 text-base mt-2 max-w-xs leading-relaxed">{t('instructions')}</p>
+            </div>
           </div>
         )}
 
         {phase === 'loading' && (
-          <div className="text-center space-y-3">
-            <div className="w-14 h-14 border-4 border-slate-600 border-t-amber-400 rounded-full animate-spin mx-auto" />
-            <p className="text-slate-300 text-xl font-medium">{t('loading')}</p>
+          <div className="text-center space-y-4">
+            <Loader2 size={44} className="text-amber-400 animate-spin mx-auto" />
+            <p className="text-slate-300 text-lg font-medium">{t('loading')}</p>
           </div>
         )}
 
@@ -241,7 +246,7 @@ export default function ScanPage() {
 
         {phase === 'registering' && (
           <div className="text-center space-y-4">
-            <div className="w-16 h-16 border-4 border-slate-600 border-t-green-400 rounded-full animate-spin mx-auto" />
+            <Loader2 size={44} className="text-green-400 animate-spin mx-auto" />
             <p className="text-slate-300 text-xl font-medium">{tCheck('registering')}</p>
           </div>
         )}
@@ -275,16 +280,17 @@ export default function ScanPage() {
         {phase === 'error' && (
           <div className="w-full max-w-md flex flex-col gap-6 text-center">
             <div>
-              <span className="flex items-center justify-center w-16 h-16 rounded-full bg-red-900/50 text-4xl mx-auto mb-4">
-                ⚠
-              </span>
+              {errorKey === 'client_not_found'
+                ? <UserX size={44} className="text-red-400 mx-auto mb-4" />
+                : <WifiOff size={44} className="text-red-400 mx-auto mb-4" />
+              }
               <h2 className="text-2xl font-bold text-white mb-2">
                 {errorKey === 'client_not_found' ? t('client_not_found') : t('error_network')}
               </h2>
             </div>
             <button
               onClick={reset}
-              className="w-full h-14 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-lg font-medium transition-colors"
+              className="w-full h-14 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-lg font-semibold transition-colors"
             >
               {t('scan_again')}
             </button>
@@ -294,9 +300,9 @@ export default function ScanPage() {
         {phase === 'camera_error' && (
           <div className="w-full max-w-md flex flex-col gap-6 text-center">
             <div>
-              <span className="text-5xl block mb-4">📷</span>
+              <Camera size={44} className="text-slate-500 mx-auto mb-4" />
               <h2 className="text-2xl font-bold text-white mb-2">{t('camera_error')}</h2>
-              <p className="text-slate-400">{t('camera_error_body')}</p>
+              <p className="text-slate-400 leading-relaxed">{t('camera_error_body')}</p>
             </div>
           </div>
         )}
@@ -344,9 +350,9 @@ function RenewPanel({ result, onConfirm, onCancel }: RenewPanelProps) {
     <div className="w-full flex flex-col gap-6">
       {/* Title */}
       <div className="flex items-center gap-3">
-        <span className="flex items-center justify-center w-10 h-10 rounded-full bg-amber-500/20 text-amber-400 text-xl">
-          ↻
-        </span>
+        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-amber-500/20">
+          <RotateCcw size={18} className="text-amber-400" />
+        </div>
         <span className="text-amber-400 text-lg font-semibold uppercase tracking-wide">
           {t('renewing_title')}
         </span>
@@ -464,9 +470,9 @@ function AssignMembershipPanel({ result, onConfirm, onCancel }: AssignMembership
     <div className="w-full flex flex-col gap-6">
       {/* Title */}
       <div className="flex items-center gap-3">
-        <span className="flex items-center justify-center w-10 h-10 rounded-full bg-amber-500/20 text-amber-400 text-xl">
-          ★
-        </span>
+        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-amber-500/20">
+          <Star size={18} className="text-amber-400" />
+        </div>
         <span className="text-amber-400 text-lg font-semibold uppercase tracking-wide">
           {t('assign_title')}
         </span>
@@ -570,9 +576,9 @@ function SuccessPanel({ info, onScanAgain }: SuccessPanelProps) {
 
   return (
     <div className="w-full flex flex-col items-center gap-6 text-center">
-      <span className="flex items-center justify-center w-20 h-20 rounded-full bg-green-500 text-white text-5xl">
-        ✓
-      </span>
+      <div className="flex items-center justify-center w-20 h-20 rounded-full bg-green-500 shadow-lg shadow-green-900/40">
+        <CheckCircle2 size={40} className="text-white" />
+      </div>
 
       <div>
         <h2 className="text-3xl font-bold text-white mb-2">{info.title}</h2>
@@ -585,7 +591,7 @@ function SuccessPanel({ info, onScanAgain }: SuccessPanelProps) {
 
       <button
         onClick={onScanAgain}
-        className="w-full h-12 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-300 text-base font-medium transition-colors"
+        className="w-full h-11 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium transition-colors"
       >
         {t('scan_again')}
       </button>
