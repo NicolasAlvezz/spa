@@ -1,0 +1,240 @@
+// Auto-generate this file with:
+// npx supabase gen types typescript --local > src/types/database.ts
+// Manual version based on docs/database-schema.md
+
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+export interface Database {
+  public: {
+    Tables: {
+      clients: {
+        Row: {
+          id: string
+          user_id: string | null
+          first_name: string
+          last_name: string
+          phone: string
+          address: string
+          email: string | null
+          how_did_you_hear: string | null
+          first_visit_date: string | null
+          is_healthcare_worker: boolean
+          work_id_verified: boolean
+          preferred_language: 'en' | 'es'
+          notes: string | null
+          qr_code: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          first_name: string
+          last_name: string
+          phone: string
+          address: string
+          email?: string | null
+          how_did_you_hear?: string | null
+          first_visit_date?: string | null
+          is_healthcare_worker?: boolean
+          work_id_verified?: boolean
+          preferred_language?: 'en' | 'es'
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          user_id?: string | null
+          first_name?: string
+          last_name?: string
+          phone?: string
+          address?: string
+          email?: string | null
+          how_did_you_hear?: string | null
+          first_visit_date?: string | null
+          is_healthcare_worker?: boolean
+          work_id_verified?: boolean
+          preferred_language?: 'en' | 'es'
+          notes?: string | null
+          updated_at?: string
+        }
+      }
+      membership_plans: {
+        Row: {
+          id: string
+          slug: string
+          name_en: string
+          name_es: string
+          price_usd: number
+          sessions_per_month: number
+          rollover_max: number
+          min_months: number
+          extras_en: string[]
+          extras_es: string[]
+          requires_healthcare: boolean
+          is_active: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          slug: string
+          name_en: string
+          name_es: string
+          price_usd: number
+          sessions_per_month?: number
+          rollover_max?: number
+          min_months?: number
+          extras_en?: string[]
+          extras_es?: string[]
+          requires_healthcare?: boolean
+          is_active?: boolean
+          created_at?: string
+        }
+        Update: {
+          slug?: string
+          name_en?: string
+          name_es?: string
+          price_usd?: number
+          sessions_per_month?: number
+          rollover_max?: number
+          min_months?: number
+          extras_en?: string[]
+          extras_es?: string[]
+          requires_healthcare?: boolean
+          is_active?: boolean
+        }
+      }
+      memberships: {
+        Row: {
+          id: string
+          client_id: string
+          plan_id: string
+          started_at: string
+          expires_at: string
+          status: 'active' | 'expired' | 'cancelled'
+          sessions_used_this_month: number
+          rollover_sessions: number
+          months_committed: number
+          months_completed: number
+          welcome_offer_used: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          client_id: string
+          plan_id: string
+          started_at?: string
+          expires_at: string
+          status?: 'active' | 'expired' | 'cancelled'
+          sessions_used_this_month?: number
+          rollover_sessions?: number
+          months_committed?: number
+          months_completed?: number
+          welcome_offer_used?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          plan_id?: string
+          started_at?: string
+          expires_at?: string
+          status?: 'active' | 'expired' | 'cancelled'
+          sessions_used_this_month?: number
+          rollover_sessions?: number
+          months_committed?: number
+          months_completed?: number
+          welcome_offer_used?: boolean
+          updated_at?: string
+        }
+      }
+      payments: {
+        Row: {
+          id: string
+          client_id: string
+          membership_id: string | null
+          amount_usd: number
+          method: 'cash' | 'debit' | 'credit'
+          concept: 'monthly_membership' | 'additional_visit' | 'welcome_offer'
+          paid_at: string
+          notes: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          client_id: string
+          membership_id?: string | null
+          amount_usd: number
+          method: 'cash' | 'debit' | 'credit'
+          concept: 'monthly_membership' | 'additional_visit' | 'welcome_offer'
+          paid_at?: string
+          notes?: string | null
+          created_at?: string
+        }
+        Update: {
+          notes?: string | null
+        }
+      }
+      visits: {
+        Row: {
+          id: string
+          client_id: string
+          membership_id: string | null
+          service_type_id: string | null
+          visited_at: string
+          session_type: 'included' | 'rollover' | 'additional' | 'welcome_offer'
+          registered_by: string | null
+          notes: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          client_id: string
+          membership_id?: string | null
+          service_type_id?: string | null
+          visited_at?: string
+          session_type?: 'included' | 'rollover' | 'additional' | 'welcome_offer'
+          registered_by?: string | null
+          notes?: string | null
+          created_at?: string
+        }
+        Update: {
+          service_type_id?: string | null
+          notes?: string | null
+        }
+      }
+      service_types: {
+        Row: {
+          id: string
+          slug: string
+          name_en: string
+          name_es: string
+          is_active: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          slug: string
+          name_en: string
+          name_es: string
+          is_active?: boolean
+          created_at?: string
+        }
+        Update: {
+          name_en?: string
+          name_es?: string
+          is_active?: boolean
+        }
+      }
+    }
+    Views: Record<string, never>
+    Functions: Record<string, never>
+    Enums: Record<string, never>
+  }
+}
