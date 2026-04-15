@@ -8,7 +8,12 @@ import { useTransition } from 'react'
 import { logout } from '@/app/login/actions'
 import { LanguageToggle } from '@/components/spa/LanguageToggle'
 
-export function AdminSidebar() {
+interface Props {
+  displayName: string
+  displayEmail: string | null
+}
+
+export function AdminSidebar({ displayName, displayEmail }: Props) {
   const t = useTranslations('nav')
   const pathname = usePathname()
   const [isPending, startTransition] = useTransition()
@@ -75,7 +80,10 @@ export function AdminSidebar() {
         {/* Admin name */}
         <div className="px-3 py-2">
           <p className="text-xs text-slate-500 uppercase tracking-wider mb-0.5">Admin</p>
-          <p className="text-sm text-slate-300 font-medium">Maria Victoria</p>
+          <p className="text-sm text-slate-300 font-medium leading-tight">{displayName}</p>
+          {displayEmail && displayEmail !== displayName && (
+            <p className="text-xs text-slate-500 mt-0.5 truncate">{displayEmail}</p>
+          )}
         </div>
 
         <button
