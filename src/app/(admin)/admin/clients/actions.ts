@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { addMonths, format } from 'date-fns'
 
@@ -10,7 +10,16 @@ export async function createClientAction(
   _prev: CreateClientState,
   formData: FormData
 ): Promise<CreateClientState> {
-  const supabase = await createClient()
+  // Verify the caller is an authenticated admin before touching the DB
+  const authClient = await createClient()
+  const { data: { user }, error: authError } = await authClient.auth.getUser()
+  if (authError || !user || user.app_metadata?.role !== 'admin') {
+    console.error('[createClientAction] unauthorized:', authError?.message, 'role:', user?.app_metadata?.role)
+    return { error: 'save_error' }
+  }
+
+  // Use service client so server actions are not affected by RLS configuration
+  const supabase = createServiceClient()
 
   // ── Personal fields ──────────────────────────────────────────────────────
   const first_name = (formData.get('first_name') as string).trim()
@@ -50,6 +59,7 @@ export async function createClientAction(
     .single()
 
   if (clientError || !client) {
+    console.error('[createClientAction] insert client failed:', clientError)
     return { error: 'save_error' }
   }
 
@@ -71,6 +81,7 @@ export async function createClientAction(
       .single()
 
     if (membershipError || !membership) {
+      console.error('[createClientAction] insert membership failed:', membershipError)
       // Client was created — redirect to detail even if membership fails
       redirect(`/admin/clients/${client.id}`)
     }

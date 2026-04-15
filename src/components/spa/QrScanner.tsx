@@ -10,43 +10,54 @@ interface Props {
 
 export function QrScanner({ onScan, onCameraError, active }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
+  // Persists across Fast Refresh re-renders so cleanup always has a reference
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const readerRef = useRef<any>(null)
 
   useEffect(() => {
     if (!active || !videoRef.current) return
 
-    let stopped = false
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const readerHolder: { reader: any } = { reader: null }
+    let cancelled = false
+
+    function cleanupReader() {
+      if (!readerRef.current) return
+      try { readerRef.current.stopAsyncDecode?.() } catch { /* ignore */ }
+      try { readerRef.current.reset() } catch { /* ignore */ }
+      readerRef.current = null
+    }
 
     async function start() {
+      // Tear down any reader left over from a previous render (e.g. Fast Refresh)
+      cleanupReader()
+
       try {
         const { BrowserMultiFormatReader } = await import('@zxing/library')
-        if (stopped || !videoRef.current) return
+        if (cancelled || !videoRef.current) return
 
         const reader = new BrowserMultiFormatReader()
-        readerHolder.reader = reader
+        readerRef.current = reader
 
         reader.decodeFromVideoDevice(
           null,
           videoRef.current,
           (result) => {
-            if (result && !stopped) {
-              stopped = true
-              readerHolder.reader?.reset()
+            if (result && !cancelled) {
+              cancelled = true
+              cleanupReader()
               onScan(result.getText())
             }
           }
         )
       } catch {
-        if (!stopped) onCameraError()
+        if (!cancelled) onCameraError()
       }
     }
 
     start()
 
     return () => {
-      stopped = true
-      readerHolder.reader?.reset()
+      cancelled = true
+      cleanupReader()
     }
   }, [active, onScan, onCameraError])
 
