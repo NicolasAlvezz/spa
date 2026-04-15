@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { calculateRollover } from '@/lib/utils/membership'
 import type { PaymentMethod } from '@/types'
 
 export async function POST(req: Request) {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
+  // Auth check — getUser() hits Supabase directly, not the stale JWT
+  const authClient = await createClient()
+  const { data: { user }, error: authError } = await authClient.auth.getUser()
   if (!user || user.app_metadata?.role !== 'admin') {
+    console.error('[memberships/renew] unauthorized — user:', user?.id, 'authError:', authError?.message)
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 
@@ -23,6 +24,9 @@ export async function POST(req: Request) {
   if (!client_id || !plan_id || !payment_method || !amount_usd) {
     return NextResponse.json({ error: 'missing_required_fields' }, { status: 400 })
   }
+
+  // Use service client so RLS does not block reads or writes
+  const supabase = createServiceClient()
 
   // Get the most recent non-cancelled membership for this client
   const { data: currentMembership } = await supabase

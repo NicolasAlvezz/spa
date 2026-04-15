@@ -123,6 +123,8 @@ export default function ScanPage() {
         }),
       })
       if (!res.ok) {
+        const errBody = await res.json().catch(() => null)
+        console.error('[handleAssignConfirm] status:', res.status, 'body:', errBody)
         setErrorKey('network_error')
         setPhase('error')
         return
@@ -154,6 +156,8 @@ export default function ScanPage() {
         }),
       })
       if (!res.ok) {
+        const errBody = await res.json().catch(() => null)
+        console.error('[handleRenewConfirm] status:', res.status, 'body:', errBody)
         setErrorKey('network_error')
         setPhase('error')
         return

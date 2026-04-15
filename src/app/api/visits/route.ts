@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import type { SessionType } from '@/types'
 
 export async function POST(req: Request) {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
+  // Auth check — getUser() hits Supabase directly, not the stale JWT
+  const authClient = await createClient()
+  const { data: { user }, error: authError } = await authClient.auth.getUser()
   if (!user || user.app_metadata?.role !== 'admin') {
+    console.error('[visits] unauthorized — user:', user?.id, 'authError:', authError?.message)
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 
@@ -16,6 +17,9 @@ export async function POST(req: Request) {
   if (!client_id) {
     return NextResponse.json({ error: 'client_id is required' }, { status: 400 })
   }
+
+  // Use service client so RLS does not block reads or writes
+  const supabase = createServiceClient()
 
   let session_type: SessionType = 'additional'
 
