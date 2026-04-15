@@ -10,6 +10,14 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
+type Relationship = {
+  foreignKeyName: string
+  columns: string[]
+  isOneToOne: boolean
+  referencedRelation: string
+  referencedColumns: string[]
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -64,6 +72,7 @@ export interface Database {
           notes?: string | null
           updated_at?: string
         }
+        Relationships: Relationship[]
       }
       membership_plans: {
         Row: {
@@ -109,6 +118,7 @@ export interface Database {
           requires_healthcare?: boolean
           is_active?: boolean
         }
+        Relationships: Relationship[]
       }
       memberships: {
         Row: {
@@ -153,6 +163,7 @@ export interface Database {
           welcome_offer_used?: boolean
           updated_at?: string
         }
+        Relationships: Relationship[]
       }
       payments: {
         Row: {
@@ -180,6 +191,7 @@ export interface Database {
         Update: {
           notes?: string | null
         }
+        Relationships: Relationship[]
       }
       visits: {
         Row: {
@@ -208,6 +220,7 @@ export interface Database {
           service_type_id?: string | null
           notes?: string | null
         }
+        Relationships: Relationship[]
       }
       service_types: {
         Row: {
@@ -231,10 +244,12 @@ export interface Database {
           name_es?: string
           is_active?: boolean
         }
+        Relationships: Relationship[]
       }
     }
-    Views: Record<string, never>
-    Functions: Record<string, never>
-    Enums: Record<string, never>
+    Views: { [_ in never]: never }
+    Functions: { [_ in never]: never }
+    Enums: { [_ in never]: never }
+    CompositeTypes: { [_ in never]: never }
   }
 }
