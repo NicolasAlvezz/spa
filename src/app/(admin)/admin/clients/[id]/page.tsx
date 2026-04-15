@@ -37,6 +37,21 @@ export default async function ClientDetailPage({ params }: Props) {
   // Derive locale from client preference for display
   const locale: 'en' | 'es' = client.preferred_language === 'es' ? 'es' : 'en'
 
+  const sessionTypeLabel: Record<string, string> = {
+    included: tCheck('session_included'),
+    rollover: tCheck('session_rollover'),
+    additional: tCheck('session_additional'),
+    welcome_offer: tCheck('session_welcome_offer'),
+  }
+
+  const conceptKey: Record<string, Parameters<typeof tPay>[0]> = {
+    monthly_membership: 'concept_membership',
+    additional_visit: 'concept_additional',
+    welcome_offer: 'concept_welcome',
+  }
+
+  const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount_usd), 0)
+
   return (
     <div className="p-8 space-y-6 max-w-5xl">
       {/* Back */}
@@ -152,6 +167,14 @@ export default async function ClientDetailPage({ params }: Props) {
         </div>
       </div>
 
+      {/* ── Summary stats ─────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <StatCard label={tCheck('sessions_used')} value={`${membership?.sessions_used_this_month ?? 0} / ${plan?.sessions_per_month ?? '—'}`} />
+        <StatCard label={t('visit_history')} value={String(visits.length)} />
+        <StatCard label={t('payment_history')} value={String(payments.length)} />
+        <StatCard label="Total paid" value={`USD ${totalPaid.toFixed(0)}`} />
+      </div>
+
       {/* ── Visit history ──────────────────────────────────────────────── */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100">
@@ -184,7 +207,9 @@ export default async function ClientDetailPage({ params }: Props) {
                         : v.service_types.name_en
                       : '—'}
                   </td>
-                  <td className="px-6 py-3 text-gray-600 capitalize">{v.session_type}</td>
+                  <td className="px-6 py-3 text-gray-600">
+                    {sessionTypeLabel[v.session_type] ?? v.session_type}
+                  </td>
                   <td className="px-6 py-3 text-gray-400 text-xs">{v.notes ?? '—'}</td>
                 </tr>
               ))}
@@ -218,7 +243,7 @@ export default async function ClientDetailPage({ params }: Props) {
                 <tr key={p.id}>
                   <td className="px-6 py-3 text-gray-700">{formatDate(p.paid_at, locale)}</td>
                   <td className="px-6 py-3 text-gray-600">
-                    {tPay(`concept_${p.concept.replace('monthly_membership', 'membership').replace('additional_visit', 'additional').replace('welcome_offer', 'welcome')}` as Parameters<typeof tPay>[0])}
+                    {tPay(conceptKey[p.concept] ?? 'concept_membership')}
                   </td>
                   <td className="px-6 py-3 text-gray-600">
                     {tPay(`method_${p.method}` as Parameters<typeof tPay>[0])}
@@ -243,5 +268,14 @@ function InfoRow({ label, value }: { label: string; value: string }) {
       <dt className="text-gray-400">{label}</dt>
       <dd className="text-gray-700 font-medium">{value}</dd>
     </>
+  )
+}
+
+function StatCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-4">
+      <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">{label}</p>
+      <p className="text-2xl font-bold text-gray-900">{value}</p>
+    </div>
   )
 }

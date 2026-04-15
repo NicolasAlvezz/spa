@@ -97,7 +97,14 @@
     "renewing": "Processing...",
     "renew_success": "Membership renewed!",
     "renew_expires": "New expiry",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "assign_title": "Assign Membership",
+    "assign_button": "Assign Membership",
+    "assign_plan": "Select Plan",
+    "assign_confirm": "Confirm & Assign",
+    "assign_success": "Membership assigned!",
+    "assigning": "Processing...",
+    "loading_plans": "Loading plans..."
   },
   "payment": {
     "method_cash": "Cash",

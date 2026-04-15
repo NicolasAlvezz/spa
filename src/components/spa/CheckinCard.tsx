@@ -8,12 +8,12 @@ import type { CheckinResult } from '@/types'
 interface Props {
   data: CheckinResult
   onScanAgain: () => void
-  // Step 6 will wire these up
   onRegisterVisit: () => void
   onRenew: () => void
+  onAssignMembership: () => void
 }
 
-export function CheckinCard({ data, onScanAgain, onRegisterVisit, onRenew }: Props) {
+export function CheckinCard({ data, onScanAgain, onRegisterVisit, onRenew, onAssignMembership }: Props) {
   const t = useTranslations('scan')
   const tCheck = useTranslations('checkin')
   const locale = useLocale() as 'en' | 'es'
@@ -156,14 +156,20 @@ export function CheckinCard({ data, onScanAgain, onRegisterVisit, onRenew }: Pro
 
       <h2 className="text-5xl font-bold text-white leading-tight">{clientName}</h2>
 
-      <p className="text-slate-400 text-lg">{t('no_plan_body')}</p>
-
-      <button
-        onClick={onScanAgain}
-        className="w-full h-12 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-300 text-base font-medium transition-colors"
-      >
-        {t('scan_again')}
-      </button>
+      <div className="flex flex-col gap-3 pt-2">
+        <button
+          onClick={onAssignMembership}
+          className="w-full h-16 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-white text-xl font-bold transition-colors"
+        >
+          {tCheck('assign_button')}
+        </button>
+        <button
+          onClick={onScanAgain}
+          className="w-full h-12 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-300 text-base font-medium transition-colors"
+        >
+          {t('scan_again')}
+        </button>
+      </div>
     </div>
   )
 }

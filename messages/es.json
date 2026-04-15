@@ -97,7 +97,14 @@
     "renewing": "Procesando...",
     "renew_success": "¡Membresía renovada!",
     "renew_expires": "Nuevo vencimiento",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "assign_title": "Asignar Membresía",
+    "assign_button": "Asignar Membresía",
+    "assign_plan": "Elegir Plan",
+    "assign_confirm": "Confirmar y asignar",
+    "assign_success": "¡Membresía asignada!",
+    "assigning": "Procesando...",
+    "loading_plans": "Cargando planes..."
   },
   "payment": {
     "method_cash": "Efectivo",

@@ -13,6 +13,7 @@ type Phase =
   | 'result'
   | 'registering'
   | 'renewing'
+  | 'assigning'
   | 'success'
   | 'error'
   | 'camera_error'
@@ -108,6 +109,36 @@ export default function ScanPage() {
     }
   }, [result, tCheck])
 
+  const handleAssignConfirm = useCallback(async (planId: string, method: PaymentMethod, amountUsd: number) => {
+    if (!result) return
+    try {
+      const res = await fetch('/api/memberships/renew', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          client_id: result.client.id,
+          plan_id: planId,
+          payment_method: method,
+          amount_usd: amountUsd,
+        }),
+      })
+      if (!res.ok) {
+        setErrorKey('network_error')
+        setPhase('error')
+        return
+      }
+      const data: { expires_at: string } = await res.json()
+      setSuccessInfo({
+        title: tCheck('assign_success'),
+        detail: `${tCheck('renew_expires')}: ${formatDate(data.expires_at, locale)}`,
+      })
+      setPhase('success')
+    } catch {
+      setErrorKey('network_error')
+      setPhase('error')
+    }
+  }, [result, tCheck, locale])
+
   const handleRenewConfirm = useCallback(async (method: PaymentMethod) => {
     if (!result?.membership) return
     const plan = result.membership.membership_plans
@@ -143,6 +174,7 @@ export default function ScanPage() {
     phase === 'result' ||
     phase === 'registering' ||
     phase === 'renewing' ||
+    phase === 'assigning' ||
     phase === 'success' ||
     phase === 'error'
 
@@ -198,6 +230,7 @@ export default function ScanPage() {
               onScanAgain={reset}
               onRegisterVisit={handleRegisterVisit}
               onRenew={() => setPhase('renewing')}
+              onAssignMembership={() => setPhase('assigning')}
             />
           </div>
         )}
@@ -214,6 +247,16 @@ export default function ScanPage() {
             <RenewPanel
               result={result}
               onConfirm={handleRenewConfirm}
+              onCancel={() => setPhase('result')}
+            />
+          </div>
+        )}
+
+        {phase === 'assigning' && result && (
+          <div className="w-full max-w-md">
+            <AssignMembershipPanel
+              result={result}
+              onConfirm={handleAssignConfirm}
               onCancel={() => setPhase('result')}
             />
           </div>
@@ -351,6 +394,147 @@ function RenewPanel({ result, onConfirm, onCancel }: RenewPanelProps) {
           className="w-full h-16 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xl font-bold transition-colors"
         >
           {submitting ? t('renewing') : t('renew_confirm')}
+        </button>
+        <button
+          onClick={onCancel}
+          disabled={submitting}
+          className="w-full h-12 rounded-xl bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-slate-300 text-base font-medium transition-colors"
+        >
+          {t('cancel')}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+interface AssignMembershipPanelProps {
+  result: CheckinResult
+  onConfirm: (planId: string, method: PaymentMethod, amountUsd: number) => Promise<void>
+  onCancel: () => void
+}
+
+interface PlanOption {
+  id: string
+  name_en: string
+  name_es: string
+  price_usd: number
+}
+
+function AssignMembershipPanel({ result, onConfirm, onCancel }: AssignMembershipPanelProps) {
+  const t = useTranslations('checkin')
+  const tPayment = useTranslations('payment')
+  const locale = useLocale() as 'en' | 'es'
+
+  const [plans, setPlans] = useState<PlanOption[]>([])
+  const [loadingPlans, setLoadingPlans] = useState(true)
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null)
+  const [method, setMethod] = useState<PaymentMethod | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/membership-plans')
+      .then((r) => r.json())
+      .then((data: PlanOption[]) => {
+        setPlans(data)
+        setLoadingPlans(false)
+      })
+      .catch(() => setLoadingPlans(false))
+  }, [])
+
+  const selectedPlan = plans.find((p) => p.id === selectedPlanId) ?? null
+
+  const METHODS: PaymentMethod[] = ['cash', 'debit', 'credit']
+  const methodKeys = {
+    cash: 'method_cash',
+    debit: 'method_debit',
+    credit: 'method_credit',
+  } as const
+
+  const handleConfirm = async () => {
+    if (!selectedPlanId || !method || !selectedPlan || submitting) return
+    setSubmitting(true)
+    await onConfirm(selectedPlanId, method, selectedPlan.price_usd)
+  }
+
+  return (
+    <div className="w-full flex flex-col gap-6">
+      {/* Title */}
+      <div className="flex items-center gap-3">
+        <span className="flex items-center justify-center w-10 h-10 rounded-full bg-amber-500/20 text-amber-400 text-xl">
+          ★
+        </span>
+        <span className="text-amber-400 text-lg font-semibold uppercase tracking-wide">
+          {t('assign_title')}
+        </span>
+      </div>
+
+      {/* Client name */}
+      <h2 className="text-4xl font-bold text-white leading-tight">
+        {result.client.first_name} {result.client.last_name}
+      </h2>
+
+      {/* Plan selector */}
+      <div>
+        <p className="text-slate-400 text-xs uppercase tracking-wide mb-3">{t('assign_plan')}</p>
+        {loadingPlans ? (
+          <p className="text-slate-400 text-sm">{t('loading_plans')}</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {plans.map((plan) => (
+              <button
+                key={plan.id}
+                onClick={() => setSelectedPlanId(plan.id)}
+                disabled={submitting}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-left transition-colors disabled:opacity-50 ${
+                  selectedPlanId === plan.id
+                    ? 'bg-amber-500 text-white'
+                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                }`}
+              >
+                <span className="font-semibold">
+                  {locale === 'es' ? plan.name_es : plan.name_en}
+                </span>
+                <span className="text-lg font-bold ml-4">
+                  ${plan.price_usd}
+                  <span className="text-xs font-normal opacity-75 ml-1">
+                    {locale === 'es' ? '/mes' : '/mo'}
+                  </span>
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Payment method */}
+      <div>
+        <p className="text-slate-400 text-xs uppercase tracking-wide mb-3">{tPayment('method')}</p>
+        <div className="grid grid-cols-3 gap-3">
+          {METHODS.map((m) => (
+            <button
+              key={m}
+              onClick={() => setMethod(m)}
+              disabled={submitting}
+              className={`h-14 rounded-xl text-base font-semibold transition-colors disabled:opacity-50 ${
+                method === m
+                  ? 'bg-amber-500 text-white'
+                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+              }`}
+            >
+              {tPayment(methodKeys[m])}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex flex-col gap-3 pt-2">
+        <button
+          onClick={handleConfirm}
+          disabled={!selectedPlanId || !method || submitting}
+          className="w-full h-16 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xl font-bold transition-colors"
+        >
+          {submitting ? t('assigning') : t('assign_confirm')}
         </button>
         <button
           onClick={onCancel}
