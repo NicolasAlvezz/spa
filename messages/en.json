@@ -1,0 +1,93 @@
+{
+  "auth": {
+    "email": "Email",
+    "password": "Password",
+    "login": "Log in",
+    "logging_in": "Logging in...",
+    "logout": "Log out",
+    "error_invalid": "Invalid email or password.",
+    "error_generic": "Something went wrong. Please try again."
+  },
+  "nav": {
+    "clients": "Clients",
+    "scan": "Scan QR",
+    "payments": "Payments",
+    "memberships": "Memberships",
+    "dashboard": "Dashboard"
+  },
+  "admin": {
+    "welcome": "Welcome, Maria Victoria",
+    "dashboard_subtitle": "Select an option from the menu to get started."
+  },
+  "myqr": {
+    "title": "Your QR Code",
+    "subtitle": "Show this code at the reception when you arrive.",
+    "member_since": "Member since"
+  },
+  "client": {
+    "first_name": "First name",
+    "last_name": "Last name",
+    "phone": "Phone / Cell",
+    "address": "Address",
+    "email": "Email (optional)",
+    "how_heard": "How did you hear about us?",
+    "first_visit": "First massage / enrollment date",
+    "is_healthcare": "Are you a healthcare worker?",
+    "id_verified": "Work ID verified",
+    "notes": "Internal notes",
+    "how_heard_options": {
+      "instagram": "Instagram",
+      "referral": "Referred by a friend",
+      "google": "Google",
+      "facebook": "Facebook",
+      "flyer": "Flyer / Poster",
+      "walk_in": "Walked in",
+      "other": "Other"
+    }
+  },
+  "plan": {
+    "healthcare_basic": "Healthcare Relief – Basic",
+    "healthcare_95": "Healthcare 95",
+    "price_per_month": "/month",
+    "sessions_included": "1 massage per month included",
+    "additional_massage": "Additional massages: $80 each",
+    "welcome_offer": "First massage for $70*",
+    "welcome_offer_note": "*With active membership. Limited spots."
+  },
+  "status": {
+    "active": "Active ✓",
+    "expired": "Expired ✗",
+    "cancelled": "Cancelled",
+    "no_membership": "No plan"
+  },
+  "checkin": {
+    "register_visit": "Register Visit",
+    "renew": "Renew Membership",
+    "expires": "Expires",
+    "expired_on": "Expired on",
+    "sessions_used": "Sessions used this month",
+    "rollover": "Rollover session available",
+    "visits_this_month": "Visits this month"
+  },
+  "payment": {
+    "method_cash": "Cash",
+    "method_debit": "Debit",
+    "method_credit": "Credit",
+    "concept_membership": "Monthly membership",
+    "concept_additional": "Additional visit",
+    "concept_welcome": "Welcome offer",
+    "amount": "Amount (USD)",
+    "method": "Payment method",
+    "date": "Date",
+    "notes": "Notes (optional)",
+    "confirm": "Confirm payment",
+    "cancel": "Cancel"
+  },
+  "errors": {
+    "client_not_found": "No client found with that QR code.",
+    "camera_denied": "Could not access the camera. Check your browser permissions.",
+    "network_error": "Connection error. Check your internet and try again.",
+    "membership_expired": "This client's membership has expired.",
+    "payment_failed": "Payment could not be registered. Please try again."
+  }
+}

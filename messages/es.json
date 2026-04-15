@@ -1,0 +1,93 @@
+{
+  "auth": {
+    "email": "Email",
+    "password": "Contraseña",
+    "login": "Ingresar",
+    "logging_in": "Ingresando...",
+    "logout": "Cerrar sesión",
+    "error_invalid": "Email o contraseña incorrectos.",
+    "error_generic": "Ocurrió un error. Intentá de nuevo."
+  },
+  "nav": {
+    "clients": "Clientes",
+    "scan": "Escanear QR",
+    "payments": "Pagos",
+    "memberships": "Membresías",
+    "dashboard": "Inicio"
+  },
+  "admin": {
+    "welcome": "Bienvenida, Maria Victoria",
+    "dashboard_subtitle": "Seleccioná una opción del menú para comenzar."
+  },
+  "myqr": {
+    "title": "Tu código QR",
+    "subtitle": "Mostrá este código en recepción cuando llegues al spa.",
+    "member_since": "Miembro desde"
+  },
+  "client": {
+    "first_name": "Nombre",
+    "last_name": "Apellido",
+    "phone": "Celular",
+    "address": "Dirección",
+    "email": "Email (opcional)",
+    "how_heard": "¿Cómo supo de nosotros?",
+    "first_visit": "Fecha del primer masaje o inscripción",
+    "is_healthcare": "¿Sos trabajador/a de la salud?",
+    "id_verified": "ID de trabajo verificado",
+    "notes": "Notas internas",
+    "how_heard_options": {
+      "instagram": "Instagram",
+      "referral": "Recomendación de amigo/a",
+      "google": "Google",
+      "facebook": "Facebook",
+      "flyer": "Volante / Cartel",
+      "walk_in": "Pasé por el lugar",
+      "other": "Otro"
+    }
+  },
+  "plan": {
+    "healthcare_basic": "Healthcare Relief – Básico",
+    "healthcare_95": "Healthcare 95",
+    "price_per_month": "/mes",
+    "sessions_included": "1 masaje por mes incluido",
+    "additional_massage": "Masajes adicionales: $80 c/u",
+    "welcome_offer": "Primer masaje a $70*",
+    "welcome_offer_note": "*Con membresía activa. Cupos limitados."
+  },
+  "status": {
+    "active": "Activa ✓",
+    "expired": "Vencida ✗",
+    "cancelled": "Cancelada",
+    "no_membership": "Sin plan"
+  },
+  "checkin": {
+    "register_visit": "Registrar Visita",
+    "renew": "Renovar Membresía",
+    "expires": "Vence",
+    "expired_on": "Venció el",
+    "sessions_used": "Sesiones usadas este mes",
+    "rollover": "Sesión de rollover disponible",
+    "visits_this_month": "Visitas este mes"
+  },
+  "payment": {
+    "method_cash": "Efectivo",
+    "method_debit": "Débito",
+    "method_credit": "Crédito",
+    "concept_membership": "Membresía mensual",
+    "concept_additional": "Visita adicional",
+    "concept_welcome": "Oferta de bienvenida",
+    "amount": "Monto (USD)",
+    "method": "Método de pago",
+    "date": "Fecha",
+    "notes": "Observaciones (opcional)",
+    "confirm": "Confirmar pago",
+    "cancel": "Cancelar"
+  },
+  "errors": {
+    "client_not_found": "No se encontró ningún cliente con ese código QR.",
+    "camera_denied": "No se pudo acceder a la cámara. Verificá los permisos del navegador.",
+    "network_error": "Error de conexión. Verificá el internet e intentá de nuevo.",
+    "membership_expired": "La membresía de este cliente está vencida.",
+    "payment_failed": "No se pudo registrar el pago. Intentá de nuevo."
+  }
+}
