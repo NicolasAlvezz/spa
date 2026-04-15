@@ -9,6 +9,7 @@ import {
 import { getCurrentMembership } from '@/lib/utils/membership'
 import { formatDate, formatDateTime } from '@/lib/utils/dates'
 import { MembershipBadge } from '@/components/spa/MembershipBadge'
+import { InviteClientButton } from '@/components/spa/InviteClientButton'
 import { Button } from '@/components/ui/button'
 
 interface Props {
@@ -66,6 +67,11 @@ export default async function ClientDetailPage({ params }: Props) {
         </div>
 
         <div className="flex gap-2 flex-wrap">
+          <InviteClientButton
+            clientId={client.id}
+            clientEmail={client.email}
+            isLinked={!!client.user_id}
+          />
           <Button asChild variant="outline" size="lg" className="h-9 text-xs px-3">
             <Link href={`/admin/clients/${client.id}/qr`} target="_blank">
               🖨 {t('print_qr')}

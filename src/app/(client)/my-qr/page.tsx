@@ -1,16 +1,25 @@
-import { getTranslations } from 'next-intl/server'
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+import { getClientByUserId } from '@/lib/supabase/queries/clients'
+import { QrDisplay } from '@/components/spa/QrDisplay'
 
-// Placeholder — implemented in step 5 (QR display)
 export default async function MyQrPage() {
-  const t = await getTranslations('myqr')
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  return (
-    <div className="flex-1 flex flex-col items-center justify-center gap-4 p-8">
-      <div className="w-48 h-48 bg-gray-200 rounded-xl flex items-center justify-center">
-        <span className="text-gray-400 text-sm">QR</span>
+  if (!user) redirect('/login')
+
+  const client = await getClientByUserId(user.id)
+
+  if (!client) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+        <p className="text-gray-500 text-sm">
+          Your account is not linked to a client profile yet. Please contact reception.
+        </p>
       </div>
-      <h1 className="text-xl font-semibold text-gray-900">{t('title')}</h1>
-      <p className="text-sm text-gray-500 text-center max-w-xs">{t('subtitle')}</p>
-    </div>
-  )
+    )
+  }
+
+  return <QrDisplay client={client} />
 }

@@ -22,7 +22,20 @@
   "myqr": {
     "title": "Your QR Code",
     "subtitle": "Show this code at the reception when you arrive.",
-    "member_since": "Member since"
+    "member_since": "Member since",
+    "no_membership": "No active membership"
+  },
+  "invite": {
+    "give_access": "Give app access",
+    "remove_access": "Remove app access",
+    "dialog_title": "Create app access",
+    "dialog_description": "Set the email and password the client will use to log in.",
+    "email": "Email",
+    "password": "Password",
+    "cancel": "Cancel",
+    "create_access": "Create access",
+    "creating": "Creating...",
+    "success": "Access created successfully!"
   },
   "client": {
     "first_name": "First name",

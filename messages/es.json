@@ -22,7 +22,20 @@
   "myqr": {
     "title": "Tu código QR",
     "subtitle": "Mostrá este código en recepción cuando llegues al spa.",
-    "member_since": "Miembro desde"
+    "member_since": "Miembro desde",
+    "no_membership": "Sin membresía activa"
+  },
+  "invite": {
+    "give_access": "Dar acceso a la app",
+    "remove_access": "Quitar acceso",
+    "dialog_title": "Crear acceso a la app",
+    "dialog_description": "Establecé el email y la contraseña que usará el cliente para ingresar.",
+    "email": "Email",
+    "password": "Contraseña",
+    "cancel": "Cancelar",
+    "create_access": "Crear acceso",
+    "creating": "Creando...",
+    "success": "¡Acceso creado exitosamente!"
   },
   "client": {
     "first_name": "Nombre",

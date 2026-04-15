@@ -58,6 +58,18 @@ export async function getClientPayments(clientId: string): Promise<DbPayment[]> 
   return data ?? []
 }
 
+export async function getClientByUserId(userId: string): Promise<ClientDetail | null> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('clients')
+    .select(`*, memberships(*, membership_plans(*))`)
+    .eq('user_id', userId)
+    .single()
+
+  if (error) return null
+  return data as unknown as ClientDetail
+}
+
 export async function getActivePlans(): Promise<DbMembershipPlan[]> {
   const supabase = await createClient()
   const { data, error } = await supabase
