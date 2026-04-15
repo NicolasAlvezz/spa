@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
+import { Search, ChevronRight } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import { MembershipBadge } from './MembershipBadge'
 import { getMembershipStatus, getCurrentMembership } from '@/lib/utils/membership'
@@ -41,17 +42,20 @@ export function ClientsTable({ clients }: Props) {
     <div className="space-y-4">
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
-        <input
-          type="text"
-          placeholder={t('search_placeholder')}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 h-9 rounded-md border border-gray-200 bg-white px-3 text-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
-        />
+        <div className="relative flex-1">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <input
+            type="text"
+            placeholder={t('search_placeholder')}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full h-10 pl-9 pr-3 rounded-lg border border-gray-200 bg-white text-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-shadow"
+          />
+        </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-          className="h-9 rounded-md border border-gray-200 bg-white px-3 text-sm outline-none focus:border-amber-400"
+          className="h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm outline-none focus:border-amber-400 transition-colors"
         >
           <option value="all">{t('filter_all')}</option>
           <option value="active">{locale === 'es' ? 'Activa' : 'Active'}</option>
@@ -62,19 +66,21 @@ export function ClientsTable({ clients }: Props) {
 
       {/* Table */}
       {filtered.length === 0 ? (
-        <p className="text-sm text-gray-400 py-8 text-center">{t('no_clients')}</p>
+        <div className="rounded-xl border border-gray-200 bg-white py-16 text-center">
+          <p className="text-sm text-gray-400">{t('no_clients')}</p>
+        </div>
       ) : (
-        <div className="rounded-xl border border-gray-200 overflow-hidden bg-white">
+        <div className="rounded-xl border border-gray-200 overflow-hidden bg-white shadow-sm">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100 bg-gray-50 text-left text-xs text-gray-500 uppercase tracking-wide">
-                <th className="px-4 py-3 font-medium">{t('col_name')}</th>
-                <th className="px-4 py-3 font-medium">{t('col_phone')}</th>
-                <th className="px-4 py-3 font-medium">{t('col_plan')}</th>
-                <th className="px-4 py-3 font-medium">{t('col_status')}</th>
-                <th className="px-4 py-3 font-medium">{t('col_expires')}</th>
-                <th className="px-4 py-3 font-medium text-center">{t('col_visits')}</th>
-                <th className="px-4 py-3 font-medium"></th>
+              <tr className="border-b border-gray-100 bg-gray-50/80 text-left text-xs text-gray-500 uppercase tracking-wide">
+                <th className="px-5 py-3.5 font-medium">{t('col_name')}</th>
+                <th className="px-5 py-3.5 font-medium">{t('col_phone')}</th>
+                <th className="px-5 py-3.5 font-medium">{t('col_plan')}</th>
+                <th className="px-5 py-3.5 font-medium">{t('col_status')}</th>
+                <th className="px-5 py-3.5 font-medium">{t('col_expires')}</th>
+                <th className="px-5 py-3.5 font-medium text-center">{t('col_visits')}</th>
+                <th className="px-5 py-3.5 font-medium w-8" />
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -82,40 +88,43 @@ export function ClientsTable({ clients }: Props) {
                 const membership = getCurrentMembership(client.memberships)
                 const plan = membership?.membership_plans
                 return (
-                  <tr key={client.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3 font-medium text-gray-900">
-                      {client.first_name} {client.last_name}
+                  <tr
+                    key={client.id}
+                    className="hover:bg-amber-50/40 transition-colors group"
+                  >
+                    <td className="px-5 py-3.5 font-medium text-gray-900">
+                      <span className="group-hover:text-amber-700 transition-colors">
+                        {client.first_name} {client.last_name}
+                      </span>
                       {client.is_healthcare_worker && (
-                        <span className="ml-2 text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-medium">
+                        <span className="ml-2 text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-semibold">
                           HC
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{client.phone}</td>
-                    <td className="px-4 py-3 text-gray-600">
+                    <td className="px-5 py-3.5 text-gray-500 tabular-nums">{client.phone}</td>
+                    <td className="px-5 py-3.5 text-gray-600">
                       {plan
-                        ? locale === 'es'
-                          ? plan.name_es
-                          : plan.name_en
-                        : <span className="text-gray-400">—</span>}
+                        ? (locale === 'es' ? plan.name_es : plan.name_en)
+                        : <span className="text-gray-300">—</span>}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-5 py-3.5">
                       <MembershipBadge membership={membership} locale={locale} />
                     </td>
-                    <td className="px-4 py-3 text-gray-600">
+                    <td className="px-5 py-3.5 text-gray-500 tabular-nums">
                       {membership
                         ? formatDate(membership.expires_at, locale)
-                        : <span className="text-gray-400">—</span>}
+                        : <span className="text-gray-300">—</span>}
                     </td>
-                    <td className="px-4 py-3 text-center text-gray-600">
-                      {membership ? membership.sessions_used_this_month : '—'}
+                    <td className="px-5 py-3.5 text-center tabular-nums text-gray-500">
+                      {membership ? membership.sessions_used_this_month : <span className="text-gray-300">—</span>}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-5 py-3.5">
                       <Link
                         href={`/admin/clients/${client.id}`}
-                        className="text-amber-600 hover:text-amber-700 font-medium text-xs"
+                        className="flex items-center justify-center w-7 h-7 rounded-md text-gray-300 hover:text-amber-600 hover:bg-amber-50 transition-colors"
                       >
-                        {t('view')}
+                        <ChevronRight size={16} />
                       </Link>
                     </td>
                   </tr>
