@@ -85,7 +85,7 @@ export function AddAppointmentModal({ clients, serviceTypes }: Props) {
         className="inline-flex items-center gap-2 h-9 px-3.5 rounded-lg bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-white text-sm font-semibold transition-colors shadow-sm"
       >
         <Plus size={15} />
-        {t('add_appointment')}
+        <span className="hidden sm:inline">{t('add_appointment')}</span>
       </button>
 
       {/* Overlay */}

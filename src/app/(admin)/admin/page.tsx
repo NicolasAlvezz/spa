@@ -24,7 +24,7 @@ export default async function AdminDashboardPage() {
   const tNav = await getTranslations('nav')
 
   return (
-    <div className="p-8 space-y-8 max-w-5xl">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8 max-w-5xl">
 
       {/* Page title */}
       <div>
