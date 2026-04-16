@@ -75,6 +75,42 @@ export async function getActivePlans(): Promise<DbMembershipPlan[]> {
   return data ?? []
 }
 
+export interface ClientSelectItem {
+  id: string
+  first_name: string
+  last_name: string
+}
+
+export async function getClientSelectList(): Promise<ClientSelectItem[]> {
+  const supabase = createServiceClient()
+  const { data, error } = await supabase
+    .from('clients')
+    .select('id, first_name, last_name')
+    .order('first_name')
+
+  if (error) throw error
+  return (data ?? []) as ClientSelectItem[]
+}
+
+export interface ServiceTypeItem {
+  id: string
+  slug: string
+  name_en: string
+  name_es: string
+}
+
+export async function getServiceTypes(): Promise<ServiceTypeItem[]> {
+  const supabase = createServiceClient()
+  const { data, error } = await supabase
+    .from('service_types')
+    .select('id, slug, name_en, name_es')
+    .eq('is_active', true)
+    .order('name_en')
+
+  if (error) throw error
+  return (data ?? []) as ServiceTypeItem[]
+}
+
 // ── Client-facing query — uses anon client with RLS ───────────────────────────
 // Called from /my-qr where the client reads only their own row (RLS enforced).
 
