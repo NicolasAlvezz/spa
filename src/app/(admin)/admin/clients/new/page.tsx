@@ -8,7 +8,7 @@ export default async function NewClientPage() {
   const [plans, t] = await Promise.all([getActivePlans(), getTranslations('clients')])
 
   return (
-    <div className="p-8 space-y-6 max-w-2xl">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-2xl">
       <Link
         href="/admin/clients"
         className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 transition-colors"
