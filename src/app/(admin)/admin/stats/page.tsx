@@ -37,7 +37,7 @@ export default async function StatsPage({ searchParams }: Props) {
   }
 
   return (
-    <div className="p-8 space-y-8 max-w-5xl">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8 max-w-5xl">
 
       {/* Header + period selector */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -46,13 +46,13 @@ export default async function StatsPage({ searchParams }: Props) {
           <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
         </div>
 
-        <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
+        <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-full sm:w-auto">
           {PERIODS.map((p) => (
             <Link
               key={p}
               href={`/admin/stats?period=${p}`}
               className={[
-                'px-4 py-1.5 rounded-lg text-sm font-medium transition-colors',
+                'flex-1 sm:flex-none text-center px-3 sm:px-4 py-1.5 rounded-lg text-sm font-medium transition-colors',
                 period === p
                   ? 'bg-white text-gray-900 shadow-sm'
                   : 'text-gray-500 hover:text-gray-700',
@@ -85,7 +85,7 @@ export default async function StatsPage({ searchParams }: Props) {
               : <BreakdownBars
                   items={data.revenueByConcept}
                   color="#f59e0b"
-                  formatValue={v => `$${v.toFixed(0)}`}
+                  format="currency"
                 />
             }
           </div>
@@ -98,7 +98,7 @@ export default async function StatsPage({ searchParams }: Props) {
               : <BreakdownBars
                   items={data.revenueByMethod}
                   color="#0ea5e9"
-                  formatValue={v => `$${v.toFixed(0)}`}
+                  format="currency"
                 />
             }
           </div>
