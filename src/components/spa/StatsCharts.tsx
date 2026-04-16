@@ -78,11 +78,14 @@ export function NewClientsBarChart({ data }: ClientsChartProps) {
 interface BreakdownBarProps {
   items: { label: string; value: number }[]
   color?: string
-  formatValue?: (v: number) => string
+  format?: 'currency' | 'number'
 }
 
-export function BreakdownBars({ items, color = AMBER, formatValue }: BreakdownBarProps) {
+export function BreakdownBars({ items, color = AMBER, format = 'number' }: BreakdownBarProps) {
   const max = Math.max(...items.map(i => i.value), 1)
+  function display(v: number) {
+    return format === 'currency' ? `$${v.toFixed(0)}` : String(v)
+  }
   return (
     <div className="space-y-3">
       {items.map(({ label, value }) => (
@@ -90,7 +93,7 @@ export function BreakdownBars({ items, color = AMBER, formatValue }: BreakdownBa
           <div className="flex justify-between text-sm mb-1">
             <span className="text-gray-600 font-medium capitalize">{label}</span>
             <span className="text-gray-800 font-semibold tabular-nums">
-              {formatValue ? formatValue(value) : value}
+              {display(value)}
             </span>
           </div>
           <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
