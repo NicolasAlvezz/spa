@@ -184,10 +184,10 @@ export default function ScanPage() {
     phase === 'error'
 
   return (
-    <div className="flex h-full overflow-hidden bg-slate-900">
+    <div className="flex flex-col md:flex-row h-full overflow-hidden bg-slate-900">
 
-      {/* ── Left: camera ───────────────────────────────────────────────── */}
-      <div className="relative w-1/2 bg-black flex-shrink-0">
+      {/* ── Top/Left: camera ───────────────────────────────────────────── */}
+      <div className="relative w-full md:w-1/2 h-[45vw] md:h-full bg-black flex-shrink-0">
         <QrScanner
           onScan={handleScan}
           onCameraError={handleCameraError}
@@ -210,8 +210,8 @@ export default function ScanPage() {
         )}
       </div>
 
-      {/* ── Right: status panel ─────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col items-center justify-center px-10 py-8 overflow-hidden">
+      {/* ── Bottom/Right: status panel ──────────────────────────────────── */}
+      <div className="flex-1 flex flex-col items-center justify-center px-5 md:px-10 py-6 md:py-8 overflow-y-auto">
 
         {phase === 'scanning' && (
           <div className="text-center space-y-5 select-none">
@@ -219,8 +219,8 @@ export default function ScanPage() {
               <ScanLine size={36} className="text-amber-400" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-white tracking-tight">VM Integral Massage</h1>
-              <p className="text-slate-400 text-base mt-2 max-w-xs leading-relaxed">{t('instructions')}</p>
+              <h1 className="text-xl md:text-3xl font-bold text-white tracking-tight">VM Integral Massage</h1>
+              <p className="text-slate-400 text-sm md:text-base mt-2 max-w-xs leading-relaxed">{t('instructions')}</p>
             </div>
           </div>
         )}
@@ -359,7 +359,7 @@ function RenewPanel({ result, onConfirm, onCancel }: RenewPanelProps) {
       </div>
 
       {/* Client name */}
-      <h2 className="text-4xl font-bold text-white leading-tight">
+      <h2 className="text-2xl md:text-4xl font-bold text-white leading-tight">
         {result.client.first_name} {result.client.last_name}
       </h2>
 
@@ -479,7 +479,7 @@ function AssignMembershipPanel({ result, onConfirm, onCancel }: AssignMembership
       </div>
 
       {/* Client name */}
-      <h2 className="text-4xl font-bold text-white leading-tight">
+      <h2 className="text-2xl md:text-4xl font-bold text-white leading-tight">
         {result.client.first_name} {result.client.last_name}
       </h2>
 
