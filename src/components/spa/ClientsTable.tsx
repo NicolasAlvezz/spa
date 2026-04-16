@@ -55,7 +55,7 @@ export function ClientsTable({ clients }: Props) {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-          className="h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm outline-none focus:border-amber-400 transition-colors"
+          className="w-full sm:w-auto h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm outline-none focus:border-amber-400 transition-colors"
         >
           <option value="all">{t('filter_all')}</option>
           <option value="active">{locale === 'es' ? 'Activa' : 'Active'}</option>
@@ -64,75 +64,115 @@ export function ClientsTable({ clients }: Props) {
         </select>
       </div>
 
-      {/* Table */}
       {filtered.length === 0 ? (
         <div className="rounded-xl border border-gray-200 bg-white py-16 text-center">
           <p className="text-sm text-gray-400">{t('no_clients')}</p>
         </div>
       ) : (
-        <div className="rounded-xl border border-gray-200 overflow-hidden bg-white shadow-sm">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-100 bg-gray-50/80 text-left text-xs text-gray-500 uppercase tracking-wide">
-                <th className="px-5 py-3.5 font-medium">{t('col_name')}</th>
-                <th className="px-5 py-3.5 font-medium">{t('col_phone')}</th>
-                <th className="px-5 py-3.5 font-medium">{t('col_plan')}</th>
-                <th className="px-5 py-3.5 font-medium">{t('col_status')}</th>
-                <th className="px-5 py-3.5 font-medium">{t('col_expires')}</th>
-                <th className="px-5 py-3.5 font-medium text-center">{t('col_visits')}</th>
-                <th className="px-5 py-3.5 font-medium w-8" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {filtered.map((client) => {
-                const membership = getCurrentMembership(client.memberships)
-                const plan = membership?.membership_plans
-                return (
-                  <tr
-                    key={client.id}
-                    className="hover:bg-amber-50/40 transition-colors group"
-                  >
-                    <td className="px-5 py-3.5 font-medium text-gray-900">
-                      <span className="group-hover:text-amber-700 transition-colors">
+        <>
+          {/* ── Mobile cards (hidden sm+) ─────────────────────────────── */}
+          <div className="sm:hidden space-y-2">
+            {filtered.map((client) => {
+              const membership = getCurrentMembership(client.memberships)
+              return (
+                <Link
+                  key={client.id}
+                  href={`/admin/clients/${client.id}`}
+                  className="flex items-center gap-3 bg-white rounded-xl border border-gray-200 px-4 py-3.5 shadow-sm active:bg-amber-50 transition-colors"
+                >
+                  {/* Avatar initials */}
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-amber-50 flex-shrink-0">
+                    <span className="text-amber-700 text-sm font-bold">
+                      {client.first_name[0]}{client.last_name[0]}
+                    </span>
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-sm font-semibold text-gray-900">
                         {client.first_name} {client.last_name}
-                      </span>
+                      </p>
                       {client.is_healthcare_worker && (
-                        <span className="ml-2 text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-semibold">
-                          HC
-                        </span>
+                        <span className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-semibold">HC</span>
                       )}
-                    </td>
-                    <td className="px-5 py-3.5 text-gray-500 tabular-nums">{client.phone}</td>
-                    <td className="px-5 py-3.5 text-gray-600">
-                      {plan
-                        ? (locale === 'es' ? plan.name_es : plan.name_en)
-                        : <span className="text-gray-300">—</span>}
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <MembershipBadge membership={membership} locale={locale} />
-                    </td>
-                    <td className="px-5 py-3.5 text-gray-500 tabular-nums">
-                      {membership
-                        ? formatDate(membership.expires_at, locale)
-                        : <span className="text-gray-300">—</span>}
-                    </td>
-                    <td className="px-5 py-3.5 text-center tabular-nums text-gray-500">
-                      {membership ? membership.sessions_used_this_month : <span className="text-gray-300">—</span>}
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <Link
-                        href={`/admin/clients/${client.id}`}
-                        className="flex items-center justify-center w-7 h-7 rounded-md text-gray-300 hover:text-amber-600 hover:bg-amber-50 transition-colors"
-                      >
-                        <ChevronRight size={16} />
-                      </Link>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-0.5 tabular-nums">{client.phone}</p>
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <MembershipBadge membership={membership} locale={locale} />
+                    <ChevronRight size={15} className="text-gray-300" />
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+
+          {/* ── Desktop table (hidden on mobile) ─────────────────────── */}
+          <div className="hidden sm:block rounded-xl border border-gray-200 overflow-hidden bg-white shadow-sm">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-100 bg-gray-50/80 text-left text-xs text-gray-500 uppercase tracking-wide">
+                  <th className="px-5 py-3.5 font-medium">{t('col_name')}</th>
+                  <th className="px-5 py-3.5 font-medium">{t('col_phone')}</th>
+                  <th className="px-5 py-3.5 font-medium">{t('col_plan')}</th>
+                  <th className="px-5 py-3.5 font-medium">{t('col_status')}</th>
+                  <th className="px-5 py-3.5 font-medium">{t('col_expires')}</th>
+                  <th className="px-5 py-3.5 font-medium text-center">{t('col_visits')}</th>
+                  <th className="px-5 py-3.5 font-medium w-8" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {filtered.map((client) => {
+                  const membership = getCurrentMembership(client.memberships)
+                  const plan = membership?.membership_plans
+                  return (
+                    <tr
+                      key={client.id}
+                      className="hover:bg-amber-50/40 transition-colors group"
+                    >
+                      <td className="px-5 py-3.5 font-medium text-gray-900">
+                        <span className="group-hover:text-amber-700 transition-colors">
+                          {client.first_name} {client.last_name}
+                        </span>
+                        {client.is_healthcare_worker && (
+                          <span className="ml-2 text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-semibold">
+                            HC
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-5 py-3.5 text-gray-500 tabular-nums">{client.phone}</td>
+                      <td className="px-5 py-3.5 text-gray-600">
+                        {plan
+                          ? (locale === 'es' ? plan.name_es : plan.name_en)
+                          : <span className="text-gray-300">—</span>}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <MembershipBadge membership={membership} locale={locale} />
+                      </td>
+                      <td className="px-5 py-3.5 text-gray-500 tabular-nums">
+                        {membership
+                          ? formatDate(membership.expires_at, locale)
+                          : <span className="text-gray-300">—</span>}
+                      </td>
+                      <td className="px-5 py-3.5 text-center tabular-nums text-gray-500">
+                        {membership ? membership.sessions_used_this_month : <span className="text-gray-300">—</span>}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <Link
+                          href={`/admin/clients/${client.id}`}
+                          className="flex items-center justify-center w-7 h-7 rounded-md text-gray-300 hover:text-amber-600 hover:bg-amber-50 transition-colors"
+                        >
+                          <ChevronRight size={16} />
+                        </Link>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       <p className="text-xs text-gray-400">
