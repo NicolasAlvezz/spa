@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { LayoutDashboard, Users, ScanLine, LogOut, Loader2 } from 'lucide-react'
+import { LayoutDashboard, Users, ScanLine, BarChart3, LogOut, Loader2 } from 'lucide-react'
 import { useTransition } from 'react'
 import { logout } from '@/app/login/actions'
 import { LanguageToggle } from '@/components/spa/LanguageToggle'
@@ -25,6 +25,7 @@ export function AdminSidebar({ displayName, displayEmail }: Props) {
   const links = [
     { href: '/admin',         label: t('dashboard'), icon: LayoutDashboard },
     { href: '/admin/clients', label: t('clients'),   icon: Users },
+    { href: '/admin/stats',   label: t('stats'),     icon: BarChart3 },
     { href: '/scan',          label: t('scan'),      icon: ScanLine },
   ]
 

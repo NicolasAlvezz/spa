@@ -144,7 +144,8 @@ export async function getTodayVisits(): Promise<TodayVisit[]> {
 }
 
 export async function getTodayAppointments(): Promise<TodayAppointment[]> {
-  const supabase = createServiceClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = createServiceClient() as any
   const { start, end } = todayBoundsET()
 
   const { data } = await supabase
