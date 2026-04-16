@@ -51,7 +51,7 @@ export default async function ClientDetailPage({ params }: Props) {
   const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount_usd), 0)
 
   return (
-    <div className="p-8 space-y-6 max-w-5xl">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-5xl">
 
       {/* Back */}
       <Link
@@ -220,7 +220,8 @@ export default async function ClientDetailPage({ params }: Props) {
         {visits.length === 0 ? (
           <p className="text-sm text-gray-400 px-6 py-10 text-center">{t('no_visits')}</p>
         ) : (
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[480px]">
             <thead>
               <tr className="bg-gray-50/80 text-left text-xs text-gray-500 uppercase tracking-wide border-b border-gray-100">
                 <th className="px-6 py-3 font-medium">Date</th>
@@ -248,6 +249,7 @@ export default async function ClientDetailPage({ params }: Props) {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 
@@ -265,7 +267,8 @@ export default async function ClientDetailPage({ params }: Props) {
         {payments.length === 0 ? (
           <p className="text-sm text-gray-400 px-6 py-10 text-center">{t('no_payments')}</p>
         ) : (
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[520px]">
             <thead>
               <tr className="bg-gray-50/80 text-left text-xs text-gray-500 uppercase tracking-wide border-b border-gray-100">
                 <th className="px-6 py-3 font-medium">Date</th>
@@ -295,6 +298,7 @@ export default async function ClientDetailPage({ params }: Props) {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>
