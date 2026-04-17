@@ -41,7 +41,7 @@ export function CheckinCard({ data, onScanAgain, onRegisterVisit, onRenew, onAss
 
         {/* Client name + plan */}
         <div>
-          <h2 className="text-5xl font-bold text-white leading-none tracking-tight">{clientName}</h2>
+          <h2 className="text-3xl md:text-5xl font-bold text-white leading-none tracking-tight">{clientName}</h2>
           {planName && (
             <p className="text-slate-400 text-lg mt-2">{planName}</p>
           )}
@@ -99,7 +99,7 @@ export function CheckinCard({ data, onScanAgain, onRegisterVisit, onRenew, onAss
 
         {/* Client name + plan */}
         <div>
-          <h2 className="text-5xl font-bold text-white leading-none tracking-tight">{clientName}</h2>
+          <h2 className="text-3xl md:text-5xl font-bold text-white leading-none tracking-tight">{clientName}</h2>
           {planName && (
             <p className="text-slate-500 text-lg mt-2">{planName}</p>
           )}

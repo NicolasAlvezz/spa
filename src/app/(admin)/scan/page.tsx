@@ -187,7 +187,7 @@ export default function ScanPage() {
     <div className="flex flex-col md:flex-row h-full overflow-hidden bg-slate-900">
 
       {/* ── Top/Left: camera ───────────────────────────────────────────── */}
-      <div className="relative w-full md:w-1/2 h-[45vw] md:h-full bg-black flex-shrink-0">
+      <div className="relative w-full md:w-1/2 h-64 md:h-full bg-black flex-shrink-0">
         <QrScanner
           onScan={handleScan}
           onCameraError={handleCameraError}
