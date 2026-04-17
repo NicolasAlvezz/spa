@@ -37,17 +37,17 @@ export default function LoginPage() {
 
           {/* Brand */}
           <div className="text-center mb-10">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-500/15 border border-amber-500/25 mb-5">
-              <span className="text-amber-400 text-2xl font-bold">VM</span>
+            <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-amber-500/15 border border-amber-500/25 mb-4 sm:mb-5">
+              <span className="text-amber-400 text-xl sm:text-2xl font-bold">VM</span>
             </div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
               VM Integral Massage
             </h1>
             <p className="text-slate-400 text-sm mt-1.5">Kissimmee, Florida</p>
           </div>
 
           {/* Card */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-8">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-5 sm:p-8">
             <form onSubmit={handleSubmit} className="space-y-5">
 
               <div className="space-y-2">
