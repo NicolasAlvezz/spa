@@ -90,12 +90,12 @@ export function AddAppointmentModal({ clients, serviceTypes }: Props) {
 
       {/* Overlay */}
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
           {/* Backdrop */}
           <div className="absolute inset-0 bg-black/50" onClick={handleClose} />
 
-          {/* Dialog */}
-          <div className="relative z-10 w-full max-w-md bg-white rounded-2xl shadow-2xl">
+          {/* Dialog — bottom sheet on mobile, centered card on sm+ */}
+          <div className="relative z-10 w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl max-h-[92dvh] overflow-y-auto">
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
               <h2 className="text-base font-semibold text-gray-900">{t('add_appointment')}</h2>
