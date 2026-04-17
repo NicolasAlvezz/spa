@@ -84,16 +84,17 @@ export default async function ClientDetailPage({ params }: Props) {
           </div>
         </div>
 
-        <div className="flex gap-2 flex-wrap flex-shrink-0">
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto sm:flex-shrink-0">
           <InviteClientButton
             clientId={client.id}
             clientEmail={client.email}
             isLinked={!!client.user_id}
+            className="w-full sm:w-auto justify-center"
           />
           <Link
             href={`/admin/clients/${client.id}/qr`}
             target="_blank"
-            className="inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition-colors"
+            className="inline-flex items-center justify-center gap-2 h-9 px-3 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition-colors w-full sm:w-auto"
           >
             <Printer size={13} />
             {t('print_qr')}

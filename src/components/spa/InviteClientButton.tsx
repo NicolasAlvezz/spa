@@ -21,6 +21,7 @@ interface Props {
   clientId: string
   clientEmail: string | null
   isLinked: boolean
+  className?: string
 }
 
 const ERROR_LABELS: Record<string, { en: string; es: string }> = {
@@ -31,7 +32,7 @@ const ERROR_LABELS: Record<string, { en: string; es: string }> = {
   generic_error:    { en: 'Something went wrong. Try again.',    es: 'Ocurrió un error. Intentá de nuevo.' },
 }
 
-export function InviteClientButton({ clientId, clientEmail, isLinked }: Props) {
+export function InviteClientButton({ clientId, clientEmail, isLinked, className }: Props) {
   const t = useTranslations('invite')
   const router = useRouter()
   const [open, setOpen] = useState(false)
@@ -81,7 +82,7 @@ export function InviteClientButton({ clientId, clientEmail, isLinked }: Props) {
         size="lg"
         onClick={handleUnlink}
         disabled={isPending}
-        className="h-9 text-xs px-3 text-red-600 border-red-200 hover:bg-red-50 gap-1.5"
+        className={`h-9 text-xs px-3 text-red-600 border-red-200 hover:bg-red-50 gap-1.5 ${className ?? ''}`}
       >
         {isPending ? <Loader2 size={13} className="animate-spin" /> : null}
         {isPending ? '...' : t('remove_access')}
@@ -95,7 +96,7 @@ export function InviteClientButton({ clientId, clientEmail, isLinked }: Props) {
         variant="outline"
         size="lg"
         onClick={() => setOpen(true)}
-        className="h-9 text-xs px-3 gap-1.5"
+        className={`h-9 text-xs px-3 gap-1.5 ${className ?? ''}`}
       >
         <Smartphone size={13} />
         {t('give_access')}
