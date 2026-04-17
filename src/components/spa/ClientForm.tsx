@@ -61,7 +61,7 @@ export function ClientForm({ plans }: Props) {
         <SectionHeader icon={User} title={tAuth('personal_info')} />
 
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="first_name" className="text-gray-700 font-medium">
                 {t('first_name')} <span className="text-red-400">*</span>
@@ -76,7 +76,7 @@ export function ClientForm({ plans }: Props) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="phone" className="text-gray-700 font-medium">
                 {t('phone')} <span className="text-red-400">*</span>
@@ -101,7 +101,7 @@ export function ClientForm({ plans }: Props) {
             <Input id="address" name="address" required minLength={5} disabled={isPending} className={inputClass} />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="how_did_you_hear" className="text-gray-700 font-medium">
                 {t('how_heard')}
@@ -248,7 +248,7 @@ export function ClientForm({ plans }: Props) {
       <button
         type="submit"
         disabled={isPending}
-        className="inline-flex items-center gap-2 h-11 px-6 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-white font-semibold text-sm transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 h-11 px-6 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-white font-semibold text-sm transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {isPending && <Loader2 size={16} className="animate-spin" />}
         {isPending ? tAuth('saving') : tAuth('save')}
