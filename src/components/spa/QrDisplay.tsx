@@ -2,6 +2,7 @@
 
 import QRCode from 'react-qr-code'
 import { useTranslations, useLocale } from 'next-intl'
+import { useEffect, useState } from 'react'
 import { CalendarDays, Activity, RotateCcw } from 'lucide-react'
 import { MembershipBadge } from './MembershipBadge'
 import { formatDate } from '@/lib/utils/dates'
@@ -16,12 +17,22 @@ export function QrDisplay({ client }: Props) {
   const t = useTranslations('myqr')
   const tCheck = useTranslations('checkin')
   const locale = useLocale() as 'en' | 'es'
+  const [qrSize, setQrSize] = useState(200)
+
+  useEffect(() => {
+    function update() {
+      setQrSize(window.innerWidth < 640 ? 200 : 256)
+    }
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [])
 
   const membership = getCurrentMembership(client.memberships)
   const plan = membership?.membership_plans
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 gap-7 max-w-sm mx-auto w-full">
+    <div className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 py-8 sm:py-12 gap-6 sm:gap-7 max-w-sm mx-auto w-full">
 
       {/* Header */}
       <div className="text-center">
@@ -45,7 +56,7 @@ export function QrDisplay({ client }: Props) {
         <div className="relative p-5 bg-white border border-gray-200 rounded-2xl shadow-md">
           <QRCode
             value={client.id}
-            size={210}
+            size={qrSize}
             bgColor="#ffffff"
             fgColor="#0f172a"
           />
