@@ -19,7 +19,8 @@ interface RevenueChartProps { data: MonthPoint[] }
 
 export function RevenueBarChart({ data }: RevenueChartProps) {
   return (
-    <ResponsiveContainer width="100%" height={220}>
+    <div className="h-[200px] sm:h-[280px]">
+    <ResponsiveContainer width="100%" height="100%">
       <BarChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
         <XAxis
@@ -40,6 +41,7 @@ export function RevenueBarChart({ data }: RevenueChartProps) {
         <Bar dataKey="value" fill={AMBER} radius={[4, 4, 0, 0]} maxBarSize={32} />
       </BarChart>
     </ResponsiveContainer>
+    </div>
   )
 }
 
@@ -49,7 +51,8 @@ interface ClientsChartProps { data: MonthPoint[] }
 
 export function NewClientsBarChart({ data }: ClientsChartProps) {
   return (
-    <ResponsiveContainer width="100%" height={200}>
+    <div className="h-[180px] sm:h-[260px]">
+    <ResponsiveContainer width="100%" height="100%">
       <BarChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
         <XAxis
@@ -70,6 +73,7 @@ export function NewClientsBarChart({ data }: ClientsChartProps) {
         <Bar dataKey="value" fill={SLATE} radius={[4, 4, 0, 0]} maxBarSize={32} />
       </BarChart>
     </ResponsiveContainer>
+    </div>
   )
 }
 
