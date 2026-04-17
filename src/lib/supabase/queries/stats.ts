@@ -102,7 +102,7 @@ export async function getStatsData(period: StatsPeriod): Promise<StatsData> {
     // Clients with membership status — cast via unknown to bypass manual DB type limitations
     supabase.from('clients').select(
       'id, created_at, how_did_you_hear, is_healthcare_worker, memberships(status, expires_at, plan_id, months_committed, months_completed, membership_plans(name_en))'
-    ) as unknown as Promise<{ data: any[]; error: unknown }>,
+    ) as unknown as Promise<{ data: any[]; error: unknown }>, // eslint-disable-line @typescript-eslint/no-explicit-any
 
     // Visits
     (start
@@ -167,6 +167,7 @@ export async function getStatsData(period: StatsPeriod): Promise<StatsData> {
   const todayStr = etDateStr(new Date())
 
   for (const c of allClients) {  // status uses all clients regardless of period
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mems = (c.memberships as any[]) ?? []
     const active = mems.find(m => m.status === 'active' && m.expires_at >= todayStr)
     const anyExpired = mems.some(m => m.status === 'expired')
@@ -206,6 +207,7 @@ export async function getStatsData(period: StatsPeriod): Promise<StatsData> {
 
   for (const v of visits) {
     sessionMap[v.session_type] = (sessionMap[v.session_type] ?? 0) + 1
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const svc = (v.service_types as any)?.name_en ?? 'Unknown'
     serviceMap[svc] = (serviceMap[svc] ?? 0) + 1
   }
@@ -227,6 +229,7 @@ export async function getStatsData(period: StatsPeriod): Promise<StatsData> {
 
   const planMap: Record<string, number> = {}
   for (const m of memberships) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const name = (m.membership_plans as any)?.name_en ?? 'Unknown'
     planMap[name] = (planMap[name] ?? 0) + 1
   }

@@ -2,7 +2,7 @@
 
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, Cell, Legend,
+  ResponsiveContainer,
 } from 'recharts'
 import type { MonthPoint } from '@/lib/supabase/queries/stats'
 
@@ -10,8 +10,6 @@ import type { MonthPoint } from '@/lib/supabase/queries/stats'
 
 const AMBER  = '#f59e0b'
 const SLATE  = '#64748b'
-const GREEN  = '#22c55e'
-const BLUE   = '#3b82f6'
 
 // ─── Revenue bar chart ────────────────────────────────────────────────────────
 

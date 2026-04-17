@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import {
   DollarSign, Users, Activity, CreditCard,
-  TrendingUp, BarChart3,
+  BarChart3,
 } from 'lucide-react'
 import { getStatsData, type StatsPeriod } from '@/lib/supabase/queries/stats'
 import {

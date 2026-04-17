@@ -134,6 +134,7 @@ export async function getTodayVisits(): Promise<TodayVisit[]> {
     .lt('visited_at', end)
     .order('visited_at', { ascending: false })
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (data ?? []).map((r: any) => ({
     id:          r.id,
     visited_at:  r.visited_at,
@@ -155,6 +156,7 @@ export async function getTodayAppointments(): Promise<TodayAppointment[]> {
     .lt('scheduled_at', end)
     .order('scheduled_at', { ascending: true })
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (data ?? []).map((r: any) => ({
     id:           r.id,
     scheduled_at: r.scheduled_at,
