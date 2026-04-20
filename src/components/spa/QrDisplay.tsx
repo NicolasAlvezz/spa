@@ -6,6 +6,7 @@ import { useTranslations, useLocale } from 'next-intl'
 import { useEffect, useState } from 'react'
 import { CalendarDays, Activity, RotateCcw, Clock, ChevronRight } from 'lucide-react'
 import { MembershipBadge } from './MembershipBadge'
+import { BookingSection } from './BookingSection'
 import { formatDate, formatDateTime } from '@/lib/utils/dates'
 import { getCurrentMembership } from '@/lib/utils/membership'
 import type { ClientDetail } from '@/types'
@@ -195,6 +196,9 @@ export function QrDisplay({ client, nextAppointment, recentVisits }: Props) {
           </div>
         )}
       </div>
+
+      {/* ── Book an appointment ────────────────────────────────────────── */}
+      <BookingSection locale={locale} />
 
       {/* ── Member since ───────────────────────────────────────────────── */}
       <p className="text-xs text-gray-300 font-medium">

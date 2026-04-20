@@ -110,6 +110,20 @@
     "page_info": "Page {current} of {total}",
     "total_visits": "{count} visits total"
   },
+  "booking": {
+    "title": "Book an appointment",
+    "prev_month": "Previous month",
+    "next_month": "Next month",
+    "closed_sunday": "Sundays — closed",
+    "selected": "Selected",
+    "select_time": "Select a time",
+    "notes": "Notes (optional)",
+    "notes_placeholder": "Any preferences or additional info...",
+    "book": "Book appointment",
+    "booking": "Booking...",
+    "success": "Appointment booked! We'll see you soon.",
+    "error": "Could not book the appointment. Please try again."
+  },
   "invite": {
     "give_access": "Give app access",
     "remove_access": "Remove app access",

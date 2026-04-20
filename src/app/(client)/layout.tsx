@@ -1,5 +1,4 @@
 import { LanguageToggle } from '@/components/spa/LanguageToggle'
-import { LogoutButton } from '@/components/spa/LogoutButton'
 import { ClientNav } from '@/components/spa/ClientNav'
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
@@ -16,11 +15,10 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           </p>
         </div>
 
-        {/* Right: desktop nav + language + logout */}
+        {/* Right: desktop nav + language */}
         <div className="flex items-center gap-3 sm:gap-4">
           <ClientNav />
           <LanguageToggle />
-          <LogoutButton />
         </div>
       </header>
 

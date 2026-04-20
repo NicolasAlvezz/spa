@@ -4,6 +4,7 @@ import { User } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getClientByUserId } from '@/lib/supabase/queries/clients'
 import { ClientProfileForm } from '@/components/spa/ClientProfileForm'
+import { LogoutButton } from '@/components/spa/LogoutButton'
 
 export default async function ProfilePage() {
   const supabase = await createClient()
@@ -39,6 +40,11 @@ export default async function ProfilePage() {
       {/* Editable form */}
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm px-5 py-5">
         <ClientProfileForm client={client} />
+      </div>
+
+      {/* Sign out */}
+      <div className="pt-2 border-t border-gray-100 flex justify-center">
+        <LogoutButton />
       </div>
 
     </div>

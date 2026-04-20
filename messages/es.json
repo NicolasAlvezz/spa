@@ -110,6 +110,20 @@
     "page_info": "Página {current} de {total}",
     "total_visits": "{count} visitas en total"
   },
+  "booking": {
+    "title": "Reservar un turno",
+    "prev_month": "Mes anterior",
+    "next_month": "Mes siguiente",
+    "closed_sunday": "Domingos — cerrado",
+    "selected": "Seleccionado",
+    "select_time": "Elegí un horario",
+    "notes": "Notas (opcional)",
+    "notes_placeholder": "Preferencias o información adicional...",
+    "book": "Reservar turno",
+    "booking": "Reservando...",
+    "success": "¡Turno reservado! Te esperamos pronto.",
+    "error": "No se pudo reservar el turno. Intentá de nuevo."
+  },
   "invite": {
     "give_access": "Dar acceso a la app",
     "remove_access": "Quitar acceso",
