@@ -73,7 +73,42 @@
     "title": "Your QR Code",
     "subtitle": "Show this code at the reception when you arrive.",
     "member_since": "Member since",
-    "no_membership": "No active membership"
+    "no_membership": "No active membership",
+    "not_linked": "Your account is not linked to a client profile yet. Please contact reception.",
+    "next_appointment": "Next appointment",
+    "no_upcoming": "No upcoming appointments",
+    "recent_visits": "Recent visits",
+    "no_recent_visits": "No visits registered yet",
+    "view_all": "View all visits"
+  },
+  "clientnav": {
+    "my_qr": "My QR",
+    "visits": "My Visits",
+    "profile": "Profile"
+  },
+  "clientprofile": {
+    "title": "My Profile",
+    "phone": "Phone",
+    "email": "Email (optional)",
+    "language": "Preferred language",
+    "lang_en": "English",
+    "lang_es": "Spanish",
+    "save": "Save changes",
+    "saving": "Saving...",
+    "saved": "Changes saved!",
+    "error": "Could not save. Please try again.",
+    "phone_required": "Phone number is required."
+  },
+  "clientvisits": {
+    "title": "Visit History",
+    "no_visits": "No visits registered yet.",
+    "col_date": "Date & Time",
+    "col_service": "Service",
+    "col_type": "Session",
+    "prev_page": "Previous",
+    "next_page": "Next",
+    "page_info": "Page {current} of {total}",
+    "total_visits": "{count} visits total"
   },
   "invite": {
     "give_access": "Give app access",

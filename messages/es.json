@@ -73,7 +73,42 @@
     "title": "Tu código QR",
     "subtitle": "Mostrá este código en recepción cuando llegues al spa.",
     "member_since": "Miembro desde",
-    "no_membership": "Sin membresía activa"
+    "no_membership": "Sin membresía activa",
+    "not_linked": "Tu cuenta no está vinculada a un perfil de cliente. Comunicaté con recepción.",
+    "next_appointment": "Próxima cita",
+    "no_upcoming": "Sin citas próximas",
+    "recent_visits": "Visitas recientes",
+    "no_recent_visits": "No hay visitas registradas aún",
+    "view_all": "Ver todas las visitas"
+  },
+  "clientnav": {
+    "my_qr": "Mi QR",
+    "visits": "Mis visitas",
+    "profile": "Perfil"
+  },
+  "clientprofile": {
+    "title": "Mi Perfil",
+    "phone": "Teléfono",
+    "email": "Email (opcional)",
+    "language": "Idioma preferido",
+    "lang_en": "Inglés",
+    "lang_es": "Español",
+    "save": "Guardar cambios",
+    "saving": "Guardando...",
+    "saved": "¡Cambios guardados!",
+    "error": "No se pudo guardar. Intentá de nuevo.",
+    "phone_required": "El teléfono es obligatorio."
+  },
+  "clientvisits": {
+    "title": "Historial de visitas",
+    "no_visits": "No hay visitas registradas aún.",
+    "col_date": "Fecha y hora",
+    "col_service": "Servicio",
+    "col_type": "Sesión",
+    "prev_page": "Anterior",
+    "next_page": "Siguiente",
+    "page_info": "Página {current} de {total}",
+    "total_visits": "{count} visitas en total"
   },
   "invite": {
     "give_access": "Dar acceso a la app",
