@@ -1,19 +1,30 @@
 'use client'
 
 import QRCode from 'react-qr-code'
+import Link from 'next/link'
 import { useTranslations, useLocale } from 'next-intl'
 import { useEffect, useState } from 'react'
-import { CalendarDays, Activity, RotateCcw } from 'lucide-react'
+import { CalendarDays, Activity, RotateCcw, Clock, ChevronRight } from 'lucide-react'
 import { MembershipBadge } from './MembershipBadge'
-import { formatDate } from '@/lib/utils/dates'
+import { formatDate, formatDateTime } from '@/lib/utils/dates'
 import { getCurrentMembership } from '@/lib/utils/membership'
 import type { ClientDetail } from '@/types'
+import type { ClientNextAppointment, ClientVisitRow } from '@/lib/supabase/queries/client-portal'
 
 interface Props {
   client: ClientDetail
+  nextAppointment: ClientNextAppointment | null
+  recentVisits: ClientVisitRow[]
 }
 
-export function QrDisplay({ client }: Props) {
+const SESSION_LABELS: Record<string, { en: string; es: string }> = {
+  included:      { en: 'Included',             es: 'Incluida' },
+  rollover:      { en: 'Rollover',             es: 'Rollover' },
+  additional:    { en: 'Additional',           es: 'Adicional' },
+  welcome_offer: { en: 'Welcome offer',        es: 'Bienvenida' },
+}
+
+export function QrDisplay({ client, nextAppointment, recentVisits }: Props) {
   const t = useTranslations('myqr')
   const tCheck = useTranslations('checkin')
   const locale = useLocale() as 'en' | 'es'
@@ -31,10 +42,22 @@ export function QrDisplay({ client }: Props) {
   const membership = getCurrentMembership(client.memberships)
   const plan = membership?.membership_plans
 
-  return (
-    <div className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 py-8 sm:py-12 gap-6 sm:gap-7 max-w-sm mx-auto w-full">
+  function sessionLabel(type: string) {
+    return SESSION_LABELS[type]?.[locale] ?? type
+  }
 
-      {/* Header */}
+  function serviceName(row: ClientVisitRow) {
+    return locale === 'es' ? row.service_name_es : row.service_name_en
+  }
+
+  function appointmentServiceName(appt: ClientNextAppointment) {
+    return locale === 'es' ? appt.service_name_es : appt.service_name_en
+  }
+
+  return (
+    <div className="flex-1 flex flex-col items-center px-4 sm:px-6 py-8 sm:py-12 gap-6 sm:gap-7 max-w-sm mx-auto w-full">
+
+      {/* ── Header ─────────────────────────────────────────────────────── */}
       <div className="text-center">
         <p className="text-xs text-gray-400 uppercase tracking-widest mb-2 font-medium">
           VM Integral Massage
@@ -49,9 +72,8 @@ export function QrDisplay({ client }: Props) {
         )}
       </div>
 
-      {/* QR Code */}
+      {/* ── QR Code ────────────────────────────────────────────────────── */}
       <div className="relative">
-        {/* Outer glow ring */}
         <div className="absolute -inset-3 rounded-3xl bg-amber-500/10" />
         <div className="relative p-5 bg-white border border-gray-200 rounded-2xl shadow-md">
           <QRCode
@@ -63,22 +85,18 @@ export function QrDisplay({ client }: Props) {
         </div>
       </div>
 
-      {/* Instruction */}
       <p className="text-sm text-gray-500 text-center leading-relaxed max-w-xs">
         {t('subtitle')}
       </p>
 
-      {/* Membership card */}
+      {/* ── Membership card ────────────────────────────────────────────── */}
       {membership && plan ? (
         <div className="w-full bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-          {/* Plan header */}
           <div className="px-5 py-3 bg-gray-50 border-b border-gray-100">
             <p className="text-sm font-semibold text-gray-800">
               {locale === 'es' ? plan.name_es : plan.name_en}
             </p>
           </div>
-
-          {/* Stats */}
           <div className="divide-y divide-gray-50">
             <div className="flex items-center justify-between px-5 py-3">
               <div className="flex items-center gap-2 text-sm text-gray-400">
@@ -112,7 +130,73 @@ export function QrDisplay({ client }: Props) {
         </div>
       )}
 
-      {/* Member since */}
+      {/* ── Next appointment ───────────────────────────────────────────── */}
+      <div className="w-full">
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+          {t('next_appointment')}
+        </p>
+        {nextAppointment ? (
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3 flex items-center gap-3">
+            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-amber-50 flex-shrink-0">
+              <Clock size={16} className="text-amber-500" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-gray-900">
+                {formatDateTime(nextAppointment.scheduled_at, locale)}
+              </p>
+              {(appointmentServiceName(nextAppointment) ?? nextAppointment.notes) && (
+                <p className="text-xs text-gray-400 mt-0.5 truncate">
+                  {appointmentServiceName(nextAppointment) ?? nextAppointment.notes}
+                </p>
+              )}
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-gray-300 py-1">{t('no_upcoming')}</p>
+        )}
+      </div>
+
+      {/* ── Recent visits ──────────────────────────────────────────────── */}
+      <div className="w-full">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+            {t('recent_visits')}
+          </p>
+          {recentVisits.length > 0 && (
+            <Link
+              href="/visits"
+              className="text-xs font-medium text-amber-600 hover:text-amber-700 flex items-center gap-0.5"
+            >
+              {t('view_all')}
+              <ChevronRight size={13} />
+            </Link>
+          )}
+        </div>
+
+        {recentVisits.length === 0 ? (
+          <p className="text-sm text-gray-300 py-1">{t('no_recent_visits')}</p>
+        ) : (
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden divide-y divide-gray-50">
+            {recentVisits.map((v) => (
+              <div key={v.id} className="flex items-center justify-between px-4 py-3">
+                <div>
+                  <p className="text-xs font-medium text-gray-700">
+                    {formatDate(v.visited_at, locale)}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {serviceName(v) ?? sessionLabel(v.session_type)}
+                  </p>
+                </div>
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
+                  {sessionLabel(v.session_type)}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── Member since ───────────────────────────────────────────────── */}
       <p className="text-xs text-gray-300 font-medium">
         {t('member_since')} {formatDate(client.created_at, locale)}
       </p>
