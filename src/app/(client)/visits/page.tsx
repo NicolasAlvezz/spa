@@ -37,9 +37,8 @@ export default async function VisitsPage({ searchParams }: Props) {
 
   const page = Math.max(1, parseInt(searchParams.page ?? '1', 10) || 1)
 
-  const [t, tCheck, { visits, total }] = await Promise.all([
+  const [t, { visits, total }] = await Promise.all([
     getTranslations('clientvisits'),
-    getTranslations('checkin'),
     getClientVisitsPaginated(client.id, page, PAGE_SIZE),
   ])
 
