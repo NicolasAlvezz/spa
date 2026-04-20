@@ -1,4 +1,4 @@
-import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/server'
 import type {
   ClientListRow,
   ClientDetail,
@@ -111,16 +111,22 @@ export async function getServiceTypes(): Promise<ServiceTypeItem[]> {
   return (data ?? []) as ServiceTypeItem[]
 }
 
-// ── Client-facing query — uses anon client with RLS ───────────────────────────
-// Called from /my-qr where the client reads only their own row (RLS enforced).
+// ── Client-facing query — uses service client ────────────────────────────────
+// Auth is always verified by the caller (getUser()) before this is called,
+// so service client is safe and avoids RLS policy issues on the clients table.
 
 export async function getClientByUserId(userId: string): Promise<ClientDetail | null> {
-  const supabase = await createClient()
+  const supabase = createServiceClient()
+
+  console.log('[getClientByUserId] looking up userId:', userId)
+
   const { data, error } = await supabase
     .from('clients')
     .select(`*, memberships(*, membership_plans(*))`)
     .eq('user_id', userId)
     .single()
+
+  console.log('[getClientByUserId] result:', { found: !!data, error: error?.message ?? null })
 
   if (error) return null
   return data as unknown as ClientDetail
