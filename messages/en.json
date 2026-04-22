@@ -203,7 +203,11 @@
     "assign_confirm": "Confirm & Assign",
     "assign_success": "Membership assigned!",
     "assigning": "Processing...",
-    "loading_plans": "Loading plans..."
+    "loading_plans": "Loading plans...",
+    "pack_payment_full": "Pay in full",
+    "pack_payment_split": "Split: $400 now + $400 before 5th session",
+    "pack_sessions_total": "sessions",
+    "pack_no_expiry": "No expiry date"
   },
   "payment": {
     "method_cash": "Cash",
@@ -265,6 +269,14 @@
     "no_plan_body": "This client has no active plan. Contact reception.",
     "visits_this_month": "Visits this month",
     "sessions_available": "Sessions available",
+    "sessions_remaining": "Sessions remaining",
+    "no_expiry": "No expiry",
+    "split_payment_warning": "2nd payment of $400 due before next session",
+    "split_payment_blocked": "Confirm 2nd payment to register this visit",
+    "confirm_split": "Confirm 2nd payment ($400)",
+    "confirming_split": "Confirming payment...",
+    "split_confirmed": "Payment confirmed!",
+    "post_op_visit": "Post-op visit ($90)",
     "client_not_found": "Client not found",
     "error_network": "Connection error. Check your internet and try again."
   },

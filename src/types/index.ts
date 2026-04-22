@@ -14,8 +14,9 @@ export type DbServiceType = Database['public']['Tables']['service_types']['Row']
 export type UserRole = 'admin' | 'client'
 export type MembershipStatus = 'active' | 'expired' | 'cancelled' | 'no_membership'
 export type PaymentMethod = 'cash' | 'debit' | 'credit'
-export type PaymentConcept = 'monthly_membership' | 'additional_visit' | 'welcome_offer'
-export type SessionType = 'included' | 'rollover' | 'additional' | 'welcome_offer'
+export type PaymentConcept = 'monthly_membership' | 'additional_visit' | 'welcome_offer' | 'pack_purchase' | 'pack_split_second' | 'post_op_visit'
+export type SessionType = 'included' | 'rollover' | 'additional' | 'welcome_offer' | 'post_op'
+export type PlanType = 'monthly' | 'pack'
 export type HowDidYouHear =
   | 'instagram'
   | 'referral'

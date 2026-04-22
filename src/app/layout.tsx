@@ -10,6 +10,9 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
 export const metadata: Metadata = {
   title: 'VM Integral Massage',
   description: 'Membership management system',
+  icons: {
+    icon: '/images/favicon.jpg',
+  },
 }
 
 export default async function RootLayout({

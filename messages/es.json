@@ -203,7 +203,11 @@
     "assign_confirm": "Confirmar y asignar",
     "assign_success": "¡Membresía asignada!",
     "assigning": "Procesando...",
-    "loading_plans": "Cargando planes..."
+    "loading_plans": "Cargando planes...",
+    "pack_payment_full": "Pagar total",
+    "pack_payment_split": "Dividido: $400 ahora + $400 antes de la 5ta sesión",
+    "pack_sessions_total": "sesiones",
+    "pack_no_expiry": "Sin fecha de vencimiento"
   },
   "payment": {
     "method_cash": "Efectivo",
@@ -265,6 +269,14 @@
     "no_plan_body": "Este cliente no tiene un plan activo. Consultar en recepción.",
     "visits_this_month": "Visitas este mes",
     "sessions_available": "Sesiones disponibles",
+    "sessions_remaining": "Sesiones restantes",
+    "no_expiry": "Sin vencimiento",
+    "split_payment_warning": "2do pago de $400 vence antes de la próxima sesión",
+    "split_payment_blocked": "Confirmá el 2do pago para registrar esta visita",
+    "confirm_split": "Confirmar 2do pago ($400)",
+    "confirming_split": "Confirmando pago...",
+    "split_confirmed": "¡Pago confirmado!",
+    "post_op_visit": "Visita post-op ($90)",
     "client_not_found": "Cliente no encontrado",
     "error_network": "Error de conexión. Verificá el internet e intentá de nuevo."
   },

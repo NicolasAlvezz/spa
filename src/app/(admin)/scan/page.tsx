@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
-import { ScanLine, WifiOff, UserX, Loader2, CheckCircle2, Camera, RotateCcw, Star } from 'lucide-react'
+import { ScanLine, WifiOff, UserX, Loader2, CheckCircle2, Camera, RotateCcw, Star, CreditCard } from 'lucide-react'
 import { QrScanner } from '@/components/spa/QrScanner'
 import { CheckinCard } from '@/components/spa/CheckinCard'
 import { formatDate } from '@/lib/utils/dates'
@@ -15,6 +15,8 @@ type Phase =
   | 'registering'
   | 'renewing'
   | 'assigning'
+  | 'confirming_split'
+  | 'registering_postop'
   | 'success'
   | 'error'
   | 'camera_error'
@@ -33,14 +35,15 @@ export default function ScanPage() {
   const [result, setResult] = useState<CheckinResult | null>(null)
   const [errorKey, setErrorKey] = useState<'client_not_found' | 'network_error'>('network_error')
   const [successInfo, setSuccessInfo] = useState<SuccessInfo | null>(null)
+  const [splitPaymentBlocked, setSplitPaymentBlocked] = useState(false)
 
   const reset = useCallback(() => {
     setResult(null)
     setSuccessInfo(null)
+    setSplitPaymentBlocked(false)
     setPhase('scanning')
   }, [])
 
-  // Auto-reset to scanning after success
   useEffect(() => {
     if (phase !== 'success') return
     const id = setTimeout(reset, 3000)
@@ -63,6 +66,7 @@ export default function ScanPage() {
       }
       const data: CheckinResult = await res.json()
       setResult(data)
+      setSplitPaymentBlocked(false)
       setPhase('result')
     } catch {
       setErrorKey('network_error')
@@ -86,12 +90,21 @@ export default function ScanPage() {
           membership_id: result.membership?.id ?? null,
         }),
       })
+
+      if (res.status === 402) {
+        // Split payment required before 5th session
+        setSplitPaymentBlocked(true)
+        setPhase('result')
+        return
+      }
+
       if (!res.ok) {
         setErrorKey('network_error')
         setPhase('error')
         return
       }
-      const data: { visit_id: string; visited_at: string; session_type: string } = await res.json()
+
+      const data: { visit_id: string; visited_at: string; session_type: string; split_payment_warning?: boolean } = await res.json()
 
       const sessionLabels: Record<string, string> = {
         included: tCheck('session_included'),
@@ -110,7 +123,69 @@ export default function ScanPage() {
     }
   }, [result, tCheck])
 
-  const handleAssignConfirm = useCallback(async (planId: string, method: PaymentMethod, amountUsd: number) => {
+  const handlePostOpVisit = useCallback(async () => {
+    if (!result) return
+    setPhase('registering_postop')
+    try {
+      const res = await fetch('/api/visits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          client_id: result.client.id,
+          membership_id: null,
+          session_type: 'post_op',
+        }),
+      })
+      if (!res.ok) {
+        setErrorKey('network_error')
+        setPhase('error')
+        return
+      }
+      setSuccessInfo({
+        title: tCheck('visit_registered'),
+        detail: tCheck('post_op_visit'),
+      })
+      setPhase('success')
+    } catch {
+      setErrorKey('network_error')
+      setPhase('error')
+    }
+  }, [result, tCheck])
+
+  const handleConfirmSplitPayment = useCallback(async (method: PaymentMethod) => {
+    if (!result?.membership) return
+    try {
+      const res = await fetch('/api/memberships/confirm-split-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          membership_id: result.membership.id,
+          payment_method: method,
+        }),
+      })
+      if (!res.ok) {
+        setErrorKey('network_error')
+        setPhase('error')
+        return
+      }
+      setSplitPaymentBlocked(false)
+      setSuccessInfo({
+        title: tCheck('split_confirmed'),
+        detail: tCheck('confirm_split'),
+      })
+      setPhase('success')
+    } catch {
+      setErrorKey('network_error')
+      setPhase('error')
+    }
+  }, [result, tCheck])
+
+  const handleAssignConfirm = useCallback(async (
+    planId: string,
+    method: PaymentMethod,
+    amountUsd: number,
+    splitPayment?: boolean,
+  ) => {
     if (!result) return
     try {
       const res = await fetch('/api/memberships/renew', {
@@ -121,19 +196,20 @@ export default function ScanPage() {
           plan_id: planId,
           payment_method: method,
           amount_usd: amountUsd,
+          split_payment: splitPayment ?? false,
         }),
       })
       if (!res.ok) {
-        const errBody = await res.json().catch(() => null)
-        console.error('[handleAssignConfirm] status:', res.status, 'body:', errBody)
         setErrorKey('network_error')
         setPhase('error')
         return
       }
-      const data: { expires_at: string } = await res.json()
+      const data: { expires_at: string; sessions_remaining?: number; is_pack?: boolean } = await res.json()
       setSuccessInfo({
         title: tCheck('assign_success'),
-        detail: `${tCheck('renew_expires')}: ${formatDate(data.expires_at, locale)}`,
+        detail: data.is_pack
+          ? `${data.sessions_remaining} ${tCheck('pack_sessions_total')}`
+          : `${tCheck('renew_expires')}: ${formatDate(data.expires_at, locale)}`,
       })
       setPhase('success')
     } catch {
@@ -157,8 +233,6 @@ export default function ScanPage() {
         }),
       })
       if (!res.ok) {
-        const errBody = await res.json().catch(() => null)
-        console.error('[handleRenewConfirm] status:', res.status, 'body:', errBody)
         setErrorKey('network_error')
         setPhase('error')
         return
@@ -178,8 +252,10 @@ export default function ScanPage() {
   const cameraPaused =
     phase === 'result' ||
     phase === 'registering' ||
+    phase === 'registering_postop' ||
     phase === 'renewing' ||
     phase === 'assigning' ||
+    phase === 'confirming_split' ||
     phase === 'success' ||
     phase === 'error'
 
@@ -194,7 +270,6 @@ export default function ScanPage() {
           active={phase === 'scanning'}
         />
 
-        {/* Loading overlay */}
         {phase === 'loading' && (
           <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center gap-4">
             <div className="w-10 h-10 border-4 border-white/20 border-t-white rounded-full animate-spin" />
@@ -202,7 +277,6 @@ export default function ScanPage() {
           </div>
         )}
 
-        {/* Paused overlay */}
         {cameraPaused && (
           <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
             <p className="text-slate-400 text-sm">{t('camera_paused')}</p>
@@ -240,11 +314,14 @@ export default function ScanPage() {
               onRegisterVisit={handleRegisterVisit}
               onRenew={() => setPhase('renewing')}
               onAssignMembership={() => setPhase('assigning')}
+              onConfirmSplitPayment={() => setPhase('confirming_split')}
+              onPostOpVisit={handlePostOpVisit}
+              splitPaymentBlocked={splitPaymentBlocked}
             />
           </div>
         )}
 
-        {phase === 'registering' && (
+        {(phase === 'registering' || phase === 'registering_postop') && (
           <div className="text-center space-y-4">
             <Loader2 size={44} className="text-green-400 animate-spin mx-auto" />
             <p className="text-slate-300 text-xl font-medium">{tCheck('registering')}</p>
@@ -266,6 +343,16 @@ export default function ScanPage() {
             <AssignMembershipPanel
               result={result}
               onConfirm={handleAssignConfirm}
+              onCancel={() => setPhase('result')}
+            />
+          </div>
+        )}
+
+        {phase === 'confirming_split' && result && (
+          <div className="w-full max-w-md">
+            <ConfirmSplitPanel
+              result={result}
+              onConfirm={handleConfirmSplitPayment}
               onCancel={() => setPhase('result')}
             />
           </div>
@@ -314,6 +401,9 @@ export default function ScanPage() {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
+const METHODS: PaymentMethod[] = ['cash', 'debit', 'credit']
+const methodKeys = { cash: 'method_cash', debit: 'method_debit', credit: 'method_credit' } as const
+
 interface RenewPanelProps {
   result: CheckinResult
   onConfirm: (method: PaymentMethod) => Promise<void>
@@ -332,23 +422,14 @@ function RenewPanel({ result, onConfirm, onCancel }: RenewPanelProps) {
   const planName = plan ? (locale === 'es' ? plan.name_es : plan.name_en) : null
   const amount = plan?.price_usd ?? 80
 
-  const METHODS: PaymentMethod[] = ['cash', 'debit', 'credit']
-  const methodKeys = {
-    cash: 'method_cash',
-    debit: 'method_debit',
-    credit: 'method_credit',
-  } as const
-
   const handleConfirm = async () => {
     if (!method || submitting) return
     setSubmitting(true)
     await onConfirm(method)
-    // component transitions away on success/error — no need to reset submitting
   }
 
   return (
     <div className="w-full flex flex-col gap-6">
-      {/* Title */}
       <div className="flex items-center gap-3">
         <div className="flex items-center justify-center w-10 h-10 rounded-full bg-amber-500/20">
           <RotateCcw size={18} className="text-amber-400" />
@@ -358,12 +439,10 @@ function RenewPanel({ result, onConfirm, onCancel }: RenewPanelProps) {
         </span>
       </div>
 
-      {/* Client name */}
       <h2 className="text-2xl md:text-4xl font-bold text-white leading-tight">
         {result.client.first_name} {result.client.last_name}
       </h2>
 
-      {/* Plan + amount */}
       <div className="bg-slate-800 rounded-xl p-4">
         <p className="text-slate-400 text-xs uppercase tracking-wide mb-1">{t('renew_plan')}</p>
         <p className="text-white text-xl font-semibold">{planName ?? '—'}</p>
@@ -375,41 +454,25 @@ function RenewPanel({ result, onConfirm, onCancel }: RenewPanelProps) {
         </p>
       </div>
 
-      {/* Payment method */}
       <div>
         <p className="text-slate-400 text-xs uppercase tracking-wide mb-3">{t('renew_method')}</p>
         <div className="grid grid-cols-3 gap-3">
           {METHODS.map((m) => (
-            <button
-              key={m}
-              onClick={() => setMethod(m)}
-              disabled={submitting}
-              className={`h-14 rounded-xl text-base font-semibold transition-colors disabled:opacity-50 ${
-                method === m
-                  ? 'bg-amber-500 text-white'
-                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-              }`}
-            >
+            <button key={m} onClick={() => setMethod(m)} disabled={submitting}
+              className={`h-14 rounded-xl text-base font-semibold transition-colors disabled:opacity-50 ${method === m ? 'bg-amber-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
               {tPayment(methodKeys[m])}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Actions */}
       <div className="flex flex-col gap-3 pt-2">
-        <button
-          onClick={handleConfirm}
-          disabled={!method || submitting}
-          className="w-full h-16 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xl font-bold transition-colors"
-        >
+        <button onClick={handleConfirm} disabled={!method || submitting}
+          className="w-full h-16 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xl font-bold transition-colors">
           {submitting ? t('renewing') : t('renew_confirm')}
         </button>
-        <button
-          onClick={onCancel}
-          disabled={submitting}
-          className="w-full h-12 rounded-xl bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-slate-300 text-base font-medium transition-colors"
-        >
+        <button onClick={onCancel} disabled={submitting}
+          className="w-full h-12 rounded-xl bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-slate-300 text-base font-medium transition-colors">
           {t('cancel')}
         </button>
       </div>
@@ -417,17 +480,21 @@ function RenewPanel({ result, onConfirm, onCancel }: RenewPanelProps) {
   )
 }
 
-interface AssignMembershipPanelProps {
-  result: CheckinResult
-  onConfirm: (planId: string, method: PaymentMethod, amountUsd: number) => Promise<void>
-  onCancel: () => void
-}
-
 interface PlanOption {
   id: string
   name_en: string
   name_es: string
   price_usd: number
+  plan_type: 'monthly' | 'pack'
+  total_sessions: number | null
+  allows_split_payment: boolean
+  split_first_amount: number | null
+}
+
+interface AssignMembershipPanelProps {
+  result: CheckinResult
+  onConfirm: (planId: string, method: PaymentMethod, amountUsd: number, splitPayment?: boolean) => Promise<void>
+  onCancel: () => void
 }
 
 function AssignMembershipPanel({ result, onConfirm, onCancel }: AssignMembershipPanelProps) {
@@ -439,36 +506,37 @@ function AssignMembershipPanel({ result, onConfirm, onCancel }: AssignMembership
   const [loadingPlans, setLoadingPlans] = useState(true)
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null)
   const [method, setMethod] = useState<PaymentMethod | null>(null)
+  const [useSplitPayment, setUseSplitPayment] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     fetch('/api/membership-plans')
       .then((r) => r.json())
-      .then((data: PlanOption[]) => {
-        setPlans(data)
-        setLoadingPlans(false)
-      })
+      .then((data: PlanOption[]) => { setPlans(data); setLoadingPlans(false) })
       .catch(() => setLoadingPlans(false))
   }, [])
 
   const selectedPlan = plans.find((p) => p.id === selectedPlanId) ?? null
 
-  const METHODS: PaymentMethod[] = ['cash', 'debit', 'credit']
-  const methodKeys = {
-    cash: 'method_cash',
-    debit: 'method_debit',
-    credit: 'method_credit',
-  } as const
+  const handleSelectPlan = (plan: PlanOption) => {
+    setSelectedPlanId(plan.id)
+    setUseSplitPayment(false)
+  }
+
+  const paymentAmount = selectedPlan
+    ? useSplitPayment && selectedPlan.split_first_amount
+      ? selectedPlan.split_first_amount
+      : selectedPlan.price_usd
+    : 0
 
   const handleConfirm = async () => {
     if (!selectedPlanId || !method || !selectedPlan || submitting) return
     setSubmitting(true)
-    await onConfirm(selectedPlanId, method, selectedPlan.price_usd)
+    await onConfirm(selectedPlanId, method, paymentAmount, useSplitPayment)
   }
 
   return (
     <div className="w-full flex flex-col gap-6">
-      {/* Title */}
       <div className="flex items-center gap-3">
         <div className="flex items-center justify-center w-10 h-10 rounded-full bg-amber-500/20">
           <Star size={18} className="text-amber-400" />
@@ -478,7 +546,6 @@ function AssignMembershipPanel({ result, onConfirm, onCancel }: AssignMembership
         </span>
       </div>
 
-      {/* Client name */}
       <h2 className="text-2xl md:text-4xl font-bold text-white leading-tight">
         {result.client.first_name} {result.client.last_name}
       </h2>
@@ -490,67 +557,150 @@ function AssignMembershipPanel({ result, onConfirm, onCancel }: AssignMembership
           <p className="text-slate-400 text-sm">{t('loading_plans')}</p>
         ) : (
           <div className="flex flex-col gap-2">
-            {plans.map((plan) => (
-              <button
-                key={plan.id}
-                onClick={() => setSelectedPlanId(plan.id)}
-                disabled={submitting}
-                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-left transition-colors disabled:opacity-50 ${
-                  selectedPlanId === plan.id
-                    ? 'bg-amber-500 text-white'
-                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                }`}
-              >
-                <span className="font-semibold">
-                  {locale === 'es' ? plan.name_es : plan.name_en}
-                </span>
-                <span className="text-lg font-bold ml-4">
-                  ${plan.price_usd}
-                  <span className="text-xs font-normal opacity-75 ml-1">
-                    {locale === 'es' ? '/mes' : '/mo'}
+            {plans.map((plan) => {
+              const isPack = plan.plan_type === 'pack'
+              const isSelected = selectedPlanId === plan.id
+              return (
+                <button key={plan.id} onClick={() => handleSelectPlan(plan)} disabled={submitting}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-left transition-colors disabled:opacity-50 ${isSelected ? 'bg-amber-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
+                  <div>
+                    <span className="font-semibold block">
+                      {locale === 'es' ? plan.name_es : plan.name_en}
+                    </span>
+                    {isPack && (
+                      <span className={`text-xs ${isSelected ? 'text-amber-100' : 'text-slate-400'}`}>
+                        {plan.total_sessions} {t('pack_sessions_total')} · {t('pack_no_expiry')}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-lg font-bold ml-4 flex-shrink-0">
+                    ${plan.price_usd}
+                    {!isPack && (
+                      <span className="text-xs font-normal opacity-75 ml-1">
+                        {locale === 'es' ? '/mes' : '/mo'}
+                      </span>
+                    )}
                   </span>
-                </span>
-              </button>
-            ))}
+                </button>
+              )
+            })}
           </div>
         )}
       </div>
+
+      {/* Split payment option (only for eligible packs) */}
+      {selectedPlan?.allows_split_payment && (
+        <div>
+          <p className="text-slate-400 text-xs uppercase tracking-wide mb-3">{locale === 'es' ? 'Forma de pago' : 'Payment option'}</p>
+          <div className="flex flex-col gap-2">
+            <button onClick={() => setUseSplitPayment(false)} disabled={submitting}
+              className={`w-full px-4 py-3 rounded-xl text-left text-sm font-medium transition-colors disabled:opacity-50 ${!useSplitPayment ? 'bg-amber-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
+              {t('pack_payment_full')} — ${selectedPlan.price_usd}
+            </button>
+            <button onClick={() => setUseSplitPayment(true)} disabled={submitting}
+              className={`w-full px-4 py-3 rounded-xl text-left text-sm font-medium transition-colors disabled:opacity-50 ${useSplitPayment ? 'bg-amber-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
+              {t('pack_payment_split')}
+            </button>
+          </div>
+          {useSplitPayment && (
+            <p className="text-amber-400 text-xs mt-2 ml-1">
+              {locale === 'es' ? `Cobrar ahora: $${selectedPlan.split_first_amount}` : `Charge now: $${selectedPlan.split_first_amount}`}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Payment method */}
       <div>
         <p className="text-slate-400 text-xs uppercase tracking-wide mb-3">{tPayment('method')}</p>
         <div className="grid grid-cols-3 gap-3">
           {METHODS.map((m) => (
-            <button
-              key={m}
-              onClick={() => setMethod(m)}
-              disabled={submitting}
-              className={`h-14 rounded-xl text-base font-semibold transition-colors disabled:opacity-50 ${
-                method === m
-                  ? 'bg-amber-500 text-white'
-                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-              }`}
-            >
+            <button key={m} onClick={() => setMethod(m)} disabled={submitting}
+              className={`h-14 rounded-xl text-base font-semibold transition-colors disabled:opacity-50 ${method === m ? 'bg-amber-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
               {tPayment(methodKeys[m])}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Actions */}
       <div className="flex flex-col gap-3 pt-2">
-        <button
-          onClick={handleConfirm}
-          disabled={!selectedPlanId || !method || submitting}
-          className="w-full h-16 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xl font-bold transition-colors"
-        >
-          {submitting ? t('assigning') : t('assign_confirm')}
+        <button onClick={handleConfirm} disabled={!selectedPlanId || !method || submitting}
+          className="w-full h-16 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xl font-bold transition-colors">
+          {submitting ? t('assigning') : `${t('assign_confirm')} — $${paymentAmount}`}
         </button>
-        <button
-          onClick={onCancel}
-          disabled={submitting}
-          className="w-full h-12 rounded-xl bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-slate-300 text-base font-medium transition-colors"
-        >
+        <button onClick={onCancel} disabled={submitting}
+          className="w-full h-12 rounded-xl bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-slate-300 text-base font-medium transition-colors">
+          {t('cancel')}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+interface ConfirmSplitPanelProps {
+  result: CheckinResult
+  onConfirm: (method: PaymentMethod) => Promise<void>
+  onCancel: () => void
+}
+
+function ConfirmSplitPanel({ result, onConfirm, onCancel }: ConfirmSplitPanelProps) {
+  const t = useTranslations('checkin')
+  const tPayment = useTranslations('payment')
+  const locale = useLocale() as 'en' | 'es'
+
+  const [method, setMethod] = useState<PaymentMethod | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+
+  const plan = result.membership?.membership_plans
+  const secondAmount = plan ? plan.price_usd - (plan.split_first_amount ?? 0) : 400
+
+  const handleConfirm = async () => {
+    if (!method || submitting) return
+    setSubmitting(true)
+    await onConfirm(method)
+  }
+
+  return (
+    <div className="w-full flex flex-col gap-6">
+      <div className="flex items-center gap-3">
+        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-amber-500/20">
+          <CreditCard size={18} className="text-amber-400" />
+        </div>
+        <span className="text-amber-400 text-lg font-semibold uppercase tracking-wide">
+          {t('confirm_split')}
+        </span>
+      </div>
+
+      <h2 className="text-2xl md:text-4xl font-bold text-white leading-tight">
+        {result.client.first_name} {result.client.last_name}
+      </h2>
+
+      <div className="bg-slate-800 rounded-xl p-4">
+        <p className="text-slate-400 text-xs uppercase tracking-wide mb-1">
+          {locale === 'es' ? '2do pago del paquete' : '2nd pack installment'}
+        </p>
+        <p className="text-amber-400 text-4xl font-bold">${secondAmount}</p>
+      </div>
+
+      <div>
+        <p className="text-slate-400 text-xs uppercase tracking-wide mb-3">{tPayment('method')}</p>
+        <div className="grid grid-cols-3 gap-3">
+          {METHODS.map((m) => (
+            <button key={m} onClick={() => setMethod(m)} disabled={submitting}
+              className={`h-14 rounded-xl text-base font-semibold transition-colors disabled:opacity-50 ${method === m ? 'bg-amber-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
+              {tPayment(methodKeys[m])}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-3 pt-2">
+        <button onClick={handleConfirm} disabled={!method || submitting}
+          className="w-full h-16 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xl font-bold transition-colors">
+          {submitting ? t('confirming_split') : t('confirm_split')}
+        </button>
+        <button onClick={onCancel} disabled={submitting}
+          className="w-full h-12 rounded-xl bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-slate-300 text-base font-medium transition-colors">
           {t('cancel')}
         </button>
       </div>
@@ -589,10 +739,8 @@ function SuccessPanel({ info, onScanAgain }: SuccessPanelProps) {
         {tCheck('reset_countdown')} {seconds}s…
       </p>
 
-      <button
-        onClick={onScanAgain}
-        className="w-full h-11 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium transition-colors"
-      >
+      <button onClick={onScanAgain}
+        className="w-full h-11 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium transition-colors">
         {t('scan_again')}
       </button>
     </div>

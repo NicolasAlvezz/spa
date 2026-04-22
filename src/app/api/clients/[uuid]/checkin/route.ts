@@ -65,6 +65,11 @@ export async function GET(
       .limit(1),
   ])
 
+  const isPack = membership?.membership_plans?.plan_type === 'pack'
+  const sessionsUsed = isPack
+    ? (membership?.membership_plans?.total_sessions ?? 0) - (membership?.sessions_remaining ?? 0)
+    : (membership?.sessions_used_this_month ?? 0)
+
   const result: CheckinResult = {
     client: {
       id: client.id,
@@ -75,8 +80,8 @@ export async function GET(
     },
     membership,
     membership_status,
-    sessions_used_this_month: membership?.sessions_used_this_month ?? 0,
-    rollover_sessions: membership?.rollover_sessions ?? 0,
+    sessions_used_this_month: sessionsUsed,
+    rollover_sessions: isPack ? 0 : (membership?.rollover_sessions ?? 0),
     visits_this_month: visits ?? [],
     last_payment: lastPaymentArr?.[0] ?? null,
   }

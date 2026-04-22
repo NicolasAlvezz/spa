@@ -4,7 +4,6 @@ import { calculateRollover } from '@/lib/utils/membership'
 import type { PaymentMethod } from '@/types'
 
 export async function POST(req: Request) {
-  // Auth check — getUser() hits Supabase directly, not the stale JWT
   const authClient = await createClient()
   const { data: { user }, error: authError } = await authClient.auth.getUser()
   if (!user || user.app_metadata?.role !== 'admin') {
@@ -17,73 +16,81 @@ export async function POST(req: Request) {
     plan_id: string
     payment_method: PaymentMethod
     amount_usd: number
+    split_payment?: boolean  // true = paying $400 now, $400 before 5th session
   } = await req.json()
 
-  const { client_id, plan_id, payment_method, amount_usd } = body
+  const { client_id, plan_id, payment_method, amount_usd, split_payment } = body
 
   if (!client_id || !plan_id || !payment_method || !amount_usd) {
     return NextResponse.json({ error: 'missing_required_fields' }, { status: 400 })
   }
 
-  // Use service client so RLS does not block reads or writes
   const supabase = createServiceClient()
 
-  // Get the most recent non-cancelled membership for this client
+  // Fetch the selected plan to know if it's a pack or monthly
+  const { data: plan } = await supabase
+    .from('membership_plans')
+    .select('plan_type, total_sessions, allows_split_payment, split_first_amount, sessions_per_month')
+    .eq('id', plan_id)
+    .single()
+
+  const isPack = plan?.plan_type === 'pack'
+
+  // Get the most recent non-cancelled membership for rollover calculation
   const { data: currentMembership } = await supabase
     .from('memberships')
-    .select('id, status, expires_at, started_at, sessions_used_this_month, rollover_sessions, months_completed, membership_plans(sessions_per_month)')
+    .select('id, status, expires_at, sessions_used_this_month, rollover_sessions, months_completed, membership_plans(sessions_per_month)')
     .eq('client_id', client_id)
     .neq('status', 'cancelled')
-    .order('expires_at', { ascending: false })
+    .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle()
 
-  // Calculate new period dates
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
   let started_at: string
   let expires_at: string
+  let rollover_sessions = 0
 
-  if (currentMembership) {
-    const currentExpiry = new Date(currentMembership.expires_at)
-    currentExpiry.setHours(0, 0, 0, 0)
+  if (isPack) {
+    // Packs don't expire by time — use a far-future sentinel date
+    started_at = today.toISOString().split('T')[0]
+    expires_at = '9999-12-31'
+  } else {
+    // Monthly plan: calculate 1-month period
+    if (currentMembership && currentMembership.membership_plans) {
+      const currentExpiry = new Date(currentMembership.expires_at)
+      currentExpiry.setHours(0, 0, 0, 0)
 
-    if (currentExpiry >= today) {
-      // Renew before expiry — new period starts where the current one ends
-      started_at = currentMembership.expires_at
-      const newExpiry = new Date(currentExpiry)
-      newExpiry.setMonth(newExpiry.getMonth() + 1)
-      expires_at = newExpiry.toISOString().split('T')[0]
+      if (currentExpiry >= today) {
+        started_at = currentMembership.expires_at
+        const newExpiry = new Date(currentExpiry)
+        newExpiry.setMonth(newExpiry.getMonth() + 1)
+        expires_at = newExpiry.toISOString().split('T')[0]
+      } else {
+        started_at = today.toISOString().split('T')[0]
+        const newExpiry = new Date(today)
+        newExpiry.setMonth(newExpiry.getMonth() + 1)
+        expires_at = newExpiry.toISOString().split('T')[0]
+      }
+
+      const prevPlan = currentMembership.membership_plans as unknown as { sessions_per_month: number } | null
+      const sessionsPerMonth = prevPlan?.sessions_per_month ?? 1
+      rollover_sessions = calculateRollover(
+        currentMembership.sessions_used_this_month,
+        sessionsPerMonth,
+        0,
+      )
     } else {
-      // Renew after expiry — new period starts today
       started_at = today.toISOString().split('T')[0]
       const newExpiry = new Date(today)
       newExpiry.setMonth(newExpiry.getMonth() + 1)
       expires_at = newExpiry.toISOString().split('T')[0]
     }
-  } else {
-    // First membership ever
-    started_at = today.toISOString().split('T')[0]
-    const newExpiry = new Date(today)
-    newExpiry.setMonth(newExpiry.getMonth() + 1)
-    expires_at = newExpiry.toISOString().split('T')[0]
   }
 
-  // Calculate rollover to carry into the new period
-  // Rule: if client didn't use their included session, they get 1 rollover next month
-  let rollover_sessions = 0
-  if (currentMembership) {
-    const plan = currentMembership.membership_plans as unknown as { sessions_per_month: number } | null
-    const sessionsPerMonth = plan?.sessions_per_month ?? 1
-    rollover_sessions = calculateRollover(
-      currentMembership.sessions_used_this_month,
-      sessionsPerMonth,
-      0, // start rollover count fresh — rollovers don't compound beyond 1 month
-    )
-  }
-
-  // Mark previous membership as expired (if it was still active)
+  // Mark previous active membership as expired
   if (currentMembership?.status === 'active') {
     await supabase
       .from('memberships')
@@ -91,7 +98,8 @@ export async function POST(req: Request) {
       .eq('id', currentMembership.id)
   }
 
-  // Create the new membership
+  const usingSplitPayment = isPack && !!split_payment && !!plan?.allows_split_payment
+
   const { data: newMembership, error: membershipError } = await supabase
     .from('memberships')
     .insert({
@@ -101,11 +109,13 @@ export async function POST(req: Request) {
       expires_at,
       status: 'active',
       sessions_used_this_month: 0,
-      rollover_sessions,
-      months_committed: 3,
-      months_completed: (currentMembership?.months_completed ?? 0) + 1,
+      rollover_sessions: isPack ? 0 : rollover_sessions,
+      months_committed: isPack ? 0 : 3,
+      months_completed: isPack ? 0 : (currentMembership?.months_completed ?? 0) + 1,
+      sessions_remaining: isPack ? (plan?.total_sessions ?? null) : null,
+      split_payment_pending: usingSplitPayment,
     })
-    .select('id, started_at, expires_at, rollover_sessions')
+    .select('id, started_at, expires_at, rollover_sessions, sessions_remaining, split_payment_pending')
     .single()
 
   if (membershipError || !newMembership) {
@@ -113,7 +123,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'failed_to_create_membership' }, { status: 500 })
   }
 
-  // Record the payment
   const { error: paymentError } = await supabase
     .from('payments')
     .insert({
@@ -121,12 +130,11 @@ export async function POST(req: Request) {
       membership_id: newMembership.id,
       amount_usd,
       method: payment_method,
-      concept: 'monthly_membership',
+      concept: isPack ? 'pack_purchase' : 'monthly_membership',
     })
 
   if (paymentError) {
     console.error('[POST /api/memberships/renew] payment insert:', paymentError)
-    // Membership was created — don't rollback, just warn. Payment can be added manually.
   }
 
   return NextResponse.json({
@@ -134,5 +142,8 @@ export async function POST(req: Request) {
     started_at: newMembership.started_at,
     expires_at: newMembership.expires_at,
     rollover_sessions: newMembership.rollover_sessions,
+    sessions_remaining: newMembership.sessions_remaining,
+    split_payment_pending: newMembership.split_payment_pending,
+    is_pack: isPack,
   })
 }

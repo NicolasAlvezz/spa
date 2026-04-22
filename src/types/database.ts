@@ -89,6 +89,10 @@ export interface Database {
           requires_healthcare: boolean
           is_active: boolean
           created_at: string
+          plan_type: 'monthly' | 'pack'
+          total_sessions: number | null
+          allows_split_payment: boolean
+          split_first_amount: number | null
         }
         Insert: {
           id?: string
@@ -104,6 +108,10 @@ export interface Database {
           requires_healthcare?: boolean
           is_active?: boolean
           created_at?: string
+          plan_type?: 'monthly' | 'pack'
+          total_sessions?: number | null
+          allows_split_payment?: boolean
+          split_first_amount?: number | null
         }
         Update: {
           slug?: string
@@ -117,6 +125,10 @@ export interface Database {
           extras_es?: string[]
           requires_healthcare?: boolean
           is_active?: boolean
+          plan_type?: 'monthly' | 'pack'
+          total_sessions?: number | null
+          allows_split_payment?: boolean
+          split_first_amount?: number | null
         }
         Relationships: Relationship[]
       }
@@ -135,6 +147,8 @@ export interface Database {
           welcome_offer_used: boolean
           created_at: string
           updated_at: string
+          sessions_remaining: number | null
+          split_payment_pending: boolean
         }
         Insert: {
           id?: string
@@ -150,6 +164,8 @@ export interface Database {
           welcome_offer_used?: boolean
           created_at?: string
           updated_at?: string
+          sessions_remaining?: number | null
+          split_payment_pending?: boolean
         }
         Update: {
           plan_id?: string
@@ -162,6 +178,8 @@ export interface Database {
           months_completed?: number
           welcome_offer_used?: boolean
           updated_at?: string
+          sessions_remaining?: number | null
+          split_payment_pending?: boolean
         }
         Relationships: Relationship[]
       }
@@ -172,7 +190,7 @@ export interface Database {
           membership_id: string | null
           amount_usd: number
           method: 'cash' | 'debit' | 'credit'
-          concept: 'monthly_membership' | 'additional_visit' | 'welcome_offer'
+          concept: 'monthly_membership' | 'additional_visit' | 'welcome_offer' | 'pack_purchase' | 'pack_split_second' | 'post_op_visit'
           paid_at: string
           notes: string | null
           created_at: string
@@ -183,7 +201,7 @@ export interface Database {
           membership_id?: string | null
           amount_usd: number
           method: 'cash' | 'debit' | 'credit'
-          concept: 'monthly_membership' | 'additional_visit' | 'welcome_offer'
+          concept: 'monthly_membership' | 'additional_visit' | 'welcome_offer' | 'pack_purchase' | 'pack_split_second' | 'post_op_visit'
           paid_at?: string
           notes?: string | null
           created_at?: string
@@ -200,7 +218,7 @@ export interface Database {
           membership_id: string | null
           service_type_id: string | null
           visited_at: string
-          session_type: 'included' | 'rollover' | 'additional' | 'welcome_offer'
+          session_type: 'included' | 'rollover' | 'additional' | 'welcome_offer' | 'post_op'
           registered_by: string | null
           notes: string | null
           created_at: string
@@ -211,7 +229,7 @@ export interface Database {
           membership_id?: string | null
           service_type_id?: string | null
           visited_at?: string
-          session_type?: 'included' | 'rollover' | 'additional' | 'welcome_offer'
+          session_type?: 'included' | 'rollover' | 'additional' | 'welcome_offer' | 'post_op'
           registered_by?: string | null
           notes?: string | null
           created_at?: string
