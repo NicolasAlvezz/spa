@@ -1,7 +1,33 @@
+import { redirect } from 'next/navigation'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { LanguageToggle } from '@/components/spa/LanguageToggle'
 import { ClientNav } from '@/components/spa/ClientNav'
 
-export default function ClientLayout({ children }: { children: React.ReactNode }) {
+export default async function ClientLayout({ children }: { children: React.ReactNode }) {
+  const authClient = await createClient()
+  const { data: { user } } = await authClient.auth.getUser()
+
+  if (user) {
+    const supabase = createServiceClient()
+    const { data: client } = await supabase
+      .from('clients')
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    if (client) {
+      const { data: healthForm } = await supabase
+        .from('client_health_forms')
+        .select('id')
+        .eq('client_id', client.id)
+        .maybeSingle()
+
+      if (!healthForm) {
+        redirect('/onboarding')
+      }
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <header className="flex items-center justify-between px-4 sm:px-5 py-3.5 bg-white border-b border-gray-100 shadow-sm">

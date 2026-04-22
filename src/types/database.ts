@@ -240,6 +240,75 @@ export interface Database {
         }
         Relationships: Relationship[]
       }
+      client_health_forms: {
+        Row: {
+          id: string
+          client_id: string
+          date_of_birth: string | null
+          under_medical_treatment: boolean
+          medical_treatment_details: string | null
+          known_allergies: boolean
+          allergies_details: string | null
+          chronic_conditions: boolean
+          chronic_conditions_details: string | null
+          taking_medications: boolean
+          medications_details: string | null
+          is_pregnant: boolean
+          surgeries_last_12_months: boolean
+          surgery_details: string | null
+          had_post_surgical_massage_before: boolean
+          post_surgical_details: string | null
+          existing_conditions: string | null
+          other_health_concerns: string | null
+          contract_accepted: boolean
+          contract_accepted_at: string | null
+          completed_at: string
+        }
+        Insert: {
+          id?: string
+          client_id: string
+          date_of_birth?: string | null
+          under_medical_treatment?: boolean
+          medical_treatment_details?: string | null
+          known_allergies?: boolean
+          allergies_details?: string | null
+          chronic_conditions?: boolean
+          chronic_conditions_details?: string | null
+          taking_medications?: boolean
+          medications_details?: string | null
+          is_pregnant?: boolean
+          surgeries_last_12_months?: boolean
+          surgery_details?: string | null
+          had_post_surgical_massage_before?: boolean
+          post_surgical_details?: string | null
+          existing_conditions?: string | null
+          other_health_concerns?: string | null
+          contract_accepted?: boolean
+          contract_accepted_at?: string | null
+          completed_at?: string
+        }
+        Update: {
+          date_of_birth?: string | null
+          under_medical_treatment?: boolean
+          medical_treatment_details?: string | null
+          known_allergies?: boolean
+          allergies_details?: string | null
+          chronic_conditions?: boolean
+          chronic_conditions_details?: string | null
+          taking_medications?: boolean
+          medications_details?: string | null
+          is_pregnant?: boolean
+          surgeries_last_12_months?: boolean
+          surgery_details?: string | null
+          had_post_surgical_massage_before?: boolean
+          post_surgical_details?: string | null
+          existing_conditions?: string | null
+          other_health_concerns?: string | null
+          contract_accepted?: boolean
+          contract_accepted_at?: string | null
+        }
+        Relationships: Relationship[]
+      }
       service_types: {
         Row: {
           id: string
