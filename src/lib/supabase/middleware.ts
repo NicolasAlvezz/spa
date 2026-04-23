@@ -34,8 +34,9 @@ export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl
   const role = (user?.app_metadata?.role ?? null) as 'admin' | 'client' | null
 
-  // Unauthenticated users can only access /login
-  if (!user && pathname !== '/login') {
+  // Public paths that don't require authentication
+  const publicPaths = ['/login', '/auth/confirm', '/set-password']
+  if (!user && !publicPaths.includes(pathname)) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
@@ -56,7 +57,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Redirect authenticated users away from /login
-  if (user && pathname === '/login') {
+  if (user && (pathname === '/login' || pathname === '/auth/confirm')) {
     const destination = role === 'admin' ? '/admin' : '/my-qr'
     return NextResponse.redirect(new URL(destination, request.url))
   }
