@@ -43,6 +43,7 @@ export function AddAppointmentModal({ clients, serviceTypes }: Props) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!clientId) { setError('Please select a client'); return }
+    if (!serviceId) { setError('Please select a service type'); return }
     setError(null)
 
     // Build ISO timestamp from local date + time (Eastern Time — admin is on-site)
@@ -145,10 +146,11 @@ export function AddAppointmentModal({ clients, serviceTypes }: Props) {
                   <select
                     value={serviceId}
                     onChange={e => setServiceId(e.target.value)}
+                    required
                     disabled={isPending}
                     className={selectCls}
                   >
-                    <option value="">—</option>
+                    <option value="">— {t('select_service')} —</option>
                     {serviceTypes.map(s => (
                       <option key={s.id} value={s.id}>
                         {locale === 'es' ? s.name_es : s.name_en}
@@ -219,7 +221,7 @@ export function AddAppointmentModal({ clients, serviceTypes }: Props) {
                   </button>
                   <button
                     type="submit"
-                    disabled={isPending || !clientId}
+                    disabled={isPending || !clientId || !serviceId}
                     className="flex-1 h-10 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-white text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {isPending && <Loader2 size={14} className="animate-spin" />}

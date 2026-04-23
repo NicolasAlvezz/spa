@@ -62,6 +62,13 @@ export interface CheckinResult {
   rollover_sessions: number
   visits_this_month: DbVisit[]
   last_payment: DbPayment | null
+  today_appointment: {
+    id: string
+    scheduled_at: string
+    service_name_en: string | null
+    service_name_es: string | null
+    notes: string | null
+  } | null
 }
 
 // ─── Form input types ─────────────────────────────────────────────────────────

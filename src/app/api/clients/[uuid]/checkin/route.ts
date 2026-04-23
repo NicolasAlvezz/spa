@@ -50,7 +50,15 @@ export async function GET(
   startOfMonth.setDate(1)
   startOfMonth.setHours(0, 0, 0, 0)
 
-  const [{ data: visits }, { data: lastPaymentArr }] = await Promise.all([
+  const todayStart = new Date()
+  todayStart.setHours(0, 0, 0, 0)
+  const todayEnd = new Date()
+  todayEnd.setHours(23, 59, 59, 999)
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabaseAny = supabase as any
+
+  const [{ data: visits }, { data: lastPaymentArr }, { data: todayAppt }] = await Promise.all([
     supabase
       .from('visits')
       .select('*')
@@ -63,6 +71,16 @@ export async function GET(
       .eq('client_id', uuid)
       .order('paid_at', { ascending: false })
       .limit(1),
+    supabaseAny
+      .from('appointments')
+      .select('id, scheduled_at, notes, service_types(name_en, name_es)')
+      .eq('client_id', uuid)
+      .eq('status', 'scheduled')
+      .gte('scheduled_at', todayStart.toISOString())
+      .lte('scheduled_at', todayEnd.toISOString())
+      .order('scheduled_at', { ascending: true })
+      .limit(1)
+      .maybeSingle(),
   ])
 
   const isPack = membership?.membership_plans?.plan_type === 'pack'
@@ -84,6 +102,17 @@ export async function GET(
     rollover_sessions: isPack ? 0 : (membership?.rollover_sessions ?? 0),
     visits_this_month: visits ?? [],
     last_payment: lastPaymentArr?.[0] ?? null,
+    today_appointment: todayAppt
+      ? {
+          id: todayAppt.id,
+          scheduled_at: todayAppt.scheduled_at,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          service_name_en: (todayAppt.service_types as any)?.name_en ?? null,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          service_name_es: (todayAppt.service_types as any)?.name_es ?? null,
+          notes: todayAppt.notes ?? null,
+        }
+      : null,
   }
 
   return NextResponse.json(result)

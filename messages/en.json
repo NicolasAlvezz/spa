@@ -32,7 +32,7 @@
     "add_appointment": "New appointment",
     "appointment_saved": "Appointment saved",
     "select_client": "Select client",
-    "select_service": "Service (optional)",
+    "select_service": "Service *",
     "date_label": "Date",
     "time_label": "Time",
     "notes_label": "Notes (optional)",
@@ -212,7 +212,11 @@
     "pack_payment_full": "Pay in full",
     "pack_payment_split": "Split: $400 now + $400 before 5th session",
     "pack_sessions_total": "sessions",
-    "pack_no_expiry": "No expiry date"
+    "pack_no_expiry": "No expiry date",
+    "no_expiry": "No expiry",
+    "sessions_remaining": "Sessions remaining",
+    "today_appointment": "Today's appointment",
+    "appointment_service": "Service"
   },
   "payment": {
     "method_cash": "Cash",

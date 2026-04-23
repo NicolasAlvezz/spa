@@ -1,8 +1,8 @@
 'use client'
 
 import { useTranslations, useLocale } from 'next-intl'
-import { CheckCircle2, XCircle, MinusCircle, Calendar, Activity, RotateCcw, Star, AlertTriangle, CreditCard } from 'lucide-react'
-import { formatDate } from '@/lib/utils/dates'
+import { CheckCircle2, XCircle, MinusCircle, Calendar, Activity, RotateCcw, Star, AlertTriangle, CreditCard, Scissors } from 'lucide-react'
+import { formatDate, formatDateTime } from '@/lib/utils/dates'
 import { getAvailableSessions } from '@/lib/utils/membership'
 import type { CheckinResult } from '@/types'
 
@@ -31,7 +31,7 @@ export function CheckinCard({
   const tCheck = useTranslations('checkin')
   const locale = useLocale() as 'en' | 'es'
 
-  const { client, membership, membership_status } = data
+  const { client, membership, membership_status, today_appointment } = data
   const plan = membership?.membership_plans
   const planName = plan ? (locale === 'es' ? plan.name_es : plan.name_en) : null
   const isPack = plan?.plan_type === 'pack'
@@ -72,6 +72,11 @@ export function CheckinCard({
             <p className="text-slate-400 text-lg mt-2">{planName}</p>
           )}
         </div>
+
+        {/* Today's appointment */}
+        {today_appointment && (
+          <TodayAppointmentBox appointment={today_appointment} locale={locale} tCheck={tCheck} />
+        )}
 
         {/* Split payment warning */}
         {showSplitWarning && (
@@ -166,6 +171,11 @@ export function CheckinCard({
           )}
         </div>
 
+        {/* Today's appointment */}
+        {today_appointment && (
+          <TodayAppointmentBox appointment={today_appointment} locale={locale} tCheck={tCheck} />
+        )}
+
         {/* Expired date (only for monthly plans) */}
         {membership && !isPack && (
           <div className="bg-red-950/40 border border-red-800/60 rounded-xl p-4">
@@ -214,6 +224,11 @@ export function CheckinCard({
 
       <h2 className="text-5xl font-bold text-white leading-none tracking-tight">{clientName}</h2>
 
+      {/* Today's appointment */}
+      {today_appointment && (
+        <TodayAppointmentBox appointment={today_appointment} locale={locale} tCheck={tCheck} />
+      )}
+
       <div className="flex flex-col gap-3 pt-1">
         <button
           onClick={onAssignMembership}
@@ -233,6 +248,40 @@ export function CheckinCard({
         >
           {t('scan_again')}
         </button>
+      </div>
+    </div>
+  )
+}
+
+function TodayAppointmentBox({
+  appointment,
+  locale,
+  tCheck,
+}: {
+  appointment: NonNullable<CheckinResult['today_appointment']>
+  locale: 'en' | 'es'
+  tCheck: ReturnType<typeof useTranslations>
+}) {
+  const serviceName = locale === 'es' ? appointment.service_name_es : appointment.service_name_en
+  const time = new Date(appointment.scheduled_at).toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  })
+
+  return (
+    <div className="bg-amber-950/30 border border-amber-600/50 rounded-xl p-4 flex items-start gap-3">
+      <Scissors size={16} className="text-amber-400 flex-shrink-0 mt-0.5" />
+      <div className="min-w-0">
+        <p className="text-amber-400 text-xs font-semibold uppercase tracking-wide mb-1">
+          {tCheck('today_appointment')} · {time}
+        </p>
+        {serviceName && (
+          <p className="text-white text-sm font-semibold">{serviceName}</p>
+        )}
+        {appointment.notes && (
+          <p className="text-slate-400 text-xs mt-0.5">{appointment.notes}</p>
+        )}
       </div>
     </div>
   )

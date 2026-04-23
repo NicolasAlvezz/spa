@@ -32,7 +32,7 @@
     "add_appointment": "Nueva cita",
     "appointment_saved": "Cita guardada",
     "select_client": "Seleccionar cliente",
-    "select_service": "Servicio (opcional)",
+    "select_service": "Servicio *",
     "date_label": "Fecha",
     "time_label": "Hora",
     "notes_label": "Notas (opcional)",
@@ -212,7 +212,11 @@
     "pack_payment_full": "Pagar total",
     "pack_payment_split": "Dividido: $400 ahora + $400 antes de la 5ta sesión",
     "pack_sessions_total": "sesiones",
-    "pack_no_expiry": "Sin fecha de vencimiento"
+    "pack_no_expiry": "Sin fecha de vencimiento",
+    "no_expiry": "Sin vencimiento",
+    "sessions_remaining": "Sesiones restantes",
+    "today_appointment": "Cita de hoy",
+    "appointment_service": "Servicio"
   },
   "payment": {
     "method_cash": "Efectivo",
