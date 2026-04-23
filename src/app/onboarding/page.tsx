@@ -2,18 +2,17 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useTranslations } from 'next-intl'
 import { CheckCircle2 } from 'lucide-react'
 
+type Lang = 'en' | 'es'
+
 type FormState = {
-  // Personal info
   first_name: string
   last_name: string
   phone: string
   address: string
   preferred_language: 'en' | 'es'
   how_did_you_hear: string
-  // Health form
   date_of_birth: string
   under_medical_treatment: boolean
   medical_treatment_details: string
@@ -69,16 +68,112 @@ const HOW_HEARD_OPTIONS = [
   { value: 'other', en: 'Other', es: 'Otro' },
 ]
 
+const STRINGS = {
+  en: {
+    title: 'Welcome to VM Integral Massage',
+    subtitle: 'Please complete this form before your first session. Your information is kept strictly confidential.',
+    done: 'All set! Redirecting...',
+    section_personal: 'Personal Information',
+    first_name: 'First name',
+    last_name: 'Last name',
+    phone: 'Phone / Cell',
+    address: 'Address',
+    preferred_language: 'Preferred language',
+    lang_en: 'English',
+    lang_es: 'Spanish',
+    how_heard: 'How did you hear about us?',
+    dob: 'Date of birth',
+    section_health: 'Medical History',
+    under_medical_treatment: 'Are you currently under medical treatment?',
+    medical_treatment_details: 'If yes, please specify your condition and treatment',
+    known_allergies: 'Do you have any known allergies?',
+    allergies_details: 'If yes, please list your allergies',
+    chronic_conditions: 'Do you have any chronic conditions (e.g., diabetes, hypertension, asthma)?',
+    chronic_conditions_details: 'If yes, please list them',
+    taking_medications: 'Are you currently taking any medications (prescription or over-the-counter)?',
+    medications_details: 'If yes, please list them with dosage',
+    is_pregnant: 'Are you pregnant or suspect you might be?',
+    surgeries_last_12_months: 'Have you undergone any surgeries in the past 12 months?',
+    surgery_details: 'If yes, please describe',
+    had_post_surgical_massage_before: 'Some type of post-surgical massage was performed before contacting us?',
+    post_surgical_details: 'If yes, please specify surgery type and date',
+    existing_conditions: 'Do you have any of the following (fibrosis, adhesions, wounds, lymphedema, varicose veins, etc.)?',
+    existing_conditions_placeholder: 'fibrosis, adhesions, wounds, lymphedema, varicose veins...',
+    other_health_concerns: 'Any other health concerns or relevant medical history?',
+    yes: 'Yes',
+    no: 'No',
+    section_contract: 'Release & Waiver',
+    contract_text: 'I understand that massage therapy is not a substitute for medical treatment. I certify that I have disclosed all known medical conditions and take full responsibility for any undisclosed conditions. I release VM Integral Massage Inc., its owner, and therapists from any liability for adverse effects resulting from massage therapy. By accepting this waiver today, I acknowledge that each future QR check-in visit at the spa constitutes my continued acceptance of these terms.',
+    contract_checkbox: 'I have read, understood, and accept the above release and waiver.',
+    submit: 'Complete & Continue',
+    submitting: 'Saving...',
+    error_personal: 'Please fill in all required personal information.',
+    error_dob: 'Date of birth is required.',
+    error_contract: 'You must accept the release and waiver to continue.',
+    error_generic: 'Something went wrong. Please try again.',
+  },
+  es: {
+    title: 'Bienvenida a VM Integral Massage',
+    subtitle: 'Por favor completá este formulario antes de tu primera sesión. Tu información es estrictamente confidencial.',
+    done: '¡Listo! Redirigiendo...',
+    section_personal: 'Información personal',
+    first_name: 'Nombre',
+    last_name: 'Apellido',
+    phone: 'Celular',
+    address: 'Dirección',
+    preferred_language: 'Idioma preferido',
+    lang_en: 'Inglés',
+    lang_es: 'Español',
+    how_heard: '¿Cómo supo de nosotros?',
+    dob: 'Fecha de nacimiento',
+    section_health: 'Historial médico',
+    under_medical_treatment: '¿Está actualmente bajo tratamiento médico?',
+    medical_treatment_details: 'Si es así, especifique su condición y tratamiento',
+    known_allergies: '¿Tiene alguna alergia conocida?',
+    allergies_details: 'Si es así, liste sus alergias',
+    chronic_conditions: '¿Tiene alguna condición crónica? (p.ej., diabetes, hipertensión, asma)',
+    chronic_conditions_details: 'Si es así, listelas',
+    taking_medications: '¿Está tomando algún medicamento actualmente? (recetado o de venta libre)',
+    medications_details: 'Si es así, listelos con la dosis',
+    is_pregnant: '¿Está embarazada o sospecha estarlo?',
+    surgeries_last_12_months: '¿Se ha sometido a alguna cirugía en los últimos 12 meses?',
+    surgery_details: 'Si es así, descríbalas',
+    had_post_surgical_massage_before: '¿Se realizó algún tipo de masaje post-quirúrgico antes de contactarnos?',
+    post_surgical_details: 'Si es así, especifique tipo de cirugía y fecha',
+    existing_conditions: '¿Presenta alguna de las siguientes condiciones (fibrosis, adherencias, heridas, linfedema, várices, etc.)?',
+    existing_conditions_placeholder: 'fibrosis, adherencias, heridas, linfedema, várices...',
+    other_health_concerns: '¿Otras preocupaciones de salud o historial médico relevante?',
+    yes: 'Sí',
+    no: 'No',
+    section_contract: 'Exención de responsabilidad',
+    contract_text: 'Entiendo que la terapia de masajes no reemplaza el tratamiento médico. Certifico que he revelado todas las condiciones médicas conocidas y asumo plena responsabilidad por cualquier condición no declarada. Exonero a VM Integral Massage Inc., su propietaria y terapeutas de cualquier responsabilidad por efectos adversos derivados de la terapia de masajes. Al aceptar esta exención hoy, reconozco que cada futura visita con escaneo de QR en el spa constituye mi aceptación continua de estos términos.',
+    contract_checkbox: 'He leído, comprendido y acepto la exención de responsabilidad anterior.',
+    submit: 'Completar y continuar',
+    submitting: 'Guardando...',
+    error_personal: 'Por favor completá todos los datos personales requeridos.',
+    error_dob: 'La fecha de nacimiento es obligatoria.',
+    error_contract: 'Debés aceptar la exención de responsabilidad para continuar.',
+    error_generic: 'Ocurrió un error. Intentá de nuevo.',
+  },
+} as const
+
 export default function OnboardingPage() {
-  const t = useTranslations('onboarding')
   const router = useRouter()
+  const [lang, setLang] = useState<Lang>('en')
   const [form, setForm] = useState<FormState>(initialState)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
 
+  const s = STRINGS[lang]
+
   function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm(prev => ({ ...prev, [key]: value }))
+  }
+
+  function handleLangChange(newLang: Lang) {
+    setLang(newLang)
+    setField('preferred_language', newLang)
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -86,15 +181,15 @@ export default function OnboardingPage() {
     setError(null)
 
     if (!form.first_name.trim() || !form.last_name.trim() || !form.phone.trim() || !form.address.trim()) {
-      setError(t('error_personal'))
+      setError(s.error_personal)
       return
     }
     if (!form.date_of_birth) {
-      setError(t('error_dob'))
+      setError(s.error_dob)
       return
     }
     if (!form.contract_accepted) {
-      setError(t('error_contract'))
+      setError(s.error_contract)
       return
     }
 
@@ -109,9 +204,9 @@ export default function OnboardingPage() {
       if (!res.ok) {
         const body = await res.json()
         if (body.error === 'contract_not_accepted') {
-          setError(t('error_contract'))
+          setError(s.error_contract)
         } else {
-          setError(t('error_generic'))
+          setError(s.error_generic)
         }
         return
       }
@@ -119,7 +214,7 @@ export default function OnboardingPage() {
       setDone(true)
       setTimeout(() => router.push('/my-qr'), 1800)
     } catch {
-      setError(t('error_generic'))
+      setError(s.error_generic)
     } finally {
       setSubmitting(false)
     }
@@ -129,7 +224,7 @@ export default function OnboardingPage() {
     return (
       <div className="w-full max-w-xl flex flex-col items-center gap-4 py-16 text-center">
         <CheckCircle2 size={52} className="text-green-500" />
-        <h2 className="text-2xl font-bold text-gray-800">{t('done')}</h2>
+        <h2 className="text-2xl font-bold text-gray-800">{s.done}</h2>
       </div>
     )
   }
@@ -138,14 +233,43 @@ export default function OnboardingPage() {
     <form onSubmit={handleSubmit} className="w-full max-w-xl flex flex-col gap-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
-        <p className="text-sm text-gray-500 mt-1">{t('subtitle')}</p>
+        <h1 className="text-2xl font-bold text-gray-900">{s.title}</h1>
+        <p className="text-sm text-gray-500 mt-1">{s.subtitle}</p>
+      </div>
+
+      {/* Language toggle */}
+      <div className="flex items-center gap-3">
+        <span className="text-sm text-gray-500">Language / Idioma:</span>
+        <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden text-sm font-medium">
+          <button
+            type="button"
+            onClick={() => handleLangChange('en')}
+            className={`px-4 py-2 transition-colors ${
+              lang === 'en'
+                ? 'bg-amber-500 text-white'
+                : 'bg-white text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            English
+          </button>
+          <button
+            type="button"
+            onClick={() => handleLangChange('es')}
+            className={`px-4 py-2 transition-colors border-l border-gray-200 ${
+              lang === 'es'
+                ? 'bg-amber-500 text-white'
+                : 'bg-white text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            Español
+          </button>
+        </div>
       </div>
 
       {/* Personal info */}
-      <Section label={t('section_personal')}>
+      <Section label={s.section_personal}>
         <div className="grid grid-cols-2 gap-3">
-          <Field label={t('first_name')}>
+          <Field label={s.first_name}>
             <input
               type="text"
               value={form.first_name}
@@ -154,7 +278,7 @@ export default function OnboardingPage() {
               className="input"
             />
           </Field>
-          <Field label={t('last_name')}>
+          <Field label={s.last_name}>
             <input
               type="text"
               value={form.last_name}
@@ -164,7 +288,7 @@ export default function OnboardingPage() {
             />
           </Field>
         </div>
-        <Field label={t('phone')}>
+        <Field label={s.phone}>
           <input
             type="tel"
             value={form.phone}
@@ -174,7 +298,7 @@ export default function OnboardingPage() {
             className="input"
           />
         </Field>
-        <Field label={t('address')}>
+        <Field label={s.address}>
           <input
             type="text"
             value={form.address}
@@ -183,17 +307,21 @@ export default function OnboardingPage() {
             className="input"
           />
         </Field>
-        <Field label={t('preferred_language')}>
+        <Field label={s.preferred_language}>
           <select
             value={form.preferred_language}
-            onChange={e => setField('preferred_language', e.target.value as 'en' | 'es')}
+            onChange={e => {
+              const v = e.target.value as 'en' | 'es'
+              setField('preferred_language', v)
+              setLang(v)
+            }}
             className="input"
           >
-            <option value="en">{t('lang_en')}</option>
-            <option value="es">{t('lang_es')}</option>
+            <option value="en">{s.lang_en}</option>
+            <option value="es">{s.lang_es}</option>
           </select>
         </Field>
-        <Field label={t('how_heard')}>
+        <Field label={s.how_heard}>
           <select
             value={form.how_did_you_hear}
             onChange={e => setField('how_did_you_hear', e.target.value)}
@@ -202,12 +330,12 @@ export default function OnboardingPage() {
             <option value="">—</option>
             {HOW_HEARD_OPTIONS.map(opt => (
               <option key={opt.value} value={opt.value}>
-                {form.preferred_language === 'es' ? opt.es : opt.en}
+                {lang === 'es' ? opt.es : opt.en}
               </option>
             ))}
           </select>
         </Field>
-        <Field label={t('dob')}>
+        <Field label={s.dob}>
           <input
             type="date"
             value={form.date_of_birth}
@@ -218,50 +346,50 @@ export default function OnboardingPage() {
       </Section>
 
       {/* Health history */}
-      <Section label={t('section_health')}>
-        <YesNoField label={t('under_medical_treatment')} value={form.under_medical_treatment} onChange={v => setField('under_medical_treatment', v)} t={t} />
+      <Section label={s.section_health}>
+        <YesNoField label={s.under_medical_treatment} value={form.under_medical_treatment} onChange={v => setField('under_medical_treatment', v)} yes={s.yes} no={s.no} />
         {form.under_medical_treatment && (
-          <DetailsField label={t('medical_treatment_details')} value={form.medical_treatment_details} onChange={v => setField('medical_treatment_details', v)} />
+          <DetailsField label={s.medical_treatment_details} value={form.medical_treatment_details} onChange={v => setField('medical_treatment_details', v)} />
         )}
 
-        <YesNoField label={t('known_allergies')} value={form.known_allergies} onChange={v => setField('known_allergies', v)} t={t} />
+        <YesNoField label={s.known_allergies} value={form.known_allergies} onChange={v => setField('known_allergies', v)} yes={s.yes} no={s.no} />
         {form.known_allergies && (
-          <DetailsField label={t('allergies_details')} value={form.allergies_details} onChange={v => setField('allergies_details', v)} />
+          <DetailsField label={s.allergies_details} value={form.allergies_details} onChange={v => setField('allergies_details', v)} />
         )}
 
-        <YesNoField label={t('chronic_conditions')} value={form.chronic_conditions} onChange={v => setField('chronic_conditions', v)} t={t} />
+        <YesNoField label={s.chronic_conditions} value={form.chronic_conditions} onChange={v => setField('chronic_conditions', v)} yes={s.yes} no={s.no} />
         {form.chronic_conditions && (
-          <DetailsField label={t('chronic_conditions_details')} value={form.chronic_conditions_details} onChange={v => setField('chronic_conditions_details', v)} />
+          <DetailsField label={s.chronic_conditions_details} value={form.chronic_conditions_details} onChange={v => setField('chronic_conditions_details', v)} />
         )}
 
-        <YesNoField label={t('taking_medications')} value={form.taking_medications} onChange={v => setField('taking_medications', v)} t={t} />
+        <YesNoField label={s.taking_medications} value={form.taking_medications} onChange={v => setField('taking_medications', v)} yes={s.yes} no={s.no} />
         {form.taking_medications && (
-          <DetailsField label={t('medications_details')} value={form.medications_details} onChange={v => setField('medications_details', v)} />
+          <DetailsField label={s.medications_details} value={form.medications_details} onChange={v => setField('medications_details', v)} />
         )}
 
-        <YesNoField label={t('is_pregnant')} value={form.is_pregnant} onChange={v => setField('is_pregnant', v)} t={t} />
+        <YesNoField label={s.is_pregnant} value={form.is_pregnant} onChange={v => setField('is_pregnant', v)} yes={s.yes} no={s.no} />
 
-        <YesNoField label={t('surgeries_last_12_months')} value={form.surgeries_last_12_months} onChange={v => setField('surgeries_last_12_months', v)} t={t} />
+        <YesNoField label={s.surgeries_last_12_months} value={form.surgeries_last_12_months} onChange={v => setField('surgeries_last_12_months', v)} yes={s.yes} no={s.no} />
         {form.surgeries_last_12_months && (
-          <DetailsField label={t('surgery_details')} value={form.surgery_details} onChange={v => setField('surgery_details', v)} />
+          <DetailsField label={s.surgery_details} value={form.surgery_details} onChange={v => setField('surgery_details', v)} />
         )}
 
-        <YesNoField label={t('had_post_surgical_massage_before')} value={form.had_post_surgical_massage_before} onChange={v => setField('had_post_surgical_massage_before', v)} t={t} />
+        <YesNoField label={s.had_post_surgical_massage_before} value={form.had_post_surgical_massage_before} onChange={v => setField('had_post_surgical_massage_before', v)} yes={s.yes} no={s.no} />
         {form.had_post_surgical_massage_before && (
-          <DetailsField label={t('post_surgical_details')} value={form.post_surgical_details} onChange={v => setField('post_surgical_details', v)} />
+          <DetailsField label={s.post_surgical_details} value={form.post_surgical_details} onChange={v => setField('post_surgical_details', v)} />
         )}
 
-        <Field label={t('existing_conditions')}>
+        <Field label={s.existing_conditions}>
           <textarea
             value={form.existing_conditions}
             onChange={e => setField('existing_conditions', e.target.value)}
-            placeholder={t('existing_conditions_placeholder')}
+            placeholder={s.existing_conditions_placeholder}
             rows={3}
             className="input resize-none"
           />
         </Field>
 
-        <Field label={t('other_health_concerns')}>
+        <Field label={s.other_health_concerns}>
           <textarea
             value={form.other_health_concerns}
             onChange={e => setField('other_health_concerns', e.target.value)}
@@ -272,9 +400,9 @@ export default function OnboardingPage() {
       </Section>
 
       {/* Contract */}
-      <Section label={t('section_contract')}>
+      <Section label={s.section_contract}>
         <div className="bg-gray-100 rounded-xl p-4 text-sm text-gray-600 leading-relaxed">
-          {t('contract_text')}
+          {s.contract_text}
         </div>
         <label className="flex items-start gap-3 cursor-pointer mt-2">
           <input
@@ -283,7 +411,7 @@ export default function OnboardingPage() {
             onChange={e => setField('contract_accepted', e.target.checked)}
             className="mt-0.5 h-4 w-4 rounded border-gray-300 text-amber-500 focus:ring-amber-400"
           />
-          <span className="text-sm text-gray-700 font-medium">{t('contract_checkbox')}</span>
+          <span className="text-sm text-gray-700 font-medium">{s.contract_checkbox}</span>
         </label>
       </Section>
 
@@ -298,7 +426,7 @@ export default function OnboardingPage() {
         disabled={submitting}
         className="w-full h-14 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 disabled:opacity-60 text-white text-lg font-bold transition-colors shadow-lg shadow-amber-900/20"
       >
-        {submitting ? t('submitting') : t('submit')}
+        {submitting ? s.submitting : s.submit}
       </button>
     </form>
   )
@@ -330,12 +458,14 @@ function YesNoField({
   label,
   value,
   onChange,
-  t,
+  yes,
+  no,
 }: {
   label: string
   value: boolean
   onChange: (v: boolean) => void
-  t: ReturnType<typeof useTranslations<'onboarding'>>
+  yes: string
+  no: string
 }) {
   return (
     <div className="flex flex-col gap-2">
@@ -350,7 +480,7 @@ function YesNoField({
               : 'bg-white border-gray-300 text-gray-700 hover:border-amber-400'
           }`}
         >
-          {t('yes')}
+          {yes}
         </button>
         <button
           type="button"
@@ -361,7 +491,7 @@ function YesNoField({
               : 'bg-white border-gray-300 text-gray-700 hover:border-slate-400'
           }`}
         >
-          {t('no')}
+          {no}
         </button>
       </div>
     </div>
