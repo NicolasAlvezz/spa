@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useState } from 'react'
+import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, CheckCircle2 } from 'lucide-react'
 import { inviteNewClientAction } from './actions'
@@ -13,16 +13,28 @@ const ERROR_LABELS: Record<string, { en: string; es: string }> = {
 }
 
 export default function NewClientPage() {
-  const [state, action, pending] = useActionState(inviteNewClientAction, undefined)
   const [locale] = useState<'en' | 'es'>(() =>
     typeof document !== 'undefined'
       ? ((document.cookie.match(/locale=(\w+)/)?.[1] as 'en' | 'es') ?? 'en')
       : 'en'
   )
+  const [isPending, startTransition] = useTransition()
+  const [success, setSuccess] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
-  const errorMsg = state?.status === 'error'
-    ? (ERROR_LABELS[state.message]?.[locale] ?? ERROR_LABELS.generic_error[locale])
-    : null
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setError(null)
+    const formData = new FormData(e.currentTarget)
+    startTransition(async () => {
+      const result = await inviteNewClientAction(undefined, formData)
+      if (result?.status === 'error') {
+        setError(ERROR_LABELS[result.message]?.[locale] ?? ERROR_LABELS.generic_error[locale])
+      } else if (result?.status === 'success') {
+        setSuccess(result.email)
+      }
+    })
+  }
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-md">
@@ -45,46 +57,46 @@ export default function NewClientPage() {
         </p>
       </div>
 
-      {state?.status === 'success' ? (
+      {success ? (
         <div className="flex flex-col items-center gap-3 py-10 text-center">
           <CheckCircle2 size={44} className="text-green-500" />
           <p className="text-base font-semibold text-green-700">
             {locale === 'es' ? '¡Invitación enviada!' : 'Invitation sent!'}
           </p>
-          <p className="text-sm text-gray-500">{state.email}</p>
-          <Link
-            href="/admin/clients/new"
+          <p className="text-sm text-gray-500">{success}</p>
+          <button
+            onClick={() => setSuccess(null)}
             className="mt-4 text-sm text-amber-600 hover:underline"
           >
             {locale === 'es' ? 'Invitar otro cliente' : 'Invite another client'}
-          </Link>
+          </button>
         </div>
       ) : (
-        <form action={action} className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-gray-700">Email</label>
             <input
               name="email"
               type="email"
               required
-              disabled={pending}
+              disabled={isPending}
               placeholder="client@example.com"
               className="input"
             />
           </div>
 
-          {errorMsg && (
+          {error && (
             <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
-              {errorMsg}
+              {error}
             </p>
           )}
 
           <button
             type="submit"
-            disabled={pending}
+            disabled={isPending}
             className="h-12 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 disabled:opacity-60 text-white font-bold transition-colors shadow-lg shadow-amber-900/20"
           >
-            {pending
+            {isPending
               ? (locale === 'es' ? 'Enviando...' : 'Sending...')
               : (locale === 'es' ? 'Enviar invitación' : 'Send invitation')}
           </button>
