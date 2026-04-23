@@ -130,16 +130,26 @@
     "error": "No se pudo reservar el turno. Intentá de nuevo."
   },
   "invite": {
-    "give_access": "Dar acceso a la app",
+    "give_access": "Enviar invitación",
     "remove_access": "Quitar acceso",
-    "dialog_title": "Crear acceso a la app",
-    "dialog_description": "Establecé el email y la contraseña que usará el cliente para ingresar.",
+    "dialog_title": "Invitar cliente",
+    "dialog_description": "Ingresá el email del cliente. Le llegará un link para elegir su propia contraseña.",
     "email": "Email",
-    "password": "Contraseña",
     "cancel": "Cancelar",
-    "create_access": "Crear acceso",
-    "creating": "Creando...",
-    "success": "¡Acceso creado exitosamente!"
+    "create_access": "Enviar invitación",
+    "creating": "Enviando...",
+    "success": "¡Invitación enviada! El cliente recibirá un email en breve."
+  },
+  "setpassword": {
+    "title": "Elegí tu contraseña",
+    "subtitle": "Elegí una contraseña para acceder a tu cuenta.",
+    "password": "Contraseña",
+    "confirm": "Confirmar contraseña",
+    "submit": "Guardar contraseña",
+    "submitting": "Guardando...",
+    "error_mismatch": "Las contraseñas no coinciden.",
+    "error_short": "La contraseña debe tener al menos 6 caracteres.",
+    "error_generic": "Ocurrió un error. Intentá de nuevo."
   },
   "client": {
     "first_name": "Nombre",

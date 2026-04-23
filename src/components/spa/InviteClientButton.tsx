@@ -25,11 +25,10 @@ interface Props {
 }
 
 const ERROR_LABELS: Record<string, { en: string; es: string }> = {
-  fill_all_fields:  { en: 'Please fill in all fields.',          es: 'Completá todos los campos.' },
-  password_too_short: { en: 'Password must be at least 6 characters.', es: 'La contraseña debe tener al menos 6 caracteres.' },
-  already_linked:   { en: 'This client already has app access.', es: 'Este cliente ya tiene acceso a la app.' },
-  email_taken:      { en: 'That email is already registered.',   es: 'Ese email ya está registrado.' },
-  generic_error:    { en: 'Something went wrong. Try again.',    es: 'Ocurrió un error. Intentá de nuevo.' },
+  fill_all_fields: { en: 'Please enter an email address.', es: 'Ingresá un email.' },
+  already_linked:  { en: 'This client already has app access.', es: 'Este cliente ya tiene acceso a la app.' },
+  email_taken:     { en: 'That email is already registered.',   es: 'Ese email ya está registrado.' },
+  generic_error:   { en: 'Something went wrong. Try again.',    es: 'Ocurrió un error. Intentá de nuevo.' },
 }
 
 export function InviteClientButton({ clientId, clientEmail, isLinked, className }: Props) {
@@ -40,7 +39,6 @@ export function InviteClientButton({ clientId, clientEmail, isLinked, className 
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
-  // Detect language from cookie for error messages
   const locale = (typeof document !== 'undefined'
     ? document.cookie.match(/locale=(\w+)/)?.[1]
     : 'en') as 'en' | 'es' ?? 'en'
@@ -59,7 +57,7 @@ export function InviteClientButton({ clientId, clientEmail, isLinked, className 
           setOpen(false)
           setSuccess(false)
           router.refresh()
-        }, 1800)
+        }, 2500)
       }
     })
   }
@@ -126,17 +124,6 @@ export function InviteClientButton({ clientId, clientEmail, isLinked, className 
                   required
                   disabled={isPending}
                   placeholder="client@example.com"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="invite-password">{t('password')}</Label>
-                <Input
-                  id="invite-password"
-                  name="password"
-                  type="password"
-                  required
-                  disabled={isPending}
-                  placeholder="Min. 6 characters"
                 />
               </div>
 

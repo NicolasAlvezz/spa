@@ -130,16 +130,26 @@
     "error": "Could not book the appointment. Please try again."
   },
   "invite": {
-    "give_access": "Give app access",
+    "give_access": "Send invitation",
     "remove_access": "Remove app access",
-    "dialog_title": "Create app access",
-    "dialog_description": "Set the email and password the client will use to log in.",
+    "dialog_title": "Invite client",
+    "dialog_description": "Enter the client's email. They will receive a link to set their own password.",
     "email": "Email",
-    "password": "Password",
     "cancel": "Cancel",
-    "create_access": "Create access",
-    "creating": "Creating...",
-    "success": "Access created successfully!"
+    "create_access": "Send invitation",
+    "creating": "Sending...",
+    "success": "Invitation sent! The client will receive an email shortly."
+  },
+  "setpassword": {
+    "title": "Set your password",
+    "subtitle": "Choose a password to access your account.",
+    "password": "Password",
+    "confirm": "Confirm password",
+    "submit": "Set password",
+    "submitting": "Saving...",
+    "error_mismatch": "Passwords do not match.",
+    "error_short": "Password must be at least 6 characters.",
+    "error_generic": "Something went wrong. Please try again."
   },
   "client": {
     "first_name": "First name",

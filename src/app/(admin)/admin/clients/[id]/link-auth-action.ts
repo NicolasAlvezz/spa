@@ -13,21 +13,16 @@ export async function linkClientToAuth(
   formData: FormData
 ): Promise<LinkAuthState> {
   const email = (formData.get('email') as string).trim().toLowerCase()
-  const password = formData.get('password') as string
 
-  if (!email || !password) {
+  if (!email) {
     return { status: 'error', message: 'fill_all_fields' }
-  }
-  if (password.length < 6) {
-    return { status: 'error', message: 'password_too_short' }
   }
 
   const supabase = createServiceClient()
 
-  // Check if client already has a user_id
   const { data: client } = await supabase
     .from('clients')
-    .select('user_id, email')
+    .select('user_id')
     .eq('id', clientId)
     .single()
 
@@ -35,12 +30,8 @@ export async function linkClientToAuth(
     return { status: 'error', message: 'already_linked' }
   }
 
-  // Create Supabase auth user
-  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-    app_metadata: { role: 'client' },
+  const { data: authData, error: authError } = await supabase.auth.admin.inviteUserByEmail(email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/confirm`,
   })
 
   if (authError) {
@@ -50,14 +41,17 @@ export async function linkClientToAuth(
     return { status: 'error', message: 'generic_error' }
   }
 
-  // Link auth user to client row
+  // Set role in app_metadata (inviteUserByEmail only accepts user_metadata)
+  await supabase.auth.admin.updateUserById(authData.user.id, {
+    app_metadata: { role: 'client' },
+  })
+
   const { error: updateError } = await supabase
     .from('clients')
     .update({ user_id: authData.user.id })
     .eq('id', clientId)
 
   if (updateError) {
-    // Rollback: delete the auth user we just created
     await supabase.auth.admin.deleteUser(authData.user.id)
     return { status: 'error', message: 'generic_error' }
   }
@@ -78,10 +72,7 @@ export async function unlinkClientFromAuth(
 
   if (!client?.user_id) return {}
 
-  // Remove user_id link first
   await supabase.from('clients').update({ user_id: null }).eq('id', clientId)
-
-  // Delete auth user
   await supabase.auth.admin.deleteUser(client.user_id)
 
   return {}
