@@ -2,7 +2,7 @@
 
 import { useTranslations, useLocale } from 'next-intl'
 import { CheckCircle2, XCircle, MinusCircle, Calendar, Activity, RotateCcw, Star, AlertTriangle, CreditCard, Scissors } from 'lucide-react'
-import { formatDate, formatDateTime } from '@/lib/utils/dates'
+import { formatDate } from '@/lib/utils/dates'
 import { getAvailableSessions } from '@/lib/utils/membership'
 import type { CheckinResult } from '@/types'
 
