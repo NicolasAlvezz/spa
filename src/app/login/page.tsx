@@ -24,21 +24,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div
-      className="min-h-screen flex flex-col"
-      style={{
-        backgroundColor: '#15171b',
-        backgroundImage: `repeating-linear-gradient(
-          90deg,
-          rgba(255,255,255,0.07) 0px,
-          rgba(255,255,255,0.03) 9px,
-          rgba(255,255,255,0.01) 18px,
-          rgba(0,0,0,0.85)       19px,
-          rgba(0,0,0,0.85)       22px,
-          rgba(255,255,255,0.07) 22px
-        )`,
-      }}
-    >
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex flex-col">
 
       {/* Language toggle */}
       <div className="flex justify-end p-5">
@@ -61,7 +47,7 @@ export default function LoginPage() {
           </div>
 
           {/* Card */}
-          <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-700/60 rounded-2xl shadow-2xl p-5 sm:p-8">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-5 sm:p-8">
             <form onSubmit={handleSubmit} className="space-y-5">
 
               <div className="space-y-2">
