@@ -27,15 +27,15 @@ export default function LoginPage() {
     <div
       className="min-h-screen flex flex-col"
       style={{
-        backgroundColor: '#0c0c0d',
+        backgroundColor: '#15171b',
         backgroundImage: `repeating-linear-gradient(
           90deg,
-          rgba(255,255,255,0.045) 0px,
-          rgba(255,255,255,0.02)  46px,
-          rgba(0,0,0,0.0)         46px,
-          rgba(0,0,0,0.55)        50px,
-          rgba(0,0,0,0.65)        54px,
-          rgba(255,255,255,0.045) 54px
+          rgba(255,255,255,0.07) 0px,
+          rgba(255,255,255,0.03) 9px,
+          rgba(255,255,255,0.01) 18px,
+          rgba(0,0,0,0.85)       19px,
+          rgba(0,0,0,0.85)       22px,
+          rgba(255,255,255,0.07) 22px
         )`,
       }}
     >
