@@ -15,7 +15,9 @@ export default async function ClientLayout({ children }: { children: React.React
       .eq('user_id', user.id)
       .maybeSingle()
 
-    if (client) {
+    if (!client) {
+      redirect('/onboarding')
+    } else {
       const { data: healthForm } = await supabase
         .from('client_health_forms')
         .select('id')
