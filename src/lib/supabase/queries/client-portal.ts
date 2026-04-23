@@ -84,28 +84,33 @@ export async function getClientRecentVisits(
 
 /**
  * Returns paginated visits for a client.
- * page is 1-based.
+ * page is 1-based. since is an ISO timestamp to filter visits after that date.
  */
 export async function getClientVisitsPaginated(
   clientId: string,
   page: number,
-  pageSize = 20
+  pageSize = 20,
+  since?: string
 ): Promise<{ visits: ClientVisitRow[]; total: number }> {
   const supabase = createServiceClient()
   const from = (page - 1) * pageSize
   const to = from + pageSize - 1
+  // Use epoch as "no filter" — no visits exist before 1970
+  const sinceIso = since ?? new Date(0).toISOString()
 
   const [dataRes, countRes] = await Promise.all([
     supabase
       .from('visits')
       .select('id, visited_at, session_type, service_types(name_en, name_es)')
       .eq('client_id', clientId)
+      .gte('visited_at', sinceIso)
       .order('visited_at', { ascending: false })
       .range(from, to),
     supabase
       .from('visits')
       .select('id', { count: 'exact', head: true })
-      .eq('client_id', clientId),
+      .eq('client_id', clientId)
+      .gte('visited_at', sinceIso),
   ])
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

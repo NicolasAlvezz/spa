@@ -108,7 +108,12 @@
     "prev_page": "Anterior",
     "next_page": "Siguiente",
     "page_info": "Página {current} de {total}",
-    "total_visits": "{count} visitas en total"
+    "total_visits": "{count} visitas en el período",
+    "period_1m": "Último mes",
+    "period_3m": "3 meses",
+    "period_6m": "6 meses",
+    "period_1y": "1 año",
+    "period_all": "Todas"
   },
   "booking": {
     "title": "Reservar un turno",
@@ -254,7 +259,12 @@
     "save_error": "No se pudo guardar el cliente. Intentá de nuevo.",
     "preferred_language": "Idioma preferido",
     "lang_en": "Inglés",
-    "lang_es": "Español"
+    "lang_es": "Español",
+    "period_1m": "Último mes",
+    "period_3m": "3 meses",
+    "period_6m": "6 meses",
+    "period_1y": "1 año",
+    "period_all": "Todo"
   },
   "scan": {
     "instructions": "Apuntá la cámara al código QR del cliente",

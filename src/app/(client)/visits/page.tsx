@@ -8,10 +8,22 @@ import { getClientVisitsPaginated } from '@/lib/supabase/queries/client-portal'
 import { formatDateTime } from '@/lib/utils/dates'
 
 interface Props {
-  searchParams: { page?: string }
+  searchParams: { page?: string; period?: string }
 }
 
 const PAGE_SIZE = 20
+
+const PERIODS = ['1m', '3m', '6m', '1y', 'all'] as const
+type Period = typeof PERIODS[number]
+
+function periodSince(period: string): string | undefined {
+  if (period === 'all') return undefined
+  const days: Record<string, number> = { '1m': 30, '3m': 90, '6m': 180, '1y': 365 }
+  const d = days[period] ?? 30
+  const since = new Date()
+  since.setDate(since.getDate() - d)
+  return since.toISOString()
+}
 
 const SESSION_LABELS: Record<string, { en: string; es: string }> = {
   included:      { en: 'Included',      es: 'Incluida'   },
@@ -35,11 +47,16 @@ export default async function VisitsPage({ searchParams }: Props) {
   const client = await getClientByUserId(user.id)
   if (!client) redirect('/my-qr')
 
+  const period: Period = (PERIODS as readonly string[]).includes(searchParams.period ?? '')
+    ? (searchParams.period as Period)
+    : '1m'
+
   const page = Math.max(1, parseInt(searchParams.page ?? '1', 10) || 1)
+  const since = periodSince(period)
 
   const [t, { visits, total }] = await Promise.all([
     getTranslations('clientvisits'),
-    getClientVisitsPaginated(client.id, page, PAGE_SIZE),
+    getClientVisitsPaginated(client.id, page, PAGE_SIZE, since),
   ])
 
   const locale: 'en' | 'es' = client.preferred_language === 'es' ? 'es' : 'en'
@@ -51,6 +68,14 @@ export default async function VisitsPage({ searchParams }: Props) {
 
   function serviceName(nameEn: string | null, nameEs: string | null) {
     return locale === 'es' ? nameEs : nameEn
+  }
+
+  const periodLabels: Record<Period, string> = {
+    '1m':  t('period_1m'),
+    '3m':  t('period_3m'),
+    '6m':  t('period_6m'),
+    '1y':  t('period_1y'),
+    'all': t('period_all'),
   }
 
   return (
@@ -69,6 +94,23 @@ export default async function VisitsPage({ searchParams }: Props) {
             </p>
           )}
         </div>
+      </div>
+
+      {/* Period filter */}
+      <div className="flex items-center gap-1.5 flex-wrap">
+        {PERIODS.map(p => (
+          <Link
+            key={p}
+            href={`/visits?page=1&period=${p}`}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+              period === p
+                ? 'bg-green-100 text-green-700'
+                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+            }`}
+          >
+            {periodLabels[p]}
+          </Link>
+        ))}
       </div>
 
       {/* Table / empty */}
@@ -131,7 +173,7 @@ export default async function VisitsPage({ searchParams }: Props) {
       {totalPages > 1 && (
         <div className="flex items-center justify-between pt-1">
           <Link
-            href={`/visits?page=${page - 1}`}
+            href={`/visits?page=${page - 1}&period=${period}`}
             aria-disabled={page <= 1}
             className={[
               'inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg text-sm font-medium border transition-colors',
@@ -149,7 +191,7 @@ export default async function VisitsPage({ searchParams }: Props) {
           </p>
 
           <Link
-            href={`/visits?page=${page + 1}`}
+            href={`/visits?page=${page + 1}&period=${period}`}
             aria-disabled={page >= totalPages}
             className={[
               'inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg text-sm font-medium border transition-colors',

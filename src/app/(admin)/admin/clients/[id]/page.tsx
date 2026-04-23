@@ -14,9 +14,26 @@ import { InviteClientButton } from '@/components/spa/InviteClientButton'
 
 interface Props {
   params: { id: string }
+  searchParams: { period?: string }
 }
 
-export default async function ClientDetailPage({ params }: Props) {
+const PERIODS = ['1m', '3m', '6m', '1y', 'all'] as const
+type Period = typeof PERIODS[number]
+
+function periodSince(period: string): string | undefined {
+  if (period === 'all') return undefined
+  const days: Record<string, number> = { '1m': 30, '3m': 90, '6m': 180, '1y': 365 }
+  const d = days[period] ?? 30
+  const since = new Date()
+  since.setDate(since.getDate() - d)
+  return since.toISOString()
+}
+
+export default async function ClientDetailPage({ params, searchParams }: Props) {
+  const period: Period = (PERIODS as readonly string[]).includes(searchParams.period ?? '')
+    ? (searchParams.period as Period)
+    : '1m'
+
   const [client, t, tPay, tCheck] = await Promise.all([
     getClientById(params.id),
     getTranslations('clients'),
@@ -26,8 +43,10 @@ export default async function ClientDetailPage({ params }: Props) {
 
   if (!client) notFound()
 
+  const since = periodSince(period)
+
   const [visits, payments] = await Promise.all([
-    getClientVisits(client.id),
+    getClientVisits(client.id, since),
     getClientPayments(client.id),
   ])
 
@@ -49,6 +68,14 @@ export default async function ClientDetailPage({ params }: Props) {
   }
 
   const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount_usd), 0)
+
+  const periodLabels: Record<Period, string> = {
+    '1m':  t('period_1m'),
+    '3m':  t('period_3m'),
+    '6m':  t('period_6m'),
+    '1y':  t('period_1y'),
+    'all': t('period_all'),
+  }
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-5xl">
@@ -211,12 +238,27 @@ export default async function ClientDetailPage({ params }: Props) {
 
       {/* ── Visit history ──────────────────────────────────────────────── */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-        <div className="flex items-center gap-2 px-6 py-4 border-b border-gray-100">
-          <Activity size={14} className="text-gray-400" />
+        <div className="flex flex-wrap items-center gap-2 px-6 py-4 border-b border-gray-100">
+          <Activity size={14} className="text-gray-400 flex-shrink-0" />
           <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
             {t('visit_history')}
           </h2>
-          <span className="ml-auto text-xs text-gray-400 font-medium">{visits.length}</span>
+          <div className="ml-auto flex items-center gap-1 flex-wrap">
+            {PERIODS.map(p => (
+              <Link
+                key={p}
+                href={`/admin/clients/${params.id}?period=${p}`}
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                  period === p
+                    ? 'bg-amber-100 text-amber-700'
+                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                {periodLabels[p]}
+              </Link>
+            ))}
+            <span className="ml-2 text-xs text-gray-400 font-medium">{visits.length}</span>
+          </div>
         </div>
         {visits.length === 0 ? (
           <p className="text-sm text-gray-400 px-6 py-10 text-center">{t('no_visits')}</p>

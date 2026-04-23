@@ -108,7 +108,12 @@
     "prev_page": "Previous",
     "next_page": "Next",
     "page_info": "Page {current} of {total}",
-    "total_visits": "{count} visits total"
+    "total_visits": "{count} visits in period",
+    "period_1m": "Last month",
+    "period_3m": "3 months",
+    "period_6m": "6 months",
+    "period_1y": "1 year",
+    "period_all": "All"
   },
   "booking": {
     "title": "Book an appointment",
@@ -254,7 +259,12 @@
     "save_error": "Could not save client. Please try again.",
     "preferred_language": "Preferred language",
     "lang_en": "English",
-    "lang_es": "Spanish"
+    "lang_es": "Spanish",
+    "period_1m": "Last month",
+    "period_3m": "3 months",
+    "period_6m": "6 months",
+    "period_1y": "1 year",
+    "period_all": "All time"
   },
   "scan": {
     "instructions": "Point the camera at the client's QR code",

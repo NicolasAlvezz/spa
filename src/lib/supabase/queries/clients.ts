@@ -37,14 +37,17 @@ export async function getClientById(id: string): Promise<ClientDetail | null> {
   return data as unknown as ClientDetail
 }
 
-export async function getClientVisits(clientId: string): Promise<VisitWithService[]> {
+export async function getClientVisits(clientId: string, since?: string): Promise<VisitWithService[]> {
   const supabase = createServiceClient()
-  const { data, error } = await supabase
+  const query = supabase
     .from('visits')
     .select(`*, service_types(slug, name_en, name_es)`)
     .eq('client_id', clientId)
     .order('visited_at', { ascending: false })
-    .limit(50)
+
+  const { data, error } = since
+    ? await query.gte('visited_at', since)
+    : await query.limit(200)
 
   if (error) throw error
   return (data ?? []) as unknown as VisitWithService[]
