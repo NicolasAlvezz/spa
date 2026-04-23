@@ -243,13 +243,12 @@ export default function OnboardingPage() {
 
         <YesNoField label={t('surgeries_last_12_months')} value={form.surgeries_last_12_months} onChange={v => setField('surgeries_last_12_months', v)} t={t} />
         {form.surgeries_last_12_months && (
-          <>
-            <DetailsField label={t('surgery_details')} value={form.surgery_details} onChange={v => setField('surgery_details', v)} />
-            <YesNoField label={t('had_post_surgical_massage_before')} value={form.had_post_surgical_massage_before} onChange={v => setField('had_post_surgical_massage_before', v)} t={t} />
-            {form.had_post_surgical_massage_before && (
-              <DetailsField label={t('post_surgical_details')} value={form.post_surgical_details} onChange={v => setField('post_surgical_details', v)} />
-            )}
-          </>
+          <DetailsField label={t('surgery_details')} value={form.surgery_details} onChange={v => setField('surgery_details', v)} />
+        )}
+
+        <YesNoField label={t('had_post_surgical_massage_before')} value={form.had_post_surgical_massage_before} onChange={v => setField('had_post_surgical_massage_before', v)} t={t} />
+        {form.had_post_surgical_massage_before && (
+          <DetailsField label={t('post_surgical_details')} value={form.post_surgical_details} onChange={v => setField('post_surgical_details', v)} />
         )}
 
         <Field label={t('existing_conditions')}>
