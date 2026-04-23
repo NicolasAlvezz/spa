@@ -45,6 +45,7 @@ export function CheckinCard({
 
   const sessionsRemaining = membership?.sessions_remaining ?? 0
   const splitPending = membership?.split_payment_pending ?? false
+  const splitSecondAmount = plan ? plan.price_usd - (plan.split_first_amount ?? 0) : 0
 
   const clientName = `${client.first_name} ${client.last_name}`
 
@@ -82,7 +83,10 @@ export function CheckinCard({
         {showSplitWarning && (
           <div className="bg-amber-950/40 border border-amber-700/60 rounded-xl p-4 flex items-start gap-3">
             <AlertTriangle size={18} className="text-amber-400 flex-shrink-0 mt-0.5" />
-            <p className="text-amber-300 text-sm font-medium">{tCheck('split_payment_warning')}</p>
+            <p className="text-amber-300 text-sm font-medium">
+              {tCheck('split_payment_warning')}
+              {splitSecondAmount > 0 && ` — $${splitSecondAmount}`}
+            </p>
           </div>
         )}
 
@@ -130,7 +134,7 @@ export function CheckinCard({
                 className="w-full h-16 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-white text-xl font-bold transition-colors shadow-lg shadow-amber-900/30 flex items-center justify-center gap-2"
               >
                 <CreditCard size={20} />
-                {tCheck('confirm_split')}
+                {tCheck('confirm_split')}{splitSecondAmount > 0 && ` ($${splitSecondAmount})`}
               </button>
             </>
           ) : (

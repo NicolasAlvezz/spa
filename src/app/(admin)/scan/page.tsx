@@ -599,12 +599,15 @@ function AssignMembershipPanel({ result, onConfirm, onCancel }: AssignMembership
             </button>
             <button onClick={() => setUseSplitPayment(true)} disabled={submitting}
               className={`w-full px-4 py-3 rounded-xl text-left text-sm font-medium transition-colors disabled:opacity-50 ${useSplitPayment ? 'bg-amber-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
-              {t('pack_payment_split')}
+              {t('pack_payment_split')} — ${selectedPlan.split_first_amount} {locale === 'es' ? 'ahora' : 'now'}
             </button>
           </div>
           {useSplitPayment && (
             <p className="text-amber-400 text-xs mt-2 ml-1">
-              {locale === 'es' ? `Cobrar ahora: $${selectedPlan.split_first_amount}` : `Charge now: $${selectedPlan.split_first_amount}`}
+              {locale === 'es'
+                ? `Cobrar ahora: $${selectedPlan.split_first_amount} · 2do pago: $${selectedPlan.price_usd - (selectedPlan.split_first_amount ?? 0)}`
+                : `Charge now: $${selectedPlan.split_first_amount} · 2nd payment: $${selectedPlan.price_usd - (selectedPlan.split_first_amount ?? 0)}`
+              }
             </p>
           )}
         </div>
