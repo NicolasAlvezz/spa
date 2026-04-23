@@ -10,31 +10,28 @@ export default function AuthConfirmPage() {
   const [error, setError] = useState(false)
 
   useEffect(() => {
+    const hash = window.location.hash.substring(1)
+    const params = new URLSearchParams(hash)
+    const access_token = params.get('access_token')
+    const refresh_token = params.get('refresh_token')
+
+    if (!access_token || !refresh_token) {
+      setError(true)
+      return
+    }
+
     const supabase = createBrowserClient<Database>(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     )
 
-    // The browser client automatically processes the #access_token fragment.
-    // We listen for SIGNED_IN to know when the session is ready.
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session) {
+    supabase.auth.setSession({ access_token, refresh_token }).then(({ error: sessionError }) => {
+      if (sessionError) {
+        setError(true)
+      } else {
         router.replace('/set-password')
       }
     })
-
-    // Fallback: if already signed in (page refreshed), redirect directly
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) router.replace('/set-password')
-    })
-
-    // If after 5 seconds there's no session, show error
-    const timeout = setTimeout(() => setError(true), 5000)
-
-    return () => {
-      subscription.unsubscribe()
-      clearTimeout(timeout)
-    }
   }, [router])
 
   if (error) {
