@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   title: 'VM Integral Massage',
   description: 'Membership management system',
   icons: {
-    icon: '/images/favicon.jpg',
+    icon: '/images/logo.png',
   },
 }
 

@@ -52,9 +52,7 @@ export function AdminSidebar({ displayName, displayEmail }: Props) {
       {/* Brand */}
       <div className="px-6 py-6 border-b border-slate-800">
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-brand-500/20 flex-shrink-0">
-            <span className="text-brand-400 text-lg font-bold leading-none">V</span>
-          </div>
+          <img src="/images/logo.png" alt="VM" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
           <div className="min-w-0">
             <p className="text-white font-semibold text-sm leading-tight">VM Integral</p>
             <p className="text-slate-500 text-xs leading-tight">Massage Inc.</p>
@@ -104,7 +102,7 @@ export function AdminSidebar({ displayName, displayEmail }: Props) {
   return (
     <>
       {/* ── Mobile top bar (hidden on lg+) ──────────────────────────────── */}
-      <header className="lg:hidden fixed top-0 inset-x-0 z-30 h-14 bg-slate-950 border-b border-slate-800 flex items-center gap-3 px-4">
+      <header className="lg:hidden fixed top-0 inset-x-0 z-30 h-14 bg-black border-b border-slate-800 flex items-center gap-3 px-4">
         <button
           onClick={() => setOpen(true)}
           aria-label="Open navigation"
@@ -113,9 +111,7 @@ export function AdminSidebar({ displayName, displayEmail }: Props) {
           <Menu size={20} />
         </button>
         <div className="flex items-center gap-2.5">
-          <div className="flex items-center justify-center w-7 h-7 rounded-md bg-brand-500/20 flex-shrink-0">
-            <span className="text-brand-400 text-sm font-bold leading-none">V</span>
-          </div>
+          <img src="/images/logo.png" alt="VM" className="w-7 h-7 rounded-md object-cover flex-shrink-0" />
           <p className="text-white font-semibold text-sm">VM Integral</p>
         </div>
       </header>
@@ -131,7 +127,7 @@ export function AdminSidebar({ displayName, displayEmail }: Props) {
       {/* ── Mobile drawer ─────────────────────────────────────────────────── */}
       <aside
         className={[
-          'lg:hidden fixed inset-y-0 left-0 z-50 w-64 bg-slate-950 flex flex-col border-r border-slate-800',
+          'lg:hidden fixed inset-y-0 left-0 z-50 w-64 bg-black flex flex-col border-r border-slate-800',
           'transition-transform duration-200 ease-in-out',
           open ? 'translate-x-0' : '-translate-x-full',
         ].join(' ')}
@@ -150,7 +146,7 @@ export function AdminSidebar({ displayName, displayEmail }: Props) {
       </aside>
 
       {/* ── Desktop sidebar (hidden below lg) ────────────────────────────── */}
-      <aside className="hidden lg:flex flex-col w-64 flex-shrink-0 bg-slate-950 border-r border-slate-800">
+      <aside className="hidden lg:flex flex-col w-64 flex-shrink-0 bg-black border-r border-slate-800">
         <SidebarBody />
       </aside>
     </>
