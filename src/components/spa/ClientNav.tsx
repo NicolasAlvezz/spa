@@ -30,7 +30,7 @@ export function ClientNav() {
             className={[
               'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
               active(href)
-                ? 'bg-amber-50 text-amber-700'
+                ? 'bg-brand-50 text-brand-700'
                 : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100',
             ].join(' ')}
           >
@@ -48,7 +48,7 @@ export function ClientNav() {
             className={[
               'flex-1 flex flex-col items-center justify-center pt-2.5 pb-3 gap-1 text-[10px] font-semibold tracking-wide transition-colors',
               active(href)
-                ? 'text-amber-600'
+                ? 'text-brand-600'
                 : 'text-gray-400 hover:text-gray-600',
             ].join(' ')}
           >

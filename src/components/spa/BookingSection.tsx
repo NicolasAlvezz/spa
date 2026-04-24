@@ -182,9 +182,9 @@ export function BookingSection({ locale }: Props) {
                 className={[
                   'flex items-center justify-center h-9 w-full rounded-lg text-sm font-medium transition-colors',
                   isSelected
-                    ? 'bg-amber-500 text-white shadow-sm'
+                    ? 'bg-brand-500 text-white shadow-sm'
                     : clickable && isToday
-                    ? 'bg-amber-50 text-amber-700 hover:bg-amber-100'
+                    ? 'bg-brand-50 text-brand-700 hover:bg-brand-100'
                     : clickable
                     ? 'text-gray-700 hover:bg-gray-100'
                     : working
@@ -205,8 +205,8 @@ export function BookingSection({ locale }: Props) {
             {t('closed_sunday')}
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-sm bg-amber-500 inline-block" />
-            <span className="text-amber-500">{t('selected')}</span>
+            <span className="w-3 h-3 rounded-sm bg-brand-500 inline-block" />
+            <span className="text-brand-500">{t('selected')}</span>
           </span>
         </div>
       </div>
@@ -227,8 +227,8 @@ export function BookingSection({ locale }: Props) {
                   className={[
                     'px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors',
                     selectedHour === h
-                      ? 'bg-amber-500 text-white border-amber-500'
-                      : 'border-gray-200 text-gray-600 hover:border-amber-300 hover:text-amber-700',
+                      ? 'bg-brand-500 text-white border-brand-500'
+                      : 'border-gray-200 text-gray-600 hover:border-brand-300 hover:text-brand-700',
                   ].join(' ')}
                 >
                   {formatHour(h, locale)}
@@ -245,7 +245,7 @@ export function BookingSection({ locale }: Props) {
               onChange={(e) => setNotes(e.target.value)}
               placeholder={t('notes_placeholder')}
               rows={2}
-              className="w-full text-sm rounded-lg border border-gray-200 px-3 py-2 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 resize-none text-gray-800 placeholder:text-gray-300"
+              className="w-full text-sm rounded-lg border border-gray-200 px-3 py-2 outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 resize-none text-gray-800 placeholder:text-gray-300"
             />
           </div>
 
@@ -266,7 +266,7 @@ export function BookingSection({ locale }: Props) {
           <button
             onClick={handleSubmit}
             disabled={selectedHour === null || isPending}
-            className="w-full flex items-center justify-center gap-2 h-11 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-white font-semibold text-sm transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center gap-2 h-11 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 text-white font-semibold text-sm transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isPending && <Loader2 size={15} className="animate-spin" />}
             {isPending ? t('booking') : t('book')}

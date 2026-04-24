@@ -145,7 +145,7 @@ export function InviteClientButton({ clientId, clientEmail, isLinked, className 
                 <Button
                   type="submit"
                   disabled={isPending}
-                  className="bg-amber-500 hover:bg-amber-600 text-white"
+                  className="bg-brand-500 hover:bg-brand-600 text-white"
                 >
                   {isPending ? t('creating') : t('create_access')}
                 </Button>

@@ -51,13 +51,13 @@ export function ClientsTable({ clients }: Props) {
             placeholder={t('search_placeholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full h-10 pl-9 pr-3 rounded-lg border border-gray-200 bg-white text-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-shadow"
+            className="w-full h-10 pl-9 pr-3 rounded-lg border border-gray-200 bg-white text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-shadow"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-          className="w-full md:w-auto h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm outline-none focus:border-amber-400 transition-colors"
+          className="w-full md:w-auto h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm outline-none focus:border-brand-400 transition-colors"
         >
           <option value="all">{t('filter_all')}</option>
           <option value="active">{locale === 'es' ? 'Activa' : 'Active'}</option>
@@ -85,11 +85,11 @@ export function ClientsTable({ clients }: Props) {
                 <Link
                   key={client.id}
                   href={`/admin/clients/${client.id}`}
-                  className="flex items-center gap-3 bg-white rounded-xl border border-gray-200 px-4 py-3.5 shadow-sm active:bg-amber-50/60 transition-colors"
+                  className="flex items-center gap-3 bg-white rounded-xl border border-gray-200 px-4 py-3.5 shadow-sm active:bg-brand-50/60 transition-colors"
                 >
                   {/* Initials avatar */}
-                  <div className="flex items-center justify-center w-11 h-11 rounded-full bg-amber-50 border border-amber-100 flex-shrink-0">
-                    <span className="text-amber-700 text-sm font-bold leading-none">
+                  <div className="flex items-center justify-center w-11 h-11 rounded-full bg-brand-50 border border-brand-100 flex-shrink-0">
+                    <span className="text-brand-700 text-sm font-bold leading-none">
                       {client.first_name[0]}{client.last_name[0]}
                     </span>
                   </div>
@@ -148,11 +148,11 @@ export function ClientsTable({ clients }: Props) {
                   return (
                     <tr
                       key={client.id}
-                      className="hover:bg-amber-50/40 transition-colors group"
+                      className="hover:bg-brand-50/40 transition-colors group"
                     >
                       {/* Name */}
                       <td className="px-5 py-3.5 font-medium text-gray-900">
-                        <span className="group-hover:text-amber-700 transition-colors">
+                        <span className="group-hover:text-brand-700 transition-colors">
                           {client.first_name} {client.last_name}
                         </span>
                         {client.is_healthcare_worker && (
@@ -189,7 +189,7 @@ export function ClientsTable({ clients }: Props) {
                       <td className="px-5 py-3.5">
                         <Link
                           href={`/admin/clients/${client.id}`}
-                          className="flex items-center justify-center w-7 h-7 rounded-md text-gray-300 hover:text-amber-600 hover:bg-amber-50 transition-colors"
+                          className="flex items-center justify-center w-7 h-7 rounded-md text-gray-300 hover:text-brand-600 hover:bg-brand-50 transition-colors"
                         >
                           <ChevronRight size={16} />
                         </Link>

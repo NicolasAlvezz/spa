@@ -135,7 +135,7 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
           icon={Calendar}
           label={tCheck('sessions_used')}
           value={`${membership?.sessions_used_this_month ?? 0} / ${plan?.sessions_per_month ?? '—'}`}
-          color="amber"
+          color="brand"
         />
         <StatCard
           icon={Activity}
@@ -197,7 +197,7 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
                 <p className="font-semibold text-gray-900 text-base">
                   {locale === 'es' ? plan.name_es : plan.name_en}
                 </p>
-                <p className="text-2xl font-bold text-amber-600 mt-1">
+                <p className="text-2xl font-bold text-brand-600 mt-1">
                   USD {plan.price_usd}
                   <span className="text-sm font-normal text-gray-400">
                     /{locale === 'es' ? 'mes' : 'mo'}
@@ -219,7 +219,7 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
                   </span>
                 </div>
                 {membership.rollover_sessions > 0 && (
-                  <p className="text-xs text-amber-600 font-medium pt-1">
+                  <p className="text-xs text-brand-600 font-medium pt-1">
                     {tCheck('rollover')}
                   </p>
                 )}
@@ -250,7 +250,7 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
                 href={`/admin/clients/${params.id}?period=${p}`}
                 className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
                   period === p
-                    ? 'bg-amber-100 text-amber-700'
+                    ? 'bg-brand-100 text-brand-700'
                     : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
                 }`}
               >
@@ -303,7 +303,7 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
           <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
             {t('payment_history')}
           </h2>
-          <span className="ml-auto text-xs font-semibold text-amber-600">
+          <span className="ml-auto text-xs font-semibold text-brand-600">
             USD {totalPaid.toFixed(0)} total
           </span>
         </div>
@@ -368,10 +368,10 @@ function StatCard({
   icon: React.ElementType
   label: string
   value: string
-  color: 'amber' | 'green' | 'blue' | 'purple'
+  color: 'brand' | 'green' | 'blue' | 'purple'
 }) {
   const colors = {
-    amber:  { bg: 'bg-amber-50',  icon: 'text-amber-500' },
+    brand:  { bg: 'bg-brand-50',  icon: 'text-brand-500' },
     green:  { bg: 'bg-green-50',  icon: 'text-green-500' },
     blue:   { bg: 'bg-blue-50',   icon: 'text-blue-500' },
     purple: { bg: 'bg-purple-50', icon: 'text-purple-500' },
@@ -391,7 +391,7 @@ function StatCard({
 function SessionTypeBadge({ label, type }: { label: string; type: string }) {
   const styles: Record<string, string> = {
     included:      'bg-green-50 text-green-700',
-    rollover:      'bg-amber-50 text-amber-700',
+    rollover:      'bg-brand-50 text-brand-700',
     additional:    'bg-blue-50 text-blue-700',
     welcome_offer: 'bg-purple-50 text-purple-700',
   }

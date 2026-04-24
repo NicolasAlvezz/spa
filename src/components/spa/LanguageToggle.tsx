@@ -16,14 +16,14 @@ export function LanguageToggle() {
     <div className="flex items-center gap-1 text-sm font-medium">
       <button
         onClick={() => setLocale('en')}
-        className={locale === 'en' ? 'text-amber-600 font-bold' : 'text-gray-400 hover:text-gray-600'}
+        className={locale === 'en' ? 'text-brand-600 font-bold' : 'text-gray-400 hover:text-gray-600'}
       >
         EN
       </button>
       <span className="text-gray-300">|</span>
       <button
         onClick={() => setLocale('es')}
-        className={locale === 'es' ? 'text-amber-600 font-bold' : 'text-gray-400 hover:text-gray-600'}
+        className={locale === 'es' ? 'text-brand-600 font-bold' : 'text-gray-400 hover:text-gray-600'}
       >
         ES
       </button>

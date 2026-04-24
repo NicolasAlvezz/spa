@@ -289,8 +289,8 @@ export default function ScanPage() {
 
         {phase === 'scanning' && (
           <div className="text-center space-y-5 select-none">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-amber-500/10 border border-amber-500/20 mb-1">
-              <ScanLine size={36} className="text-amber-400" />
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-brand-500/10 border border-brand-500/20 mb-1">
+              <ScanLine size={36} className="text-brand-400" />
             </div>
             <div>
               <h1 className="text-xl md:text-3xl font-bold text-white tracking-tight">VM Integral Massage</h1>
@@ -301,7 +301,7 @@ export default function ScanPage() {
 
         {phase === 'loading' && (
           <div className="text-center space-y-4">
-            <Loader2 size={44} className="text-amber-400 animate-spin mx-auto" />
+            <Loader2 size={44} className="text-brand-400 animate-spin mx-auto" />
             <p className="text-slate-300 text-lg font-medium">{t('loading')}</p>
           </div>
         )}
@@ -431,10 +431,10 @@ function RenewPanel({ result, onConfirm, onCancel }: RenewPanelProps) {
   return (
     <div className="w-full flex flex-col gap-6">
       <div className="flex items-center gap-3">
-        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-amber-500/20">
-          <RotateCcw size={18} className="text-amber-400" />
+        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-brand-500/20">
+          <RotateCcw size={18} className="text-brand-400" />
         </div>
-        <span className="text-amber-400 text-lg font-semibold uppercase tracking-wide">
+        <span className="text-brand-400 text-lg font-semibold uppercase tracking-wide">
           {t('renewing_title')}
         </span>
       </div>
@@ -446,7 +446,7 @@ function RenewPanel({ result, onConfirm, onCancel }: RenewPanelProps) {
       <div className="bg-slate-800 rounded-xl p-4">
         <p className="text-slate-400 text-xs uppercase tracking-wide mb-1">{t('renew_plan')}</p>
         <p className="text-white text-xl font-semibold">{planName ?? '—'}</p>
-        <p className="text-amber-400 text-3xl font-bold mt-2">
+        <p className="text-brand-400 text-3xl font-bold mt-2">
           ${amount}
           <span className="text-base font-normal text-slate-400 ml-1">
             {locale === 'es' ? '/mes' : '/month'}
@@ -459,7 +459,7 @@ function RenewPanel({ result, onConfirm, onCancel }: RenewPanelProps) {
         <div className="grid grid-cols-3 gap-3">
           {METHODS.map((m) => (
             <button key={m} onClick={() => setMethod(m)} disabled={submitting}
-              className={`h-14 rounded-xl text-base font-semibold transition-colors disabled:opacity-50 ${method === m ? 'bg-amber-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
+              className={`h-14 rounded-xl text-base font-semibold transition-colors disabled:opacity-50 ${method === m ? 'bg-brand-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
               {tPayment(methodKeys[m])}
             </button>
           ))}
@@ -468,7 +468,7 @@ function RenewPanel({ result, onConfirm, onCancel }: RenewPanelProps) {
 
       <div className="flex flex-col gap-3 pt-2">
         <button onClick={handleConfirm} disabled={!method || submitting}
-          className="w-full h-16 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xl font-bold transition-colors">
+          className="w-full h-16 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xl font-bold transition-colors">
           {submitting ? t('renewing') : t('renew_confirm')}
         </button>
         <button onClick={onCancel} disabled={submitting}
@@ -538,10 +538,10 @@ function AssignMembershipPanel({ result, onConfirm, onCancel }: AssignMembership
   return (
     <div className="w-full flex flex-col gap-6">
       <div className="flex items-center gap-3">
-        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-amber-500/20">
-          <Star size={18} className="text-amber-400" />
+        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-brand-500/20">
+          <Star size={18} className="text-brand-400" />
         </div>
-        <span className="text-amber-400 text-lg font-semibold uppercase tracking-wide">
+        <span className="text-brand-400 text-lg font-semibold uppercase tracking-wide">
           {t('assign_title')}
         </span>
       </div>
@@ -562,13 +562,13 @@ function AssignMembershipPanel({ result, onConfirm, onCancel }: AssignMembership
               const isSelected = selectedPlanId === plan.id
               return (
                 <button key={plan.id} onClick={() => handleSelectPlan(plan)} disabled={submitting}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-left transition-colors disabled:opacity-50 ${isSelected ? 'bg-amber-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-left transition-colors disabled:opacity-50 ${isSelected ? 'bg-brand-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
                   <div>
                     <span className="font-semibold block">
                       {locale === 'es' ? plan.name_es : plan.name_en}
                     </span>
                     {isPack && (
-                      <span className={`text-xs ${isSelected ? 'text-amber-100' : 'text-slate-400'}`}>
+                      <span className={`text-xs ${isSelected ? 'text-brand-100' : 'text-slate-400'}`}>
                         {plan.total_sessions} {t('pack_sessions_total')} · {t('pack_no_expiry')}
                       </span>
                     )}
@@ -594,16 +594,16 @@ function AssignMembershipPanel({ result, onConfirm, onCancel }: AssignMembership
           <p className="text-slate-400 text-xs uppercase tracking-wide mb-3">{locale === 'es' ? 'Forma de pago' : 'Payment option'}</p>
           <div className="flex flex-col gap-2">
             <button onClick={() => setUseSplitPayment(false)} disabled={submitting}
-              className={`w-full px-4 py-3 rounded-xl text-left text-sm font-medium transition-colors disabled:opacity-50 ${!useSplitPayment ? 'bg-amber-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
+              className={`w-full px-4 py-3 rounded-xl text-left text-sm font-medium transition-colors disabled:opacity-50 ${!useSplitPayment ? 'bg-brand-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
               {t('pack_payment_full')} — ${selectedPlan.price_usd}
             </button>
             <button onClick={() => setUseSplitPayment(true)} disabled={submitting}
-              className={`w-full px-4 py-3 rounded-xl text-left text-sm font-medium transition-colors disabled:opacity-50 ${useSplitPayment ? 'bg-amber-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
+              className={`w-full px-4 py-3 rounded-xl text-left text-sm font-medium transition-colors disabled:opacity-50 ${useSplitPayment ? 'bg-brand-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
               {t('pack_payment_split')} — ${selectedPlan.split_first_amount} {locale === 'es' ? 'ahora' : 'now'}
             </button>
           </div>
           {useSplitPayment && (
-            <p className="text-amber-400 text-xs mt-2 ml-1">
+            <p className="text-brand-400 text-xs mt-2 ml-1">
               {locale === 'es'
                 ? `Cobrar ahora: $${selectedPlan.split_first_amount} · 2do pago: $${selectedPlan.price_usd - (selectedPlan.split_first_amount ?? 0)}`
                 : `Charge now: $${selectedPlan.split_first_amount} · 2nd payment: $${selectedPlan.price_usd - (selectedPlan.split_first_amount ?? 0)}`
@@ -619,7 +619,7 @@ function AssignMembershipPanel({ result, onConfirm, onCancel }: AssignMembership
         <div className="grid grid-cols-3 gap-3">
           {METHODS.map((m) => (
             <button key={m} onClick={() => setMethod(m)} disabled={submitting}
-              className={`h-14 rounded-xl text-base font-semibold transition-colors disabled:opacity-50 ${method === m ? 'bg-amber-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
+              className={`h-14 rounded-xl text-base font-semibold transition-colors disabled:opacity-50 ${method === m ? 'bg-brand-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
               {tPayment(methodKeys[m])}
             </button>
           ))}
@@ -628,7 +628,7 @@ function AssignMembershipPanel({ result, onConfirm, onCancel }: AssignMembership
 
       <div className="flex flex-col gap-3 pt-2">
         <button onClick={handleConfirm} disabled={!selectedPlanId || !method || submitting}
-          className="w-full h-16 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xl font-bold transition-colors">
+          className="w-full h-16 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xl font-bold transition-colors">
           {submitting ? t('assigning') : `${t('assign_confirm')} — $${paymentAmount}`}
         </button>
         <button onClick={onCancel} disabled={submitting}
@@ -666,10 +666,10 @@ function ConfirmSplitPanel({ result, onConfirm, onCancel }: ConfirmSplitPanelPro
   return (
     <div className="w-full flex flex-col gap-6">
       <div className="flex items-center gap-3">
-        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-amber-500/20">
-          <CreditCard size={18} className="text-amber-400" />
+        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-brand-500/20">
+          <CreditCard size={18} className="text-brand-400" />
         </div>
-        <span className="text-amber-400 text-lg font-semibold uppercase tracking-wide">
+        <span className="text-brand-400 text-lg font-semibold uppercase tracking-wide">
           {t('confirm_split')}
         </span>
       </div>
@@ -682,7 +682,7 @@ function ConfirmSplitPanel({ result, onConfirm, onCancel }: ConfirmSplitPanelPro
         <p className="text-slate-400 text-xs uppercase tracking-wide mb-1">
           {locale === 'es' ? '2do pago del paquete' : '2nd pack installment'}
         </p>
-        <p className="text-amber-400 text-4xl font-bold">${secondAmount}</p>
+        <p className="text-brand-400 text-4xl font-bold">${secondAmount}</p>
       </div>
 
       <div>
@@ -690,7 +690,7 @@ function ConfirmSplitPanel({ result, onConfirm, onCancel }: ConfirmSplitPanelPro
         <div className="grid grid-cols-3 gap-3">
           {METHODS.map((m) => (
             <button key={m} onClick={() => setMethod(m)} disabled={submitting}
-              className={`h-14 rounded-xl text-base font-semibold transition-colors disabled:opacity-50 ${method === m ? 'bg-amber-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
+              className={`h-14 rounded-xl text-base font-semibold transition-colors disabled:opacity-50 ${method === m ? 'bg-brand-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
               {tPayment(methodKeys[m])}
             </button>
           ))}
@@ -699,7 +699,7 @@ function ConfirmSplitPanel({ result, onConfirm, onCancel }: ConfirmSplitPanelPro
 
       <div className="flex flex-col gap-3 pt-2">
         <button onClick={handleConfirm} disabled={!method || submitting}
-          className="w-full h-16 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xl font-bold transition-colors">
+          className="w-full h-16 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xl font-bold transition-colors">
           {submitting ? t('confirming_split') : t('confirm_split')}
         </button>
         <button onClick={onCancel} disabled={submitting}

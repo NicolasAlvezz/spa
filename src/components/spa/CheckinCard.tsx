@@ -81,9 +81,9 @@ export function CheckinCard({
 
         {/* Split payment warning */}
         {showSplitWarning && (
-          <div className="bg-amber-950/40 border border-amber-700/60 rounded-xl p-4 flex items-start gap-3">
-            <AlertTriangle size={18} className="text-amber-400 flex-shrink-0 mt-0.5" />
-            <p className="text-amber-300 text-sm font-medium">
+          <div className="bg-brand-950/40 border border-brand-700/60 rounded-xl p-4 flex items-start gap-3">
+            <AlertTriangle size={18} className="text-brand-400 flex-shrink-0 mt-0.5" />
+            <p className="text-brand-300 text-sm font-medium">
               {tCheck('split_payment_warning')}
               {splitSecondAmount > 0 && ` — $${splitSecondAmount}`}
             </p>
@@ -115,7 +115,7 @@ export function CheckinCard({
         </div>
 
         {!isPack && membership!.rollover_sessions > 0 && (
-          <p className="text-amber-400 text-sm font-medium flex items-center gap-1.5">
+          <p className="text-brand-400 text-sm font-medium flex items-center gap-1.5">
             <RotateCcw size={13} />
             {tCheck('rollover')}
           </p>
@@ -131,7 +131,7 @@ export function CheckinCard({
               </div>
               <button
                 onClick={onConfirmSplitPayment}
-                className="w-full h-16 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-white text-xl font-bold transition-colors shadow-lg shadow-amber-900/30 flex items-center justify-center gap-2"
+                className="w-full h-16 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 text-white text-xl font-bold transition-colors shadow-lg shadow-brand-900/30 flex items-center justify-center gap-2"
               >
                 <CreditCard size={20} />
                 {tCheck('confirm_split')}{splitSecondAmount > 0 && ` ($${splitSecondAmount})`}
@@ -201,7 +201,7 @@ export function CheckinCard({
         <div className="flex flex-col gap-3 pt-1">
           <button
             onClick={onRenew}
-            className="w-full h-16 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-white text-xl font-bold transition-colors shadow-lg shadow-amber-900/30"
+            className="w-full h-16 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 text-white text-xl font-bold transition-colors shadow-lg shadow-brand-900/30"
           >
             {tCheck('renew')}
           </button>
@@ -236,7 +236,7 @@ export function CheckinCard({
       <div className="flex flex-col gap-3 pt-1">
         <button
           onClick={onAssignMembership}
-          className="w-full h-16 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-white text-xl font-bold transition-colors shadow-lg shadow-amber-900/30"
+          className="w-full h-16 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 text-white text-xl font-bold transition-colors shadow-lg shadow-brand-900/30"
         >
           {tCheck('assign_button')}
         </button>
@@ -274,10 +274,10 @@ function TodayAppointmentBox({
   })
 
   return (
-    <div className="bg-amber-950/30 border border-amber-600/50 rounded-xl p-4 flex items-start gap-3">
-      <Scissors size={16} className="text-amber-400 flex-shrink-0 mt-0.5" />
+    <div className="bg-brand-950/30 border border-brand-600/50 rounded-xl p-4 flex items-start gap-3">
+      <Scissors size={16} className="text-brand-400 flex-shrink-0 mt-0.5" />
       <div className="min-w-0">
-        <p className="text-amber-400 text-xs font-semibold uppercase tracking-wide mb-1">
+        <p className="text-brand-400 text-xs font-semibold uppercase tracking-wide mb-1">
           {tCheck('today_appointment')} · {time}
         </p>
         {serviceName && (

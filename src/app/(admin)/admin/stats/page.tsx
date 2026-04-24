@@ -42,7 +42,7 @@ export default async function StatsPage({ searchParams }: Props) {
       {/* Header + period selector */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-2.5">
-          <BarChart3 size={22} className="text-amber-500" />
+          <BarChart3 size={22} className="text-brand-500" />
           <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
         </div>
 
@@ -67,7 +67,7 @@ export default async function StatsPage({ searchParams }: Props) {
       {/* ═══════════════════════════════════════════════════════════════ */}
       {/* 1. REVENUE                                                     */}
       {/* ═══════════════════════════════════════════════════════════════ */}
-      <Section icon={DollarSign} title={t('revenue_section')} color="amber">
+      <Section icon={DollarSign} title={t('revenue_section')} color="brand">
 
         {/* Total */}
         <BigStat
@@ -226,7 +226,7 @@ export default async function StatsPage({ searchParams }: Props) {
 
 // ─── Layout helpers ───────────────────────────────────────────────────────────
 
-type SectionColor = 'amber' | 'blue' | 'green' | 'purple'
+type SectionColor = 'brand' | 'blue' | 'green' | 'purple'
 
 function Section({
   icon: Icon, title, color, children,
@@ -237,7 +237,7 @@ function Section({
   children: React.ReactNode
 }) {
   const palette: Record<SectionColor, { bg: string; icon: string }> = {
-    amber:  { bg: 'bg-amber-50',  icon: 'text-amber-500'  },
+    brand:  { bg: 'bg-brand-50',  icon: 'text-brand-500'  },
     blue:   { bg: 'bg-blue-50',   icon: 'text-blue-500'   },
     green:  { bg: 'bg-green-50',  icon: 'text-green-500'  },
     purple: { bg: 'bg-purple-50', icon: 'text-purple-500' },

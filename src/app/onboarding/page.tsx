@@ -246,7 +246,7 @@ export default function OnboardingPage() {
             onClick={() => handleLangChange('en')}
             className={`px-4 py-2 transition-colors ${
               lang === 'en'
-                ? 'bg-amber-500 text-white'
+                ? 'bg-brand-500 text-white'
                 : 'bg-white text-gray-600 hover:bg-gray-50'
             }`}
           >
@@ -257,7 +257,7 @@ export default function OnboardingPage() {
             onClick={() => handleLangChange('es')}
             className={`px-4 py-2 transition-colors border-l border-gray-200 ${
               lang === 'es'
-                ? 'bg-amber-500 text-white'
+                ? 'bg-brand-500 text-white'
                 : 'bg-white text-gray-600 hover:bg-gray-50'
             }`}
           >
@@ -409,7 +409,7 @@ export default function OnboardingPage() {
             type="checkbox"
             checked={form.contract_accepted}
             onChange={e => setField('contract_accepted', e.target.checked)}
-            className="mt-0.5 h-4 w-4 rounded border-gray-300 text-amber-500 focus:ring-amber-400"
+            className="mt-0.5 h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-400"
           />
           <span className="text-sm text-gray-700 font-medium">{s.contract_checkbox}</span>
         </label>
@@ -424,7 +424,7 @@ export default function OnboardingPage() {
       <button
         type="submit"
         disabled={submitting}
-        className="w-full h-14 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 disabled:opacity-60 text-white text-lg font-bold transition-colors shadow-lg shadow-amber-900/20"
+        className="w-full h-14 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 disabled:opacity-60 text-white text-lg font-bold transition-colors shadow-lg shadow-brand-900/20"
       >
         {submitting ? s.submitting : s.submit}
       </button>
@@ -476,8 +476,8 @@ function YesNoField({
           onClick={() => onChange(true)}
           className={`flex-1 h-10 rounded-lg border text-sm font-medium transition-colors ${
             value
-              ? 'bg-amber-500 border-amber-500 text-white'
-              : 'bg-white border-gray-300 text-gray-700 hover:border-amber-400'
+              ? 'bg-brand-500 border-brand-500 text-white'
+              : 'bg-white border-gray-300 text-gray-700 hover:border-brand-400'
           }`}
         >
           {yes}
@@ -508,7 +508,7 @@ function DetailsField({
   onChange: (v: string) => void
 }) {
   return (
-    <div className="flex flex-col gap-1.5 pl-2 border-l-2 border-amber-300">
+    <div className="flex flex-col gap-1.5 pl-2 border-l-2 border-brand-300">
       <label className="text-sm text-gray-600">{label}</label>
       <input
         type="text"

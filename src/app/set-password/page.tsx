@@ -109,7 +109,7 @@ export default function SetPasswordPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full h-12 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 disabled:opacity-60 text-white text-base font-bold transition-colors shadow-lg shadow-amber-900/20 mt-2"
+          className="w-full h-12 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 disabled:opacity-60 text-white text-base font-bold transition-colors shadow-lg shadow-brand-900/20 mt-2"
         >
           {submitting ? t('submitting') : t('submit')}
         </button>

@@ -41,7 +41,7 @@ export function AdminSidebar({ displayName, displayEmail }: Props) {
     return [
       'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
       active(href)
-        ? 'bg-slate-800 text-white border-l-2 border-amber-500 rounded-l-none pl-[10px]'
+        ? 'bg-slate-800 text-white border-l-2 border-brand-500 rounded-l-none pl-[10px]'
         : 'text-slate-400 hover:text-white hover:bg-slate-800/60 border-l-2 border-transparent rounded-l-none pl-[10px]',
     ].join(' ')
   }
@@ -52,8 +52,8 @@ export function AdminSidebar({ displayName, displayEmail }: Props) {
       {/* Brand */}
       <div className="px-6 py-6 border-b border-slate-800">
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-amber-500/20 flex-shrink-0">
-            <span className="text-amber-400 text-lg font-bold leading-none">V</span>
+          <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-brand-500/20 flex-shrink-0">
+            <span className="text-brand-400 text-lg font-bold leading-none">V</span>
           </div>
           <div className="min-w-0">
             <p className="text-white font-semibold text-sm leading-tight">VM Integral</p>
@@ -71,7 +71,7 @@ export function AdminSidebar({ displayName, displayEmail }: Props) {
             onClick={onLinkClick}
             className={linkCls(href)}
           >
-            <Icon size={16} className={active(href) ? 'text-amber-400' : 'text-slate-500'} />
+            <Icon size={16} className={active(href) ? 'text-brand-400' : 'text-slate-500'} />
             {label}
           </Link>
         ))}
@@ -113,8 +113,8 @@ export function AdminSidebar({ displayName, displayEmail }: Props) {
           <Menu size={20} />
         </button>
         <div className="flex items-center gap-2.5">
-          <div className="flex items-center justify-center w-7 h-7 rounded-md bg-amber-500/20 flex-shrink-0">
-            <span className="text-amber-400 text-sm font-bold leading-none">V</span>
+          <div className="flex items-center justify-center w-7 h-7 rounded-md bg-brand-500/20 flex-shrink-0">
+            <span className="text-brand-400 text-sm font-bold leading-none">V</span>
           </div>
           <p className="text-white font-semibold text-sm">VM Integral</p>
         </div>

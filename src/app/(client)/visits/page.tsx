@@ -34,7 +34,7 @@ const SESSION_LABELS: Record<string, { en: string; es: string }> = {
 
 const SESSION_COLORS: Record<string, string> = {
   included:      'bg-green-50 text-green-700',
-  rollover:      'bg-amber-50 text-amber-700',
+  rollover:      'bg-brand-50 text-brand-700',
   additional:    'bg-blue-50 text-blue-700',
   welcome_offer: 'bg-purple-50 text-purple-700',
 }

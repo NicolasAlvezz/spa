@@ -55,7 +55,7 @@ export default async function AdminDashboardPage() {
           icon={DollarSign}
           label={t('revenue_this_month')}
           value={`$${stats.revenueThisMonth.toFixed(0)}`}
-          color="amber"
+          color="brand"
         />
         <StatCard
           icon={AlertTriangle}
@@ -127,12 +127,12 @@ export default async function AdminDashboardPage() {
               {appointments.map((a) => (
                 <li key={a.id} className="flex items-center gap-3 px-5 py-3.5">
                   <div className={`flex items-center justify-center w-8 h-8 rounded-lg flex-shrink-0 ${
-                    a.status === 'scheduled'  ? 'bg-amber-50' :
+                    a.status === 'scheduled'  ? 'bg-brand-50' :
                     a.status === 'completed'  ? 'bg-green-50' :
                     a.status === 'no_show'    ? 'bg-red-50'   : 'bg-gray-50'
                   }`}>
                     <Clock size={14} className={
-                      a.status === 'scheduled'  ? 'text-amber-500' :
+                      a.status === 'scheduled'  ? 'text-brand-500' :
                       a.status === 'completed'  ? 'text-green-500' :
                       a.status === 'no_show'    ? 'text-red-400'   : 'text-gray-400'
                     } />
@@ -189,7 +189,7 @@ function sessionLabel(type: string) {
 
 // ─── StatCard ─────────────────────────────────────────────────────────────────
 
-type Color = 'green' | 'blue' | 'amber' | 'red' | 'gray'
+type Color = 'green' | 'blue' | 'brand' | 'red' | 'gray'
 
 function StatCard({
   icon: Icon, label, value, color,
@@ -202,7 +202,7 @@ function StatCard({
   const palette: Record<Color, { bg: string; icon: string; val: string }> = {
     green:  { bg: 'bg-green-50',  icon: 'text-green-500',  val: 'text-green-700'  },
     blue:   { bg: 'bg-blue-50',   icon: 'text-blue-500',   val: 'text-gray-900'   },
-    amber:  { bg: 'bg-amber-50',  icon: 'text-amber-500',  val: 'text-amber-700'  },
+    brand:  { bg: 'bg-brand-50',  icon: 'text-brand-500',  val: 'text-brand-700'  },
     red:    { bg: 'bg-red-50',    icon: 'text-red-500',    val: 'text-red-700'    },
     gray:   { bg: 'bg-gray-100',  icon: 'text-gray-400',   val: 'text-gray-700'   },
   }

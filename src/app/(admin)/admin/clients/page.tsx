@@ -20,7 +20,7 @@ export default async function ClientsPage() {
         {/* Tablet+: inline button in header */}
         <Link
           href="/admin/clients/new"
-          className="hidden md:inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-white text-sm font-semibold transition-colors shadow-sm"
+          className="hidden md:inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-brand-500 hover:bg-brand-400 active:bg-brand-600 text-white text-sm font-semibold transition-colors shadow-sm"
         >
           <UserPlus size={16} />
           {t('new_client')}
@@ -33,7 +33,7 @@ export default async function ClientsPage() {
       <Link
         href="/admin/clients/new"
         aria-label={t('new_client')}
-        className="md:hidden fixed bottom-6 right-5 z-20 flex items-center justify-center w-14 h-14 rounded-full bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-white shadow-xl shadow-amber-900/30 transition-colors"
+        className="md:hidden fixed bottom-6 right-5 z-20 flex items-center justify-center w-14 h-14 rounded-full bg-brand-500 hover:bg-brand-400 active:bg-brand-600 text-white shadow-xl shadow-brand-900/30 transition-colors"
       >
         <UserPlus size={22} />
       </Link>

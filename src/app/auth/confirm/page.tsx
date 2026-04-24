@@ -39,7 +39,7 @@ export default function AuthConfirmPage() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
         <div className="text-center">
           <p className="text-red-600 font-medium mb-3">This link has expired or is invalid.</p>
-          <a href="/login" className="text-amber-600 text-sm hover:underline">Go to login</a>
+          <a href="/login" className="text-brand-600 text-sm hover:underline">Go to login</a>
         </div>
       </div>
     )

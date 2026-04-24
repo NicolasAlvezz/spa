@@ -75,7 +75,7 @@ export function QrDisplay({ client, nextAppointment, recentVisits }: Props) {
 
       {/* ── QR Code ────────────────────────────────────────────────────── */}
       <div className="relative">
-        <div className="absolute -inset-3 rounded-3xl bg-amber-500/10" />
+        <div className="absolute -inset-3 rounded-3xl bg-brand-500/10" />
         <div className="relative p-5 bg-white border border-gray-200 rounded-2xl shadow-md">
           <QRCode
             value={client.id}
@@ -118,7 +118,7 @@ export function QrDisplay({ client, nextAppointment, recentVisits }: Props) {
               </span>
             </div>
             {membership.rollover_sessions > 0 && (
-              <div className="flex items-center gap-2 px-5 py-3 text-sm text-amber-600 font-medium">
+              <div className="flex items-center gap-2 px-5 py-3 text-sm text-brand-600 font-medium">
                 <RotateCcw size={13} />
                 {tCheck('rollover')}
               </div>
@@ -138,8 +138,8 @@ export function QrDisplay({ client, nextAppointment, recentVisits }: Props) {
         </p>
         {nextAppointment ? (
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3 flex items-center gap-3">
-            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-amber-50 flex-shrink-0">
-              <Clock size={16} className="text-amber-500" />
+            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-brand-50 flex-shrink-0">
+              <Clock size={16} className="text-brand-500" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-gray-900">
@@ -166,7 +166,7 @@ export function QrDisplay({ client, nextAppointment, recentVisits }: Props) {
           {recentVisits.length > 0 && (
             <Link
               href="/visits"
-              className="text-xs font-medium text-amber-600 hover:text-amber-700 flex items-center gap-0.5"
+              className="text-xs font-medium text-brand-600 hover:text-brand-700 flex items-center gap-0.5"
             >
               {t('view_all')}
               <ChevronRight size={13} />

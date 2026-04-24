@@ -75,15 +75,15 @@ export function AddAppointmentModal({ clients, serviceTypes }: Props) {
     })
   }
 
-  const selectCls = 'w-full h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-shadow disabled:opacity-60'
-  const inputCls  = 'w-full h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-shadow disabled:opacity-60'
+  const selectCls = 'w-full h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-shadow disabled:opacity-60'
+  const inputCls  = 'w-full h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-shadow disabled:opacity-60'
 
   return (
     <>
       {/* Trigger */}
       <button
         onClick={handleOpen}
-        className="inline-flex items-center gap-2 h-9 px-3.5 rounded-lg bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-white text-sm font-semibold transition-colors shadow-sm"
+        className="inline-flex items-center gap-2 h-9 px-3.5 rounded-lg bg-brand-500 hover:bg-brand-400 active:bg-brand-600 text-white text-sm font-semibold transition-colors shadow-sm"
       >
         <Plus size={15} />
         <span className="hidden sm:inline">{t('add_appointment')}</span>
@@ -199,7 +199,7 @@ export function AddAppointmentModal({ clients, serviceTypes }: Props) {
                     onChange={e => setNotes(e.target.value)}
                     rows={2}
                     disabled={isPending}
-                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 resize-none disabled:opacity-60"
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 resize-none disabled:opacity-60"
                   />
                 </div>
 
@@ -222,7 +222,7 @@ export function AddAppointmentModal({ clients, serviceTypes }: Props) {
                   <button
                     type="submit"
                     disabled={isPending || !clientId || !serviceId}
-                    className="flex-1 h-10 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-white text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="flex-1 h-10 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 text-white text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {isPending && <Loader2 size={14} className="animate-spin" />}
                     {isPending ? t('saving') : t('save_appointment')}

@@ -21,8 +21,8 @@ export function ClientProfileForm({ client }: Props) {
   const saved   = state === null
   const errKey  = typeof state === 'string' ? state : null
 
-  const inputCls = 'h-10 bg-white border-gray-200 focus:border-amber-400 focus:ring-amber-100 text-gray-900'
-  const selectCls = 'w-full h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-shadow text-gray-900 disabled:opacity-60'
+  const inputCls = 'h-10 bg-white border-gray-200 focus:border-brand-400 focus:ring-brand-100 text-gray-900'
+  const selectCls = 'w-full h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-shadow text-gray-900 disabled:opacity-60'
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -104,7 +104,7 @@ export function ClientProfileForm({ client }: Props) {
       <button
         type="submit"
         disabled={isPending}
-        className="w-full flex items-center justify-center gap-2 h-11 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-white font-semibold text-sm transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+        className="w-full flex items-center justify-center gap-2 h-11 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 text-white font-semibold text-sm transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {isPending && <Loader2 size={16} className="animate-spin" />}
         {isPending ? t('saving') : t('save')}

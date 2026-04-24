@@ -66,7 +66,7 @@ export default function NewClientPage() {
           <p className="text-sm text-gray-500">{success}</p>
           <button
             onClick={() => setSuccess(null)}
-            className="mt-4 text-sm text-amber-600 hover:underline"
+            className="mt-4 text-sm text-brand-600 hover:underline"
           >
             {locale === 'es' ? 'Invitar otro cliente' : 'Invite another client'}
           </button>
@@ -94,7 +94,7 @@ export default function NewClientPage() {
           <button
             type="submit"
             disabled={isPending}
-            className="h-12 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 disabled:opacity-60 text-white font-bold transition-colors shadow-lg shadow-amber-900/20"
+            className="h-12 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 disabled:opacity-60 text-white font-bold transition-colors shadow-lg shadow-brand-900/20"
           >
             {isPending
               ? (locale === 'es' ? 'Enviando...' : 'Sending...')

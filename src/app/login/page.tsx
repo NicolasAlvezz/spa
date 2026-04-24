@@ -37,9 +37,11 @@ export default function LoginPage() {
 
           {/* Brand */}
           <div className="text-center mb-10">
-            <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-amber-500/15 border border-amber-500/25 mb-4 sm:mb-5">
-              <span className="text-amber-400 text-xl sm:text-2xl font-bold">VM</span>
-            </div>
+            <img
+              src="/images/logo.png"
+              alt="VM Integral Massage"
+              className="w-32 h-32 sm:w-40 sm:h-40 mx-auto mb-4 drop-shadow-2xl"
+            />
             <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
               VM Integral Massage
             </h1>
@@ -62,7 +64,7 @@ export default function LoginPage() {
                   required
                   disabled={isPending}
                   placeholder="admin@vmintegralmassage.com"
-                  className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 focus:border-amber-500 focus:ring-amber-500/20 h-11"
+                  className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 focus:border-brand-500 focus:ring-brand-500/20 h-11"
                 />
               </div>
 
@@ -77,7 +79,7 @@ export default function LoginPage() {
                   autoComplete="current-password"
                   required
                   disabled={isPending}
-                  className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 focus:border-amber-500 focus:ring-amber-500/20 h-11"
+                  className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 focus:border-brand-500 focus:ring-brand-500/20 h-11"
                 />
               </div>
 
@@ -90,7 +92,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isPending}
-                className="w-full h-11 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-white font-semibold text-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
+                className="w-full h-11 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 text-white font-semibold text-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
               >
                 {isPending && <Loader2 size={16} className="animate-spin" />}
                 {isPending ? t('logging_in') : t('login')}

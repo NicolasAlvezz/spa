@@ -23,8 +23,8 @@ export default async function ProfilePage() {
 
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-amber-50">
-          <User size={18} className="text-amber-600" />
+        <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-brand-50">
+          <User size={18} className="text-brand-600" />
         </div>
         <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
       </div>

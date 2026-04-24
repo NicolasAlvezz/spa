@@ -21,8 +21,8 @@ const HOW_HEARD_VALUES = [
 function SectionHeader({ icon: Icon, title }: { icon: React.ElementType; title: string }) {
   return (
     <div className="flex items-center gap-2.5 pb-4 mb-5 border-b border-gray-100">
-      <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-amber-50">
-        <Icon size={15} className="text-amber-600" />
+      <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-brand-50">
+        <Icon size={15} className="text-brand-600" />
       </div>
       <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">{title}</h2>
     </div>
@@ -50,8 +50,8 @@ export function ClientForm({ plans }: Props) {
     })
   }
 
-  const inputClass = "h-10 bg-white border-gray-200 focus:border-amber-400 focus:ring-amber-100 text-gray-900"
-  const selectClass = "w-full h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-shadow text-gray-900 disabled:opacity-60"
+  const inputClass = "h-10 bg-white border-gray-200 focus:border-brand-400 focus:ring-brand-100 text-gray-900"
+  const selectClass = "w-full h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-shadow text-gray-900 disabled:opacity-60"
 
   return (
     <form action={handleAction} className="space-y-6 max-w-2xl">
@@ -148,7 +148,7 @@ export function ClientForm({ plans }: Props) {
               checked={isHealthcare}
               onChange={(e) => setIsHealthcare(e.target.checked)}
               disabled={isPending}
-              className="w-4 h-4 rounded border-gray-300 accent-amber-500"
+              className="w-4 h-4 rounded border-gray-300 accent-brand-500"
             />
             <span className="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">
               {t('is_healthcare')}
@@ -161,7 +161,7 @@ export function ClientForm({ plans }: Props) {
                 type="checkbox"
                 name="work_id_verified"
                 disabled={isPending}
-                className="w-4 h-4 rounded border-gray-300 accent-amber-500"
+                className="w-4 h-4 rounded border-gray-300 accent-brand-500"
               />
               <span className="text-sm text-gray-600 group-hover:text-gray-800 transition-colors">
                 {t('id_verified')}
@@ -232,7 +232,7 @@ export function ClientForm({ plans }: Props) {
           name="notes"
           rows={3}
           disabled={isPending}
-          className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-shadow resize-none text-gray-900 placeholder:text-gray-400 disabled:opacity-60"
+          className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-shadow resize-none text-gray-900 placeholder:text-gray-400 disabled:opacity-60"
           placeholder={locale === 'es' ? 'Notas internas...' : 'Internal notes...'}
         />
       </section>
@@ -248,7 +248,7 @@ export function ClientForm({ plans }: Props) {
       <button
         type="submit"
         disabled={isPending}
-        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 h-11 px-6 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-white font-semibold text-sm transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 h-11 px-6 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 text-white font-semibold text-sm transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {isPending && <Loader2 size={16} className="animate-spin" />}
         {isPending ? tAuth('saving') : tAuth('save')}
