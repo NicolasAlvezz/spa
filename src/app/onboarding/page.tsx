@@ -110,6 +110,10 @@ const STRINGS = {
     error_personal: 'Please fill in all required personal information.',
     error_dob: 'Date of birth is required.',
     error_contract: 'You must accept the release and waiver to continue.',
+    error_already_registered: 'This account is already registered. Please go to your QR code page.',
+    error_unauthorized: 'Your session has expired. Please close this page and use the invitation link again.',
+    error_save_client: 'Could not save your profile.',
+    error_save_health: 'Your profile was saved but the health form could not be saved.',
     error_generic: 'Something went wrong. Please try again.',
   },
   es: {
@@ -153,6 +157,10 @@ const STRINGS = {
     error_personal: 'Por favor completá todos los datos personales requeridos.',
     error_dob: 'La fecha de nacimiento es obligatoria.',
     error_contract: 'Debés aceptar la exención de responsabilidad para continuar.',
+    error_already_registered: 'Esta cuenta ya está registrada. Por favor andá a tu página de código QR.',
+    error_unauthorized: 'Tu sesión expiró. Cerrá esta página y usá el link de invitación nuevamente.',
+    error_save_client: 'No se pudo guardar tu perfil.',
+    error_save_health: 'Tu perfil se guardó pero no se pudo guardar el formulario de salud.',
     error_generic: 'Ocurrió un error. Intentá de nuevo.',
   },
 } as const
@@ -203,10 +211,24 @@ export default function OnboardingPage() {
 
       if (!res.ok) {
         const body = await res.json()
-        if (body.error === 'contract_not_accepted') {
-          setError(s.error_contract)
-        } else {
-          setError(s.error_generic)
+        switch (body.error) {
+          case 'contract_not_accepted':
+            setError(s.error_contract)
+            break
+          case 'already_registered':
+            setError(s.error_already_registered)
+            break
+          case 'unauthorized':
+            setError(s.error_unauthorized)
+            break
+          case 'failed_to_create_client':
+            setError(`${s.error_save_client} (${body.detail ?? body.code ?? 'unknown'})`)
+            break
+          case 'failed_to_save_health_form':
+            setError(`${s.error_save_health} (${body.detail ?? body.code ?? 'unknown'})`)
+            break
+          default:
+            setError(`${s.error_generic} [${body.error ?? 'unknown'}]`)
         }
         return
       }

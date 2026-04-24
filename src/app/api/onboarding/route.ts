@@ -78,7 +78,11 @@ export async function POST(req: Request) {
 
   if (clientError || !client) {
     console.error('[POST /api/onboarding] client insert:', clientError)
-    return NextResponse.json({ error: 'failed_to_create_client' }, { status: 500 })
+    return NextResponse.json({
+      error: 'failed_to_create_client',
+      detail: clientError?.message ?? 'unknown',
+      code: clientError?.code ?? null,
+    }, { status: 500 })
   }
 
   // Create health form record
@@ -108,7 +112,11 @@ export async function POST(req: Request) {
 
   if (formError) {
     console.error('[POST /api/onboarding] health form insert:', formError)
-    return NextResponse.json({ error: 'failed_to_save_health_form' }, { status: 500 })
+    return NextResponse.json({
+      error: 'failed_to_save_health_form',
+      detail: formError?.message ?? 'unknown',
+      code: formError?.code ?? null,
+    }, { status: 500 })
   }
 
   return NextResponse.json({ ok: true })
