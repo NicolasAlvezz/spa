@@ -60,7 +60,9 @@ export function getOccupiedHoursForDate(
 export async function getScheduledWindowsForDate(
   date: string
 ): Promise<ScheduledAppointmentWindow[]> {
-  const supabase = createServiceClient()
+  // appointments table is present in DB but not yet in generated TS types
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = createServiceClient() as any
   const { start, end } = getDayBoundsET(date)
 
   const { data, error } = await supabase
