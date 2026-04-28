@@ -31,6 +31,7 @@ export function QrDisplay({ client, nextAppointment, recentVisits, serviceTypes 
   const t = useTranslations('myqr')
   const tCheck = useTranslations('checkin')
   const locale = useLocale() as 'en' | 'es'
+  const [consented, setConsented] = useState(false)
   const [qrSize, setQrSize] = useState(200)
 
   useEffect(() => {
@@ -55,6 +56,70 @@ export function QrDisplay({ client, nextAppointment, recentVisits, serviceTypes 
 
   function appointmentServiceName(appt: ClientNextAppointment) {
     return locale === 'es' ? appt.service_name_es : appt.service_name_en
+  }
+
+  if (!consented) {
+    return (
+      <div className="flex-1 flex flex-col px-5 py-8 max-w-sm mx-auto w-full gap-5">
+
+        {/* Logo + title */}
+        <div className="text-center">
+          <img src="/images/logo.png" alt="VM" className="w-20 h-20 mx-auto mb-3 drop-shadow" />
+          <h1 className="text-lg font-bold text-gray-900">VM Integral Massage</h1>
+          <p className="text-xs text-gray-400 mt-0.5">Kissimmee, Florida</p>
+        </div>
+
+        {/* Consent text */}
+        <div className="flex-1 overflow-y-auto bg-gray-50 rounded-2xl border border-gray-200 p-5 space-y-5 text-sm leading-relaxed text-gray-600">
+
+          <div className="space-y-1">
+            <h2 className="font-bold text-gray-800 text-sm">Medical Disclosure</h2>
+            <p>
+              I certify that I am free of any ailment which might be affected by the service, test or
+              procedure to be performed on me. I certify that to the best of my knowledge I do not have
+              any communicable or infectious disease. I understand that if I am ill or become ill I
+              should see my own physician and rely on his/her advice and consultation.
+            </p>
+          </div>
+
+          <div className="space-y-1">
+            <h2 className="font-bold text-gray-800 text-sm">Declaración médica</h2>
+            <p>
+              Certifico que estoy libre de cualquier dolencia que pueda verse afectada por el servicio,
+              la prueba o el procedimiento a realizarme. Certifico que a mi leal saber y entender no
+              tengo ninguna enfermedad contagiosa. Entiendo que si estoy enfermo o me enfermo debo ver
+              a mis propios médicos y confiar en sus consejos y consultas.
+            </p>
+          </div>
+
+          <div className="border-t border-gray-200 pt-4 space-y-1">
+            <h2 className="font-bold text-gray-800 text-sm">Agreement to Participate</h2>
+            <p>
+              I agree to participate in the massage therapy services that will be performed on me today
+              at VM Integral Massage Inc.
+            </p>
+          </div>
+
+          <div className="space-y-1">
+            <h2 className="font-bold text-gray-800 text-sm">Acuerdo para participar</h2>
+            <p>
+              Estoy de acuerdo en participar en los servicios de terapia de masajes que me realizarán
+              hoy en VM Integral Massage Inc.
+            </p>
+          </div>
+
+        </div>
+
+        {/* Accept button */}
+        <button
+          onClick={() => setConsented(true)}
+          className="w-full h-14 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 text-white font-bold text-base transition-colors shadow-lg shadow-brand-900/20"
+        >
+          I Accept &nbsp;/&nbsp; Acepto
+        </button>
+
+      </div>
+    )
   }
 
   return (
