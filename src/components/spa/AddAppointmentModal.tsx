@@ -1,10 +1,13 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { Plus, X, Loader2, CheckCircle2 } from 'lucide-react'
 import type { ClientSelectItem, ServiceTypeItem } from '@/lib/supabase/queries/clients'
+
+const WEEKDAY_SLOTS = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
+const SATURDAY_SLOTS = [8, 9, 10, 11, 12, 13]
 
 interface Props {
   clients: ClientSelectItem[]
@@ -27,6 +30,8 @@ export function AddAppointmentModal({ clients, serviceTypes }: Props) {
   const [dateStr, setDateStr]           = useState(todayLocal())
   const [timeStr, setTimeStr]           = useState('10:00')
   const [notes, setNotes]               = useState('')
+  const [occupiedExactHours, setOccupiedExactHours] = useState<number[]>([])
+  const [loadingAvailability, setLoadingAvailability] = useState(false)
 
   function todayLocal() {
     return new Date().toLocaleDateString('en-CA') // 'YYYY-MM-DD'
@@ -34,16 +39,79 @@ export function AddAppointmentModal({ clients, serviceTypes }: Props) {
 
   function reset() {
     setClientId(''); setServiceId(''); setDateStr(todayLocal()); setTimeStr('10:00'); setNotes('')
+    setOccupiedExactHours([])
     setError(null); setSuccess(false)
   }
 
   function handleOpen() { reset(); setOpen(true) }
   function handleClose() { setOpen(false) }
 
+  function getCandidateSlots(date: string): number[] {
+    const parsed = new Date(`${date}T00:00:00`)
+    if (parsed.getDay() === 0) return []
+    return parsed.getDay() === 6 ? SATURDAY_SLOTS : WEEKDAY_SLOTS
+  }
+
+  function toTimeString(hour: number): string {
+    return `${String(hour).padStart(2, '0')}:00`
+  }
+
+  function formatHourLabel(hour: number): string {
+    const d = new Date()
+    d.setHours(hour, 0, 0, 0)
+    return d.toLocaleTimeString(locale === 'es' ? 'es-US' : 'en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+    })
+  }
+
+  const candidateSlots = getCandidateSlots(dateStr)
+  const availableHours = candidateSlots.filter((hour) => !occupiedExactHours.includes(hour))
+
+  useEffect(() => {
+    if (!availableHours.length) return
+    if (!availableHours.includes(Number(timeStr.split(':')[0]))) {
+      setTimeStr(toTimeString(availableHours[0]))
+    }
+  }, [availableHours, timeStr])
+
+  useEffect(() => {
+    if (!open) return
+    let cancelled = false
+    setLoadingAvailability(true)
+
+    fetch(`/api/appointments/availability?date=${dateStr}`)
+      .then(async (res) => {
+        if (!res.ok) throw new Error('availability_fetch_failed')
+        return res.json()
+      })
+      .then((data: { occupied_exact_hours?: number[] }) => {
+        if (cancelled) return
+        const occupied = data.occupied_exact_hours ?? []
+        setOccupiedExactHours(occupied)
+        const selectedHour = Number(timeStr.split(':')[0])
+        if (occupied.includes(selectedHour)) {
+          const nextHour = getCandidateSlots(dateStr).find((hour) => !occupied.includes(hour))
+          setTimeStr(nextHour !== undefined ? toTimeString(nextHour) : '')
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setOccupiedExactHours([])
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingAvailability(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [dateStr, open, timeStr])
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!clientId) { setError('Please select a client'); return }
     if (!serviceId) { setError('Please select a service type'); return }
+    if (!timeStr) { setError(t('no_slots_available')); return }
     setError(null)
 
     // Build ISO timestamp from local date + time (Eastern Time — admin is on-site)
@@ -65,7 +133,11 @@ export function AddAppointmentModal({ clients, serviceTypes }: Props) {
       if (!res.ok) {
         const body = await res.json().catch(() => null)
         console.error('[AddAppointmentModal] error:', res.status, body)
-        setError('Could not save appointment. Try again.')
+        if (res.status === 409) {
+          setError(t('conflict_retry'))
+        } else {
+          setError('Could not save appointment. Try again.')
+        }
         return
       }
 
@@ -178,16 +250,31 @@ export function AddAppointmentModal({ clients, serviceTypes }: Props) {
                     <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block">
                       {t('time_label')} *
                     </label>
-                    <input
-                      type="time"
+                    <select
                       value={timeStr}
                       onChange={e => setTimeStr(e.target.value)}
                       required
-                      disabled={isPending}
+                      disabled={isPending || loadingAvailability || availableHours.length === 0}
                       className={inputCls}
-                    />
+                    >
+                      {availableHours.length === 0 ? (
+                        <option value="">{t('no_slots_available')}</option>
+                      ) : (
+                        availableHours.map((hour) => (
+                          <option key={hour} value={toTimeString(hour)}>
+                            {formatHourLabel(hour)}
+                          </option>
+                        ))
+                      )}
+                    </select>
                   </div>
                 </div>
+
+                {availableHours.length === 0 && (
+                  <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                    {t('no_slots_available')}
+                  </p>
+                )}
 
                 {/* Notes */}
                 <div className="space-y-1.5">
@@ -221,7 +308,7 @@ export function AddAppointmentModal({ clients, serviceTypes }: Props) {
                   </button>
                   <button
                     type="submit"
-                    disabled={isPending || !clientId || !serviceId}
+                    disabled={isPending || !clientId || !serviceId || !timeStr}
                     className="flex-1 h-10 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 text-white text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {isPending && <Loader2 size={14} className="animate-spin" />}

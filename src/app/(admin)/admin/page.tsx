@@ -22,6 +22,20 @@ export default async function AdminDashboardPage() {
   ])
 
   const tNav = await getTranslations('nav')
+  const occupiedToday = Array.from(
+    new Set(
+      appointments
+        .filter((appointment) => appointment.status === 'scheduled')
+        .map((appointment) =>
+          new Date(appointment.scheduled_at).toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true,
+            timeZone: 'America/New_York',
+          })
+        )
+    )
+  )
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8 max-w-5xl">
@@ -117,6 +131,13 @@ export default async function AdminDashboardPage() {
             </div>
             <AddAppointmentModal clients={clients} serviceTypes={serviceTypes} />
           </div>
+          {occupiedToday.length > 0 && (
+            <div className="px-5 py-2.5 border-b border-gray-100 bg-amber-50/40">
+              <p className="text-[11px] font-medium text-amber-700">
+                {t('occupied_today')}: {occupiedToday.join(', ')}
+              </p>
+            </div>
+          )}
 
           {appointments.length === 0 ? (
             <div className="px-5 py-10 text-center">

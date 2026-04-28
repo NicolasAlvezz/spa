@@ -100,18 +100,37 @@ export interface ServiceTypeItem {
   slug: string
   name_en: string
   name_es: string
+  duration_minutes: number
+  description: string | null
+  price: number | null
+}
+
+export interface ServiceTypeAdminItem extends ServiceTypeItem {
+  is_active: boolean
+  created_at: string
 }
 
 export async function getServiceTypes(): Promise<ServiceTypeItem[]> {
   const supabase = createServiceClient()
   const { data, error } = await supabase
     .from('service_types')
-    .select('id, slug, name_en, name_es')
+    .select('id, slug, name_en, name_es, duration_minutes, description, price')
     .eq('is_active', true)
     .order('name_en')
 
   if (error) throw error
-  return (data ?? []) as ServiceTypeItem[]
+  return (data ?? []) as unknown as ServiceTypeItem[]
+}
+
+export async function getAllServiceTypes(): Promise<ServiceTypeAdminItem[]> {
+  const supabase = createServiceClient()
+  const { data, error } = await supabase
+    .from('service_types')
+    .select('id, slug, name_en, name_es, duration_minutes, description, price, is_active, created_at')
+    .order('name_en')
+
+  if (error) throw error
+  return (data ?? []) as unknown as ServiceTypeAdminItem[]
 }
 
 // ── Client-facing query — uses service client ────────────────────────────────

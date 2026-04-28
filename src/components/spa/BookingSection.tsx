@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useEffect, useMemo, useState, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
-import { ChevronLeft, ChevronRight, Loader2, CheckCircle2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
 import { bookAppointmentAction } from '@/app/(client)/my-qr/book-action'
+import type { ServiceTypeItem } from '@/lib/supabase/queries/clients'
 
 // ─── Spa schedule ─────────────────────────────────────────────────────────────
 // Mon–Fri: 8 am – 7 pm (last slot 6 pm)
@@ -39,18 +40,22 @@ function formatHour(h: number, locale: 'en' | 'es'): string {
 
 interface Props {
   locale: 'en' | 'es'
+  serviceTypes: ServiceTypeItem[]
 }
 
-export function BookingSection({ locale }: Props) {
+export function BookingSection({ locale, serviceTypes }: Props) {
   const t = useTranslations('booking')
 
   const now = new Date()
   const [month, setMonth] = useState(() => new Date(now.getFullYear(), now.getMonth(), 1))
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [selectedHour, setSelectedHour] = useState<number | null>(null)
+  const [selectedServiceTypeId, setSelectedServiceTypeId] = useState<string | null>(null)
   const [notes, setNotes] = useState('')
   const [isPending, startTransition] = useTransition()
-  const [bookStatus, setBookStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [bookStatus, setBookStatus] = useState<'idle' | 'success' | 'error' | 'occupied'>('idle')
+  const [occupiedHours, setOccupiedHours] = useState<number[]>([])
+  const [loadingAvailability, setLoadingAvailability] = useState(false)
 
   const year = month.getFullYear()
   const monthIdx = month.getMonth()
@@ -74,39 +79,50 @@ export function BookingSection({ locale }: Props) {
 
   const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
 
+  function resetForm() {
+    setSelectedDate(null)
+    setSelectedHour(null)
+    setSelectedServiceTypeId(null)
+    setBookStatus('idle')
+  }
+
   function prevMonth() {
     const prev = new Date(year, monthIdx - 1, 1)
     if (prev < currentMonthStart) return
     setMonth(prev)
-    setSelectedDate(null)
-    setSelectedHour(null)
-    setBookStatus('idle')
+    resetForm()
   }
 
   function nextMonth() {
     setMonth(new Date(year, monthIdx + 1, 1))
-    setSelectedDate(null)
-    setSelectedHour(null)
-    setBookStatus('idle')
+    resetForm()
   }
 
   function handleDayClick(date: Date) {
     if (isPast(date) || !isWorkingDay(date)) return
     setSelectedDate(date)
     setSelectedHour(null)
+    setSelectedServiceTypeId(null)
+    setBookStatus('idle')
+  }
+
+  function handleHourClick(h: number) {
+    setSelectedHour(h)
+    // Keep service type selection if already picked
     setBookStatus('idle')
   }
 
   function handleSubmit() {
-    if (!selectedDate || selectedHour === null) return
+    if (!selectedDate || selectedHour === null || !selectedServiceTypeId) return
     const dt = new Date(selectedDate)
     dt.setHours(selectedHour, 0, 0, 0)
     startTransition(async () => {
-      const err = await bookAppointmentAction(dt.toISOString(), notes.trim() || null)
-      setBookStatus(err ? 'error' : 'success')
+      const err = await bookAppointmentAction(dt.toISOString(), selectedServiceTypeId, notes.trim() || null)
+      setBookStatus(err ? (err === 'slot_occupied' ? 'occupied' : 'error') : 'success')
       if (!err) {
         setSelectedDate(null)
         setSelectedHour(null)
+        setSelectedServiceTypeId(null)
         setNotes('')
       }
     })
@@ -114,6 +130,7 @@ export function BookingSection({ locale }: Props) {
 
   const isPrevDisabled = new Date(year, monthIdx - 1, 1) < currentMonthStart
   const slots = selectedDate ? getSlots(selectedDate) : []
+  const hasAvailableSlots = slots.some((h) => !occupiedHours.includes(h))
 
   const selectedDateLabel = selectedDate
     ? selectedDate.toLocaleDateString(locale === 'es' ? 'es-US' : 'en-US', {
@@ -122,6 +139,52 @@ export function BookingSection({ locale }: Props) {
         day: 'numeric',
       })
     : ''
+
+  const canSubmit = selectedHour !== null && selectedServiceTypeId !== null && !isPending
+
+  const selectedDateKey = useMemo(() => {
+    if (!selectedDate) return null
+    const yearPart = selectedDate.getFullYear()
+    const monthPart = String(selectedDate.getMonth() + 1).padStart(2, '0')
+    const dayPart = String(selectedDate.getDate()).padStart(2, '0')
+    return `${yearPart}-${monthPart}-${dayPart}`
+  }, [selectedDate])
+
+  useEffect(() => {
+    if (!selectedDateKey) {
+      setOccupiedHours([])
+      return
+    }
+
+    let cancelled = false
+    setLoadingAvailability(true)
+
+    fetch(`/api/appointments/availability?date=${selectedDateKey}`)
+      .then(async (res) => {
+        if (!res.ok) throw new Error('availability_fetch_failed')
+        return res.json()
+      })
+      .then((data: { occupied_hours?: number[] }) => {
+        if (cancelled) return
+        const nextOccupied = data.occupied_hours ?? []
+        setOccupiedHours(nextOccupied)
+        if (selectedHour !== null && nextOccupied.includes(selectedHour)) {
+          setSelectedHour(null)
+          setSelectedServiceTypeId(null)
+          setBookStatus('occupied')
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setOccupiedHours([])
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingAvailability(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [selectedDateKey, selectedHour])
 
   return (
     <div className="w-full">
@@ -213,46 +276,114 @@ export function BookingSection({ locale }: Props) {
 
       {/* ── Booking form (appears when day is selected) ─────────────────── */}
       {selectedDate && (
-        <div className="mt-3 bg-white rounded-2xl border border-gray-200 shadow-sm px-4 py-4 space-y-4">
+        <div className="mt-3 bg-white rounded-2xl border border-gray-200 shadow-sm px-4 py-4 space-y-5">
           <p className="text-sm font-semibold text-gray-800 capitalize">{selectedDateLabel}</p>
 
-          {/* Time slots */}
+          {/* ── Step 1: Time slots ──────────────────────────────────── */}
           <div>
             <p className="text-xs text-gray-400 mb-2.5">{t('select_time')}</p>
+            {!loadingAvailability && !hasAvailableSlots && (
+              <p className="text-xs text-amber-600 mb-2">{t('no_slots_available')}</p>
+            )}
             <div className="flex flex-wrap gap-2">
-              {slots.map((h) => (
-                <button
-                  key={h}
-                  onClick={() => setSelectedHour(h)}
-                  className={[
-                    'px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors',
-                    selectedHour === h
-                      ? 'bg-brand-500 text-white border-brand-500'
-                      : 'border-gray-200 text-gray-600 hover:border-brand-300 hover:text-brand-700',
-                  ].join(' ')}
-                >
-                  {formatHour(h, locale)}
-                </button>
-              ))}
+              {slots.map((h) => {
+                const occupied = occupiedHours.includes(h)
+                const disabled = occupied || loadingAvailability
+
+                return (
+                  <button
+                    key={h}
+                    onClick={() => !disabled && handleHourClick(h)}
+                    disabled={disabled}
+                    className={[
+                      'px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors',
+                      selectedHour === h
+                        ? 'bg-brand-500 text-white border-brand-500'
+                        : occupied
+                        ? 'border-gray-100 bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'border-gray-200 text-gray-600 hover:border-brand-300 hover:text-brand-700',
+                    ].join(' ')}
+                  >
+                    {occupied ? `${formatHour(h, locale)} · ${t('slot_occupied')}` : formatHour(h, locale)}
+                  </button>
+                )
+              })}
             </div>
           </div>
 
-          {/* Notes */}
-          <div>
-            <p className="text-xs text-gray-400 mb-2">{t('notes')}</p>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder={t('notes_placeholder')}
-              rows={2}
-              className="w-full text-sm rounded-lg border border-gray-200 px-3 py-2 outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 resize-none text-gray-800 placeholder:text-gray-300"
-            />
-          </div>
+          {/* ── Step 2: Massage type (appears after hour is selected) ── */}
+          {selectedHour !== null && (
+            <div>
+              <p className="text-xs text-gray-400 mb-2.5">{t('select_service')}</p>
+
+              {serviceTypes.length === 0 ? (
+                <div className="flex items-center gap-2 text-xs text-gray-400 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3">
+                  <AlertCircle size={14} className="flex-shrink-0" />
+                  {t('no_services')}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-2">
+                  {serviceTypes.map((s) => {
+                    const name = locale === 'es' ? s.name_es : s.name_en
+                    const isSelected = selectedServiceTypeId === s.id
+                    return (
+                      <button
+                        key={s.id}
+                        onClick={() => setSelectedServiceTypeId(s.id)}
+                        aria-pressed={isSelected}
+                        className={[
+                          'w-full text-left px-4 py-3 rounded-xl border-2 transition-all',
+                          isSelected
+                            ? 'border-brand-500 bg-brand-50'
+                            : 'border-gray-100 bg-white hover:border-brand-200 hover:bg-brand-50/40',
+                        ].join(' ')}
+                      >
+                        <span className={[
+                          'text-sm font-semibold block leading-tight',
+                          isSelected ? 'text-brand-700' : 'text-gray-800',
+                        ].join(' ')}>
+                          {name}
+                        </span>
+                        <span className={[
+                          'text-xs mt-0.5 block',
+                          isSelected ? 'text-brand-500' : 'text-gray-400',
+                        ].join(' ')}>
+                          {s.duration_minutes} min
+                          {s.description && (
+                            <> · {s.description}</>
+                          )}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── Step 3: Notes (appears after massage type is selected) ─ */}
+          {selectedServiceTypeId !== null && (
+            <div>
+              <p className="text-xs text-gray-400 mb-2">{t('notes')}</p>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder={t('notes_placeholder')}
+                rows={2}
+                className="w-full text-sm rounded-lg border border-gray-200 px-3 py-2 outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 resize-none text-gray-800 placeholder:text-gray-300"
+              />
+            </div>
+          )}
 
           {/* Feedback */}
           {bookStatus === 'error' && (
             <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-4 py-2.5">
               {t('error')}
+            </p>
+          )}
+          {bookStatus === 'occupied' && (
+            <p className="text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-4 py-2.5">
+              {t('conflict_retry')}
             </p>
           )}
           {bookStatus === 'success' && (
@@ -265,7 +396,7 @@ export function BookingSection({ locale }: Props) {
           {/* Submit */}
           <button
             onClick={handleSubmit}
-            disabled={selectedHour === null || isPending}
+            disabled={!canSubmit}
             className="w-full flex items-center justify-center gap-2 h-11 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 text-white font-semibold text-sm transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isPending && <Loader2 size={15} className="animate-spin" />}

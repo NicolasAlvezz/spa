@@ -11,11 +11,13 @@ import { formatDate, formatDateTime } from '@/lib/utils/dates'
 import { getCurrentMembership } from '@/lib/utils/membership'
 import type { ClientDetail } from '@/types'
 import type { ClientNextAppointment, ClientVisitRow } from '@/lib/supabase/queries/client-portal'
+import type { ServiceTypeItem } from '@/lib/supabase/queries/clients'
 
 interface Props {
   client: ClientDetail
   nextAppointment: ClientNextAppointment | null
   recentVisits: ClientVisitRow[]
+  serviceTypes: ServiceTypeItem[]
 }
 
 const SESSION_LABELS: Record<string, { en: string; es: string }> = {
@@ -25,7 +27,7 @@ const SESSION_LABELS: Record<string, { en: string; es: string }> = {
   welcome_offer: { en: 'Welcome offer',        es: 'Bienvenida' },
 }
 
-export function QrDisplay({ client, nextAppointment, recentVisits }: Props) {
+export function QrDisplay({ client, nextAppointment, recentVisits, serviceTypes }: Props) {
   const t = useTranslations('myqr')
   const tCheck = useTranslations('checkin')
   const locale = useLocale() as 'en' | 'es'
@@ -198,7 +200,7 @@ export function QrDisplay({ client, nextAppointment, recentVisits }: Props) {
       </div>
 
       {/* ── Book an appointment ────────────────────────────────────────── */}
-      <BookingSection locale={locale} />
+      <BookingSection locale={locale} serviceTypes={serviceTypes} />
 
       {/* ── Member since ───────────────────────────────────────────────── */}
       <p className="text-xs text-gray-300 font-medium">

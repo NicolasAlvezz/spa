@@ -14,7 +14,8 @@
     "payments": "Payments",
     "memberships": "Memberships",
     "dashboard": "Dashboard",
-    "stats": "Statistics"
+    "stats": "Statistics",
+    "services": "Services"
   },
   "admin": {
     "welcome": "Welcome, Maria Victoria",
@@ -38,6 +39,9 @@
     "notes_label": "Notes (optional)",
     "save_appointment": "Save appointment",
     "saving": "Saving...",
+    "occupied_today": "Occupied times today",
+    "no_slots_available": "No available time slots for this date.",
+    "conflict_retry": "That time was just taken. Please choose another slot.",
     "appointment_cancelled": "Cancelled",
     "appointment_completed": "Completed",
     "appointment_no_show": "No show"
@@ -122,6 +126,11 @@
     "closed_sunday": "Sundays — closed",
     "selected": "Selected",
     "select_time": "Select a time",
+    "select_service": "Select massage type",
+    "no_services": "No massage types available. Please contact reception.",
+    "slot_occupied": "Occupied",
+    "no_slots_available": "No available slots for this day.",
+    "conflict_retry": "That time is no longer available. Please choose another slot.",
     "notes": "Notes (optional)",
     "notes_placeholder": "Any preferences or additional info...",
     "book": "Book appointment",

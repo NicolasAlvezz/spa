@@ -14,7 +14,8 @@
     "payments": "Pagos",
     "memberships": "Membresías",
     "dashboard": "Inicio",
-    "stats": "Estadísticas"
+    "stats": "Estadísticas",
+    "services": "Servicios"
   },
   "admin": {
     "welcome": "Bienvenida, Maria Victoria",
@@ -38,6 +39,9 @@
     "notes_label": "Notas (opcional)",
     "save_appointment": "Guardar cita",
     "saving": "Guardando...",
+    "occupied_today": "Horarios ocupados hoy",
+    "no_slots_available": "No hay horarios disponibles para esa fecha.",
+    "conflict_retry": "Ese horario ya se ocupó. Elegí otro turno.",
     "appointment_cancelled": "Cancelada",
     "appointment_completed": "Completada",
     "appointment_no_show": "No se presentó"
@@ -122,6 +126,11 @@
     "closed_sunday": "Domingos — cerrado",
     "selected": "Seleccionado",
     "select_time": "Elegí un horario",
+    "select_service": "Elegí el tipo de masaje",
+    "no_services": "No hay tipos de masaje disponibles. Contactá recepción.",
+    "slot_occupied": "Ocupado",
+    "no_slots_available": "No hay horarios disponibles para ese día.",
+    "conflict_retry": "Ese horario ya no está disponible. Elegí otro turno.",
     "notes": "Notas (opcional)",
     "notes_placeholder": "Preferencias o información adicional...",
     "book": "Reservar turno",
