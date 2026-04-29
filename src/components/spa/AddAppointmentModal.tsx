@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { Plus, X, Loader2, CheckCircle2 } from 'lucide-react'
@@ -32,6 +32,9 @@ export function AddAppointmentModal({ clients, serviceTypes }: Props) {
   const [notes, setNotes]               = useState('')
   const [occupiedExactHours, setOccupiedExactHours] = useState<number[]>([])
   const [loadingAvailability, setLoadingAvailability] = useState(false)
+  // Ref so the effect can read the latest timeStr without it being a dependency
+  const timeStrRef = useRef(timeStr)
+  timeStrRef.current = timeStr
 
   function todayLocal() {
     return new Date().toLocaleDateString('en-CA') // 'YYYY-MM-DD'
@@ -89,7 +92,8 @@ export function AddAppointmentModal({ clients, serviceTypes }: Props) {
         if (cancelled) return
         const occupied = data.occupied_exact_hours ?? []
         setOccupiedExactHours(occupied)
-        const selectedHour = Number(timeStr.split(':')[0])
+        // Read timeStr from ref — avoids including it in deps and double-fetching
+        const selectedHour = Number(timeStrRef.current.split(':')[0])
         if (occupied.includes(selectedHour)) {
           const nextHour = getCandidateSlots(dateStr).find((hour) => !occupied.includes(hour))
           setTimeStr(nextHour !== undefined ? toTimeString(nextHour) : '')
@@ -105,7 +109,7 @@ export function AddAppointmentModal({ clients, serviceTypes }: Props) {
     return () => {
       cancelled = true
     }
-  }, [dateStr, open, timeStr])
+  }, [dateStr, open])  // timeStr removed — read via ref to avoid double-fetch
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

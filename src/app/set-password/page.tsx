@@ -53,7 +53,8 @@ export default function SetPasswordPage() {
         .maybeSingle()
 
       if (!client) {
-        router.push('/my-qr')
+        // No client record yet → must complete onboarding first
+        router.push('/onboarding')
         return
       }
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState, useTransition } from 'react'
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
 import { ChevronLeft, ChevronRight, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
 import { bookAppointmentAction } from '@/app/(client)/my-qr/book-action'
@@ -56,6 +56,9 @@ export function BookingSection({ locale, serviceTypes }: Props) {
   const [bookStatus, setBookStatus] = useState<'idle' | 'success' | 'error' | 'occupied'>('idle')
   const [occupiedHours, setOccupiedHours] = useState<number[]>([])
   const [loadingAvailability, setLoadingAvailability] = useState(false)
+  // Ref so the availability effect can check selectedHour without triggering re-runs
+  const selectedHourRef = useRef(selectedHour)
+  selectedHourRef.current = selectedHour
 
   const year = month.getFullYear()
   const monthIdx = month.getMonth()
@@ -168,7 +171,9 @@ export function BookingSection({ locale, serviceTypes }: Props) {
         if (cancelled) return
         const nextOccupied = data.occupied_hours ?? []
         setOccupiedHours(nextOccupied)
-        if (selectedHour !== null && nextOccupied.includes(selectedHour)) {
+        // Read via ref — avoids including selectedHour in deps and causing a double-fetch
+        const currentHour = selectedHourRef.current
+        if (currentHour !== null && nextOccupied.includes(currentHour)) {
           setSelectedHour(null)
           setSelectedServiceTypeId(null)
           setBookStatus('occupied')
@@ -184,7 +189,7 @@ export function BookingSection({ locale, serviceTypes }: Props) {
     return () => {
       cancelled = true
     }
-  }, [selectedDateKey, selectedHour])
+  }, [selectedDateKey])  // selectedHour removed — read via ref to avoid double-fetch
 
   return (
     <div className="w-full">

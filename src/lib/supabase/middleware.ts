@@ -46,13 +46,28 @@ export async function updateSession(request: NextRequest) {
 
   if (isAdminRoute && role !== 'admin') {
     if (!user) return NextResponse.redirect(new URL('/login', request.url))
-    // Authenticated but wrong role → redirect to their area
-    return NextResponse.redirect(new URL('/my-qr', request.url))
+    // role='client' → their area; unknown role → login (prevents /my-qr ↔ /admin loop)
+    return NextResponse.redirect(
+      new URL(role === 'client' ? '/my-qr' : '/login?error=no_role', request.url)
+    )
   }
 
-  // Client-only routes
-  if (pathname.startsWith('/my-qr') && role !== 'client') {
+  // Client-only routes — covers all pages in the (client) route group
+  const isClientRoute =
+    pathname.startsWith('/my-qr') ||
+    pathname.startsWith('/profile') ||
+    pathname.startsWith('/visits')
+
+  if (isClientRoute && role !== 'client') {
     if (!user) return NextResponse.redirect(new URL('/login', request.url))
+    // role='admin' → their area; unknown role → login (prevents loop)
+    return NextResponse.redirect(
+      new URL(role === 'admin' ? '/admin' : '/login?error=no_role', request.url)
+    )
+  }
+
+  // Block admins from hitting /onboarding (they have no client record to fill in)
+  if (pathname.startsWith('/onboarding') && role === 'admin') {
     return NextResponse.redirect(new URL('/admin', request.url))
   }
 
