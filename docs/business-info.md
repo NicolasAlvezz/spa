@@ -49,41 +49,56 @@
 
 ---
 
-## Catálogo completo de servicios
+## Rating y reseñas
 
-| Slug | Nombre ES | Nombre EN |
+| Plataforma | Rating | Reseñas |
 |---|---|---|
-| `relaxing` | Masaje Relajante / Anti-Estrés | Relaxing / Anti-Stress Massage |
-| `deep_tissue` | Masaje Descontracturante | Deep Tissue Massage |
-| `post_op` | Masaje Post Operatorio | Post-Operative Massage |
-| `lymphatic` | Drenaje Linfático | Lymphatic Drainage |
-| `sports` | Masaje Deportivo | Sports Massage |
-| `muscle_recovery` | Recuperación Muscular | Muscle Recovery |
+| Booksy | ⭐ 5.0 / 5.0 | 166 reseñas ✅ Confirmado |
 
-### Descripción de cada servicio
+---
 
-**Masaje Relajante / Anti-Estrés**
-Transforma energía negativa, estrés y cansancio. Reduce tensión muscular, frecuencia
-cardíaca y presión arterial. Mejora circulación y promueve producción de endorfinas.
+## Catálogo completo de servicios (Booksy — actualizado)
 
-**Masaje Descontracturante (Deep Tissue)**
-Técnicas en capas superficiales y profundas. Indicado para contracciones musculares,
-distensiones y dolor específico (espalda baja, cuello). Presión profunda con movimientos lentos.
+| Slug | Nombre EN | Nombre ES | Precio USD | Duración |
+|---|---|---|---|---|
+| `massage_60` | 60 min massage | Masaje 60 min | $80 | 60 min |
+| `massage_30` | 30 min massage | Masaje 30 min | $60 | 30 min |
+| `full_body` | Full body massage | Masaje cuerpo completo | $100 | 60 min |
+| `deep_tissue` | Deep tissue massage | Masaje descontracturante | $100 | 60 min |
+| `back_massage` | Back massage | Masaje de espalda | $60 | 30 min |
+| `therapeutic` | Therapeutic massage | Masaje terapéutico | $100 | 60 min |
+| `sports` | Sports massage | Masaje deportivo | $100 | 60 min |
+| `cupping` | Cupping therapy | Terapia de ventosas | $100 | 60 min |
+| `neck` | Neck massage | Masaje de cuello | $100 | 60 min |
+| `couples` | Couples massage | Masaje en pareja | $190 | 60 min |
+| `prenatal` | Pregnancy massage | Masaje prenatal | $100 | 60 min |
+| `lymphatic` | Lymphatic drainage | Drenaje linfático | $100 | 60 min |
+| `relaxation` | Relaxation massage | Masaje relajante | $100 | 60 min |
+| `foot` | Foot massage | Masaje de pies | $90 | 60 min |
+| `head` | Head massage | Masaje de cabeza | $100 | 60 min |
+| `body_scrub` | Body scrub | Exfoliación corporal | $110 | 60 min |
+| `facials` | Facials | Limpieza facial | $100 | 60 min |
+| `body_contouring` | Body contouring | Masaje moldeador | $110 | 60 min |
+| `cellulite` | Cellulite removal | Eliminación de celulitis | $110 | 60 min |
+| `post_op` | Post-Op Massage | Masaje Post Operatorio | $90 | 60 min |
+| `valentine_special` | San Valentine Special | Especial San Valentín | $170 | 60 min |
+| `valentine_facial` | Valentine Massage & Facial | Masaje y Facial San Valentín | $340 | 120 min |
+| `mothers_day` | Mothers Day Special | Especial Día de las Madres | $200 | 120 min |
 
-**Masaje Post Operatorio**
-Recomendado por cirujanos plásticos post-liposucción, abdominoplastia, etc.
-Drena líquidos acumulados, reduce inflamación, hematomas, fibrosis y adherencias.
-Se recomiendan entre 10 y 20 sesiones mínimo. → Importante para el sistema: estos
-clientes vienen en series largas, no en membresía mensual.
+---
 
-**Drenaje Linfático**
-Masaje suave complementado con presoterapia y ultrasonidos. Desintoxicante.
+## Higiene y seguridad
 
-**Masaje Deportivo**
-Prepara al deportista, oxigena músculos y aporta flexibilidad. Reduce ácido láctico.
+- ✓ Empleadas usan mascarilla
+- ✓ Empleadas usan guantes descartables
+- ✓ Desinfección de todas las superficies
+- ✓ Desinfección entre clientes
 
-**Recuperación Muscular**
-Trata desgarros, dolor de espalda, nervio ciático. Alivia dolor, rigidez, hinchazón.
+---
+
+## Comodidades del local
+
+Estacionamiento · WiFi · Se aceptan tarjetas de crédito · Accesible · Mascotas permitidas · Apto para niños
 
 ---
 

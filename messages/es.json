@@ -87,8 +87,31 @@
   },
   "clientnav": {
     "my_qr": "Mi QR",
+    "book": "Reservar",
     "visits": "Mis visitas",
     "profile": "Perfil"
+  },
+  "book": {
+    "title": "Reservar turno",
+    "subtitle": "Seleccioná una fecha y hora para tu sesión.",
+    "services_title": "Nuestros servicios",
+    "about_title": "Sobre nosotros",
+    "about_rating": "5.0 · 166 reseñas en Booksy",
+    "about_address": "211 Broadway, Kissimmee, FL 34741",
+    "about_hours": "Lun–Vie 8 am–7 pm · Sáb 8 am–2 pm · Dom cerrado",
+    "about_phone": "+1 407-388-4928",
+    "health_title": "Higiene y seguridad",
+    "health_masks": "Empleadas usan mascarilla",
+    "health_gloves": "Empleadas usan guantes descartables",
+    "health_surfaces": "Desinfección de todas las superficies",
+    "health_between_clients": "Desinfección entre clientes",
+    "amenities_title": "Comodidades",
+    "amenity_parking": "Estacionamiento",
+    "amenity_wifi": "WiFi",
+    "amenity_cards": "Se aceptan tarjetas de crédito",
+    "amenity_accessible": "Accesible",
+    "amenity_pets": "Mascotas permitidas",
+    "amenity_children": "Apto para niños"
   },
   "clientprofile": {
     "title": "Mi Perfil",

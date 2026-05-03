@@ -33,8 +33,8 @@ export function ServiceTypeRow({ service }: Props) {
           )}
         </div>
         <p className="text-xs text-gray-400 mt-0.5">
+          {service.price_usd !== null && <>${service.price_usd} · </>}
           {service.duration_minutes} min
-          {service.description && <> · {service.description}</>}
         </p>
       </div>
 

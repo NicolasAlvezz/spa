@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import {
-  LayoutDashboard, Users, ScanLine, BarChart3, Layers,
+  LayoutDashboard, Users, ScanLine, BarChart3, Sparkles,
   LogOut, Loader2, Menu, X,
 } from 'lucide-react'
 import { useState, useTransition } from 'react'
@@ -32,7 +32,7 @@ export function AdminSidebar({ displayName, displayEmail }: Props) {
     { href: '/admin',                 label: t('dashboard'), icon: LayoutDashboard },
     { href: '/admin/clients',         label: t('clients'),   icon: Users },
     { href: '/admin/stats',           label: t('stats'),     icon: BarChart3 },
-    { href: '/admin/service-types',   label: t('services'),  icon: Layers },
+    { href: '/admin/services',         label: t('services'),  icon: Sparkles },
     { href: '/scan',                  label: t('scan'),      icon: ScanLine },
   ]
 

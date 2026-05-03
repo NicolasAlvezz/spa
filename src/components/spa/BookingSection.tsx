@@ -390,10 +390,8 @@ export function BookingSection({ locale, serviceTypes }: Props) {
                           'text-xs mt-0.5 block',
                           isSelected ? 'text-brand-500' : 'text-gray-400',
                         ].join(' ')}>
+                          {s.price_usd !== null && <>${s.price_usd} · </>}
                           {s.duration_minutes} min
-                          {s.description && (
-                            <> · {s.description}</>
-                          )}
                         </span>
                       </button>
                     )

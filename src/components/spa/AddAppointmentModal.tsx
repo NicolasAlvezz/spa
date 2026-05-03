@@ -256,6 +256,8 @@ export function AddAppointmentModal({ clients, serviceTypes }: Props) {
                     {serviceTypes.map(s => (
                       <option key={s.id} value={s.id}>
                         {locale === 'es' ? s.name_es : s.name_en}
+                        {s.price_usd !== null ? ` — $${s.price_usd}` : ''}
+                        {` · ${s.duration_minutes} min`}
                       </option>
                     ))}
                   </select>

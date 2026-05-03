@@ -315,21 +315,37 @@ export interface Database {
           slug: string
           name_en: string
           name_es: string
+          price_usd: number | null
+          duration_minutes: number
+          description_en: string | null
+          description_es: string | null
           is_active: boolean
           created_at: string
+          updated_at: string
         }
         Insert: {
           id?: string
           slug: string
           name_en: string
           name_es: string
+          price_usd?: number | null
+          duration_minutes?: number
+          description_en?: string | null
+          description_es?: string | null
           is_active?: boolean
           created_at?: string
+          updated_at?: string
         }
         Update: {
+          slug?: string
           name_en?: string
           name_es?: string
+          price_usd?: number | null
+          duration_minutes?: number
+          description_en?: string | null
+          description_es?: string | null
           is_active?: boolean
+          updated_at?: string
         }
         Relationships: Relationship[]
       }

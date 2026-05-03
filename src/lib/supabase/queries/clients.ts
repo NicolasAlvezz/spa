@@ -101,8 +101,9 @@ export interface ServiceTypeItem {
   name_en: string
   name_es: string
   duration_minutes: number
-  description: string | null
-  price: number | null
+  price_usd: number | null
+  description_en: string | null
+  description_es: string | null
 }
 
 export interface ServiceTypeAdminItem extends ServiceTypeItem {
@@ -114,7 +115,7 @@ export async function getServiceTypes(): Promise<ServiceTypeItem[]> {
   const supabase = createServiceClient()
   const { data, error } = await supabase
     .from('service_types')
-    .select('id, slug, name_en, name_es, duration_minutes, description, price')
+    .select('id, slug, name_en, name_es, duration_minutes, price_usd, description_en, description_es')
     .eq('is_active', true)
     .order('name_en')
 
@@ -126,7 +127,7 @@ export async function getAllServiceTypes(): Promise<ServiceTypeAdminItem[]> {
   const supabase = createServiceClient()
   const { data, error } = await supabase
     .from('service_types')
-    .select('id, slug, name_en, name_es, duration_minutes, description, price, is_active, created_at')
+    .select('id, slug, name_en, name_es, duration_minutes, price_usd, description_en, description_es, is_active, created_at')
     .order('name_en')
 
   if (error) throw error
