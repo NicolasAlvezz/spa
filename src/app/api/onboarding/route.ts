@@ -52,7 +52,12 @@ export async function POST(req: Request) {
     contract_accepted,
   } = body
 
-  if (!first_name || !last_name || !phone || !address) {
+  if (
+    !first_name?.trim() ||
+    !last_name?.trim() ||
+    !phone?.trim() ||
+    !address?.trim()
+  ) {
     return NextResponse.json({ error: 'missing_personal_fields' }, { status: 400 })
   }
 
@@ -112,6 +117,8 @@ export async function POST(req: Request) {
 
   if (formError) {
     console.error('[POST /api/onboarding] health form insert:', formError)
+    // Clean up orphaned client record so the user can retry onboarding
+    await supabase.from('clients').delete().eq('id', client.id)
     return NextResponse.json({
       error: 'failed_to_save_health_form',
       detail: formError?.message ?? 'unknown',

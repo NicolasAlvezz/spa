@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Printer, Calendar, CreditCard, Activity, TrendingUp } from 'lucide-react'
+import { ArrowLeft, Printer, Calendar, CreditCard, Activity, TrendingUp, BadgeCheck } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
 import {
   getClientById,
@@ -98,8 +98,15 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
             </h1>
             <MembershipBadge membership={membership} locale={locale} />
             {client.is_healthcare_worker && (
-              <span className="text-xs bg-blue-50 text-blue-600 px-2.5 py-1 rounded-full font-semibold">
-                Healthcare{client.work_id_verified && ' · ID ✓'}
+              <span className="text-xs bg-blue-50 text-blue-600 px-2.5 py-1 rounded-full font-semibold inline-flex items-center gap-1">
+                {t('healthcare_worker')}
+                {client.work_id_verified && (
+                  <>
+                    <span>·</span>
+                    <BadgeCheck size={12} />
+                    {t('id_verified_badge')}
+                  </>
+                )}
               </span>
             )}
           </div>
@@ -151,7 +158,7 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
         />
         <StatCard
           icon={TrendingUp}
-          label="Total paid"
+          label={t('total_paid')}
           value={`USD ${totalPaid.toFixed(0)}`}
           color="purple"
         />
@@ -164,22 +171,22 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
             {t('personal_info')}
           </h2>
           <dl className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm">
-            <InfoRow label="Phone"         value={client.phone} />
-            <InfoRow label="Email"         value={client.email ?? '—'} />
-            <InfoRow label="Address"       value={client.address} />
-            <InfoRow label="Heard from"    value={client.how_did_you_hear ?? '—'} />
+            <InfoRow label={t('detail_phone')}      value={client.phone} />
+            <InfoRow label={t('detail_email')}      value={client.email ?? '—'} />
+            <InfoRow label={t('detail_address')}    value={client.address} />
+            <InfoRow label={t('detail_heard')}      value={client.how_did_you_hear ?? '—'} />
             <InfoRow
-              label="First visit"
+              label={t('detail_first_visit')}
               value={client.first_visit_date ? formatDate(client.first_visit_date, locale) : '—'}
             />
             <InfoRow
-              label="Language"
+              label={t('detail_language')}
               value={client.preferred_language === 'es' ? 'Español' : 'English'}
             />
           </dl>
           {client.notes && (
             <div className="pt-4 border-t border-gray-100">
-              <p className="text-xs text-gray-400 uppercase tracking-wide mb-1.5">Notes</p>
+              <p className="text-xs text-gray-400 uppercase tracking-wide mb-1.5">{t('detail_notes')}</p>
               <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">{client.notes}</p>
             </div>
           )}
@@ -267,10 +274,10 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
           <table className="w-full text-sm min-w-[480px]">
             <thead>
               <tr className="bg-gray-50/80 text-left text-xs text-gray-500 uppercase tracking-wide border-b border-gray-100">
-                <th className="px-6 py-3 font-medium">Date</th>
-                <th className="px-6 py-3 font-medium">Service</th>
-                <th className="px-6 py-3 font-medium">Type</th>
-                <th className="px-6 py-3 font-medium">Notes</th>
+                <th className="px-6 py-3 font-medium">{t('visit_col_date')}</th>
+                <th className="px-6 py-3 font-medium">{t('visit_col_service')}</th>
+                <th className="px-6 py-3 font-medium">{t('visit_col_type')}</th>
+                <th className="px-6 py-3 font-medium">{t('visit_col_notes')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -314,11 +321,11 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
           <table className="w-full text-sm min-w-[520px]">
             <thead>
               <tr className="bg-gray-50/80 text-left text-xs text-gray-500 uppercase tracking-wide border-b border-gray-100">
-                <th className="px-6 py-3 font-medium">Date</th>
-                <th className="px-6 py-3 font-medium">Concept</th>
-                <th className="px-6 py-3 font-medium">Method</th>
-                <th className="px-6 py-3 font-medium text-right">Amount</th>
-                <th className="px-6 py-3 font-medium">Notes</th>
+                <th className="px-6 py-3 font-medium">{tPay('col_date')}</th>
+                <th className="px-6 py-3 font-medium">{tPay('col_concept')}</th>
+                <th className="px-6 py-3 font-medium">{tPay('col_method')}</th>
+                <th className="px-6 py-3 font-medium text-right">{tPay('col_amount')}</th>
+                <th className="px-6 py-3 font-medium">{tPay('col_notes')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">

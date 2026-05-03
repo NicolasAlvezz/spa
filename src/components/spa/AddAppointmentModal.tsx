@@ -9,6 +9,33 @@ import type { ClientSelectItem, ServiceTypeItem } from '@/lib/supabase/queries/c
 const WEEKDAY_SLOTS = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
 const SATURDAY_SLOTS = [8, 9, 10, 11, 12, 13]
 
+// Build an ISO string anchored to Eastern Time (America/New_York) regardless of browser timezone.
+function toEasternISO(dateStr: string, hour: number): string {
+  const [year, month, day] = dateStr.split('-').map(Number)
+  const probe = new Date(Date.UTC(year, month - 1, day, 12, 0, 0))
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/New_York',
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: false,
+    })
+      .formatToParts(probe)
+      .map((p) => [p.type, p.value])
+  )
+  const easternHour = parseInt(parts.hour, 10) % 24
+  const offsetHours = easternHour - 12
+  const sign = offsetHours >= 0 ? '+' : '-'
+  const offsetStr = `${sign}${String(Math.abs(offsetHours)).padStart(2, '0')}:00`
+  const mm = String(month).padStart(2, '0')
+  const dd = String(day).padStart(2, '0')
+  const hh = String(hour).padStart(2, '0')
+  return `${year}-${mm}-${dd}T${hh}:00:00${offsetStr}`
+}
+
 interface Props {
   clients: ClientSelectItem[]
   serviceTypes: ServiceTypeItem[]
@@ -118,9 +145,8 @@ export function AddAppointmentModal({ clients, serviceTypes }: Props) {
     if (!timeStr) { setError(t('no_slots_available')); return }
     setError(null)
 
-    // Build ISO timestamp from local date + time (Eastern Time — admin is on-site)
-    // We store "as-is" and interpret in ET when displaying
-    const scheduledAt = new Date(`${dateStr}T${timeStr}:00`).toISOString()
+    // Always anchor to Eastern Time (America/New_York) regardless of browser timezone
+    const scheduledAt = toEasternISO(dateStr, Number(timeStr.split(':')[0]))
 
     startTransition(async () => {
       const res = await fetch('/api/appointments', {
@@ -140,7 +166,7 @@ export function AddAppointmentModal({ clients, serviceTypes }: Props) {
         if (res.status === 409) {
           setError(t('conflict_retry'))
         } else {
-          setError('Could not save appointment. Try again.')
+          setError(t('error'))
         }
         return
       }

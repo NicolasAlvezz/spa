@@ -104,7 +104,13 @@ export default function ScanPage() {
         return
       }
 
-      const data: { visit_id: string; visited_at: string; session_type: string; split_payment_warning?: boolean } = await res.json()
+      const data: {
+        visit_id: string
+        visited_at: string
+        session_type: string
+        split_payment_warning?: boolean
+        sessions_remaining?: number | null
+      } = await res.json()
 
       const sessionLabels: Record<string, string> = {
         included: tCheck('session_included'),
@@ -112,9 +118,15 @@ export default function ScanPage() {
         additional: tCheck('session_additional'),
         welcome_offer: tCheck('session_welcome_offer'),
       }
+
+      const isPack = result.membership?.membership_plans?.plan_type === 'pack'
+      const detail = isPack && data.sessions_remaining !== null && data.sessions_remaining !== undefined
+        ? `${tCheck('sessions_remaining')}: ${data.sessions_remaining}`
+        : `${tCheck('session_type_label')}: ${sessionLabels[data.session_type] ?? data.session_type}`
+
       setSuccessInfo({
         title: tCheck('visit_registered'),
-        detail: `${tCheck('session_type_label')}: ${sessionLabels[data.session_type] ?? data.session_type}`,
+        detail,
       })
       setPhase('success')
     } catch {
@@ -591,7 +603,7 @@ function AssignMembershipPanel({ result, onConfirm, onCancel }: AssignMembership
       {/* Split payment option (only for eligible packs) */}
       {selectedPlan?.allows_split_payment && (
         <div>
-          <p className="text-slate-400 text-xs uppercase tracking-wide mb-3">{locale === 'es' ? 'Forma de pago' : 'Payment option'}</p>
+          <p className="text-slate-400 text-xs uppercase tracking-wide mb-3">{tPayment('payment_option')}</p>
           <div className="flex flex-col gap-2">
             <button onClick={() => setUseSplitPayment(false)} disabled={submitting}
               className={`w-full px-4 py-3 rounded-xl text-left text-sm font-medium transition-colors disabled:opacity-50 ${!useSplitPayment ? 'bg-brand-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
@@ -649,7 +661,6 @@ interface ConfirmSplitPanelProps {
 function ConfirmSplitPanel({ result, onConfirm, onCancel }: ConfirmSplitPanelProps) {
   const t = useTranslations('checkin')
   const tPayment = useTranslations('payment')
-  const locale = useLocale() as 'en' | 'es'
 
   const [method, setMethod] = useState<PaymentMethod | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -680,7 +691,7 @@ function ConfirmSplitPanel({ result, onConfirm, onCancel }: ConfirmSplitPanelPro
 
       <div className="bg-slate-800 rounded-xl p-4">
         <p className="text-slate-400 text-xs uppercase tracking-wide mb-1">
-          {locale === 'es' ? '2do pago del paquete' : '2nd pack installment'}
+          {t('split_installment')}
         </p>
         <p className="text-brand-400 text-4xl font-bold">${secondAmount}</p>
       </div>

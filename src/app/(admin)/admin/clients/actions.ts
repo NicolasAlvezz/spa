@@ -86,13 +86,16 @@ export async function createClientAction(
       redirect(`/admin/clients/${client.id}`)
     }
 
-    await supabase.from('payments').insert({
+    const { error: paymentError } = await supabase.from('payments').insert({
       client_id: client.id,
       membership_id: membership.id,
       amount_usd: payment_amount,
       method: payment_method as 'cash' | 'debit' | 'credit',
       concept: 'monthly_membership',
     })
+    if (paymentError) {
+      console.error('[createClientAction] payment insert failed:', paymentError)
+    }
   }
 
   redirect(`/admin/clients/${client.id}`)

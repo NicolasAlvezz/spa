@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -18,6 +19,7 @@ interface Props {
 
 export function AdminSidebar({ displayName, displayEmail }: Props) {
   const t = useTranslations('nav')
+  const tAuth = useTranslations('auth')
   const pathname = usePathname()
   const [isPending, startTransition] = useTransition()
   const [open, setOpen] = useState(false)
@@ -53,7 +55,7 @@ export function AdminSidebar({ displayName, displayEmail }: Props) {
       {/* Brand */}
       <div className="px-6 py-6 border-b border-slate-800">
         <div className="flex items-center gap-3">
-          <img src="/images/logo.png" alt="VM" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+          <Image src="/images/logo.png" alt="VM" width={40} height={40} className="rounded-lg object-cover flex-shrink-0" />
           <div className="min-w-0">
             <p className="text-white font-semibold text-sm leading-tight">VM Integral</p>
             <p className="text-slate-500 text-xs leading-tight">Massage Inc.</p>
@@ -94,7 +96,7 @@ export function AdminSidebar({ displayName, displayEmail }: Props) {
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors disabled:opacity-50"
         >
           {isPending ? <Loader2 size={16} className="animate-spin" /> : <LogOut size={16} />}
-          {isPending ? '...' : 'Log out'}
+          {tAuth('logout')}
         </button>
       </div>
     </>
@@ -112,7 +114,7 @@ export function AdminSidebar({ displayName, displayEmail }: Props) {
           <Menu size={20} />
         </button>
         <div className="flex items-center gap-2.5">
-          <img src="/images/logo.png" alt="VM" className="w-7 h-7 rounded-md object-cover flex-shrink-0" />
+          <Image src="/images/logo.png" alt="VM" width={28} height={28} className="rounded-md object-cover flex-shrink-0" />
           <p className="text-white font-semibold text-sm">VM Integral</p>
         </div>
       </header>

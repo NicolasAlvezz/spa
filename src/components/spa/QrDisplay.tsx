@@ -1,8 +1,11 @@
 'use client'
 
 import QRCode from 'react-qr-code'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useTranslations, useLocale } from 'next-intl'
+import enMessages from '../../../messages/en.json'
+import esMessages from '../../../messages/es.json'
 import { useEffect, useState } from 'react'
 import { CalendarDays, Activity, RotateCcw, Clock, ChevronRight } from 'lucide-react'
 import { MembershipBadge } from './MembershipBadge'
@@ -64,48 +67,32 @@ export function QrDisplay({ client, nextAppointment, recentVisits, serviceTypes 
 
         {/* Logo + title */}
         <div className="text-center">
-          <img src="/images/logo.png" alt="VM" className="w-20 h-20 mx-auto mb-3 drop-shadow" />
+          <Image src="/images/logo.png" alt="VM" width={80} height={80} className="mx-auto mb-3 drop-shadow" />
           <h1 className="text-lg font-bold text-gray-900">VM Integral Massage</h1>
           <p className="text-xs text-gray-400 mt-0.5">Kissimmee, Florida</p>
         </div>
 
-        {/* Consent text */}
+        {/* Consent text — always shown bilingual by design */}
         <div className="flex-1 overflow-y-auto bg-gray-50 rounded-2xl border border-gray-200 p-5 space-y-5 text-sm leading-relaxed text-gray-600">
 
           <div className="space-y-1">
-            <h2 className="font-bold text-gray-800 text-sm">Medical Disclosure</h2>
-            <p>
-              I certify that I am free of any ailment which might be affected by the service, test or
-              procedure to be performed on me. I certify that to the best of my knowledge I do not have
-              any communicable or infectious disease. I understand that if I am ill or become ill I
-              should see my own physician and rely on his/her advice and consultation.
-            </p>
+            <h2 className="font-bold text-gray-800 text-sm">{enMessages.consent.medical_title}</h2>
+            <p>{enMessages.consent.medical_body}</p>
           </div>
 
           <div className="space-y-1">
-            <h2 className="font-bold text-gray-800 text-sm">Declaración médica</h2>
-            <p>
-              Certifico que estoy libre de cualquier dolencia que pueda verse afectada por el servicio,
-              la prueba o el procedimiento a realizarme. Certifico que a mi leal saber y entender no
-              tengo ninguna enfermedad contagiosa. Entiendo que si estoy enfermo o me enfermo debo ver
-              a mis propios médicos y confiar en sus consejos y consultas.
-            </p>
+            <h2 className="font-bold text-gray-800 text-sm">{esMessages.consent.medical_title}</h2>
+            <p>{esMessages.consent.medical_body}</p>
           </div>
 
           <div className="border-t border-gray-200 pt-4 space-y-1">
-            <h2 className="font-bold text-gray-800 text-sm">Agreement to Participate</h2>
-            <p>
-              I agree to participate in the massage therapy services that will be performed on me today
-              at VM Integral Massage Inc.
-            </p>
+            <h2 className="font-bold text-gray-800 text-sm">{enMessages.consent.agreement_title}</h2>
+            <p>{enMessages.consent.agreement_body}</p>
           </div>
 
           <div className="space-y-1">
-            <h2 className="font-bold text-gray-800 text-sm">Acuerdo para participar</h2>
-            <p>
-              Estoy de acuerdo en participar en los servicios de terapia de masajes que me realizarán
-              hoy en VM Integral Massage Inc.
-            </p>
+            <h2 className="font-bold text-gray-800 text-sm">{esMessages.consent.agreement_title}</h2>
+            <p>{esMessages.consent.agreement_body}</p>
           </div>
 
         </div>
@@ -115,7 +102,7 @@ export function QrDisplay({ client, nextAppointment, recentVisits, serviceTypes 
           onClick={() => setConsented(true)}
           className="w-full h-14 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 text-white font-bold text-base transition-colors shadow-lg shadow-brand-900/20"
         >
-          I Accept &nbsp;/&nbsp; Acepto
+          {enMessages.consent.accept_button} &nbsp;/&nbsp; {esMessages.consent.accept_button}
         </button>
 
       </div>

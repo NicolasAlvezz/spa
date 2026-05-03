@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect, useRef } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { Smartphone, Loader2, CheckCircle2 } from 'lucide-react'
@@ -24,11 +24,10 @@ interface Props {
   className?: string
 }
 
-const ERROR_LABELS: Record<string, { en: string; es: string }> = {
-  fill_all_fields: { en: 'Please enter an email address.', es: 'Ingresá un email.' },
-  already_linked:  { en: 'This client already has app access.', es: 'Este cliente ya tiene acceso a la app.' },
-  email_taken:     { en: 'That email is already registered.',   es: 'Ese email ya está registrado.' },
-  generic_error:   { en: 'Something went wrong. Try again.',    es: 'Ocurrió un error. Intentá de nuevo.' },
+const ERROR_KEY_MAP: Record<string, string> = {
+  fill_all_fields: 'error_fill_all_fields',
+  already_linked:  'error_already_linked',
+  email_taken:     'error_email_taken',
 }
 
 export function InviteClientButton({ clientId, clientEmail, isLinked, className }: Props) {
@@ -38,10 +37,13 @@ export function InviteClientButton({ clientId, clientEmail, isLinked, className 
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const locale = (typeof document !== 'undefined'
-    ? document.cookie.match(/locale=(\w+)/)?.[1]
-    : 'en') as 'en' | 'es' ?? 'en'
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
+    }
+  }, [])
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -50,10 +52,11 @@ export function InviteClientButton({ clientId, clientEmail, isLinked, className 
     startTransition(async () => {
       const result = await linkClientToAuth(clientId, undefined, formData)
       if (result?.status === 'error') {
-        setError(ERROR_LABELS[result.message]?.[locale] ?? ERROR_LABELS.generic_error[locale])
+        const key = ERROR_KEY_MAP[result.message] ?? 'error_generic'
+        setError(t(key as Parameters<typeof t>[0]))
       } else if (result?.status === 'success') {
         setSuccess(true)
-        setTimeout(() => {
+        closeTimerRef.current = setTimeout(() => {
           setOpen(false)
           setSuccess(false)
           router.refresh()
@@ -63,9 +66,7 @@ export function InviteClientButton({ clientId, clientEmail, isLinked, className 
   }
 
   function handleUnlink() {
-    if (!confirm(locale === 'es'
-      ? '¿Seguro que querés quitar el acceso a la app de este cliente?'
-      : 'Remove app access for this client?')) return
+    if (!confirm(t('confirm_remove'))) return
 
     startTransition(async () => {
       await unlinkClientFromAuth(clientId)
@@ -83,7 +84,7 @@ export function InviteClientButton({ clientId, clientEmail, isLinked, className 
         className={`h-9 text-xs px-3 text-red-600 border-red-200 hover:bg-red-50 gap-1.5 ${className ?? ''}`}
       >
         {isPending ? <Loader2 size={13} className="animate-spin" /> : null}
-        {isPending ? '...' : t('remove_access')}
+        {isPending ? t('removing') : t('remove_access')}
       </Button>
     )
   }

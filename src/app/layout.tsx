@@ -1,11 +1,11 @@
 import type { Metadata } from 'next'
 import { Analytics } from '@vercel/analytics/next'
-import { Inter } from 'next/font/google'
+import { Outfit } from 'next/font/google'
 import { NextIntlClientProvider } from 'next-intl'
 import { getMessages } from 'next-intl/server'
 import './globals.css'
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
+const outfit = Outfit({ subsets: ['latin'], variable: '--font-sans' })
 
 export const metadata: Metadata = {
   title: 'VM Integral Massage',
@@ -23,7 +23,7 @@ export default async function RootLayout({
   const messages = await getMessages()
 
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={outfit.variable}>
       <body className="bg-gray-50 text-gray-900 antialiased">
         <NextIntlClientProvider messages={messages}>
           {children}

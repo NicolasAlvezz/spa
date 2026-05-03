@@ -47,29 +47,37 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'contract_not_accepted' }, { status: 400 })
   }
 
-  const { error } = await supabase
+  const formFields = {
+    date_of_birth: date_of_birth || null,
+    under_medical_treatment: !!under_medical_treatment,
+    medical_treatment_details: under_medical_treatment ? (medical_treatment_details || null) : null,
+    known_allergies: !!known_allergies,
+    allergies_details: known_allergies ? (allergies_details || null) : null,
+    chronic_conditions: !!chronic_conditions,
+    chronic_conditions_details: chronic_conditions ? (chronic_conditions_details || null) : null,
+    taking_medications: !!taking_medications,
+    medications_details: taking_medications ? (medications_details || null) : null,
+    is_pregnant: !!is_pregnant,
+    surgeries_last_12_months: !!surgeries_last_12_months,
+    surgery_details: surgeries_last_12_months ? (surgery_details || null) : null,
+    had_post_surgical_massage_before: !!had_post_surgical_massage_before,
+    post_surgical_details: had_post_surgical_massage_before ? (post_surgical_details || null) : null,
+    existing_conditions: existing_conditions || null,
+    other_health_concerns: other_health_concerns || null,
+    contract_accepted: true,
+    contract_accepted_at: new Date().toISOString(),
+  }
+
+  // Check for an existing form — update it instead of inserting a duplicate
+  const { data: existing } = await supabase
     .from('client_health_forms')
-    .insert({
-      client_id: client.id,
-      date_of_birth: date_of_birth || null,
-      under_medical_treatment: !!under_medical_treatment,
-      medical_treatment_details: under_medical_treatment ? (medical_treatment_details || null) : null,
-      known_allergies: !!known_allergies,
-      allergies_details: known_allergies ? (allergies_details || null) : null,
-      chronic_conditions: !!chronic_conditions,
-      chronic_conditions_details: chronic_conditions ? (chronic_conditions_details || null) : null,
-      taking_medications: !!taking_medications,
-      medications_details: taking_medications ? (medications_details || null) : null,
-      is_pregnant: !!is_pregnant,
-      surgeries_last_12_months: !!surgeries_last_12_months,
-      surgery_details: surgeries_last_12_months ? (surgery_details || null) : null,
-      had_post_surgical_massage_before: !!had_post_surgical_massage_before,
-      post_surgical_details: had_post_surgical_massage_before ? (post_surgical_details || null) : null,
-      existing_conditions: existing_conditions || null,
-      other_health_concerns: other_health_concerns || null,
-      contract_accepted: true,
-      contract_accepted_at: new Date().toISOString(),
-    })
+    .select('id')
+    .eq('client_id', client.id)
+    .maybeSingle()
+
+  const { error } = existing
+    ? await supabase.from('client_health_forms').update(formFields).eq('id', existing.id)
+    : await supabase.from('client_health_forms').insert({ client_id: client.id, ...formFields })
 
   if (error) {
     console.error('[POST /api/health-form]', error)

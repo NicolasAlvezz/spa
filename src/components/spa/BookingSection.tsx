@@ -10,6 +10,7 @@ import type { ServiceTypeItem } from '@/lib/supabase/queries/clients'
 // Mon–Fri: 8 am – 7 pm (last slot 6 pm)
 // Sat:     8 am – 2 pm (last slot 1 pm)
 // Sun:     closed
+// Timezone: America/New_York (spa is in Kissimmee, FL)
 const WEEKDAY_SLOTS = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
 const SATURDAY_SLOTS = [8, 9, 10, 11, 12, 13]
 
@@ -25,6 +26,42 @@ function isPast(date: Date): boolean {
 
 function getSlots(date: Date): number[] {
   return date.getDay() === 6 ? SATURDAY_SLOTS : WEEKDAY_SLOTS
+}
+
+// Build an ISO string that treats the selected date+hour as Eastern Time,
+// regardless of the client's browser timezone.
+function toEasternISO(date: Date, hour: number): string {
+  const year = date.getFullYear()
+  const month = date.getMonth()
+  const day = date.getDate()
+
+  // Probe UTC noon to determine whether Eastern is on EST (-5) or EDT (-4)
+  const probe = new Date(Date.UTC(year, month, day, 12, 0, 0))
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/New_York',
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: false,
+    })
+      .formatToParts(probe)
+      .map((p) => [p.type, p.value])
+  )
+
+  // Eastern hour when UTC is noon; diff gives the UTC offset (e.g. -4 or -5)
+  const easternHour = parseInt(parts.hour, 10) % 24
+  const offsetHours = easternHour - 12 // e.g. -4 (EDT) or -5 (EST)
+  const sign = offsetHours >= 0 ? '+' : '-'
+  const offsetStr = `${sign}${String(Math.abs(offsetHours)).padStart(2, '0')}:00`
+
+  const mm = String(month + 1).padStart(2, '0')
+  const dd = String(day).padStart(2, '0')
+  const hh = String(hour).padStart(2, '0')
+
+  return `${year}-${mm}-${dd}T${hh}:00:00${offsetStr}`
 }
 
 function formatHour(h: number, locale: 'en' | 'es'): string {
@@ -117,10 +154,10 @@ export function BookingSection({ locale, serviceTypes }: Props) {
 
   function handleSubmit() {
     if (!selectedDate || selectedHour === null || !selectedServiceTypeId) return
-    const dt = new Date(selectedDate)
-    dt.setHours(selectedHour, 0, 0, 0)
+    // Always send the appointment time as Eastern Time (spa timezone)
+    const scheduledAt = toEasternISO(selectedDate, selectedHour)
     startTransition(async () => {
-      const err = await bookAppointmentAction(dt.toISOString(), selectedServiceTypeId, notes.trim() || null)
+      const err = await bookAppointmentAction(scheduledAt, selectedServiceTypeId, notes.trim() || null)
       setBookStatus(err ? (err === 'slot_occupied' ? 'occupied' : 'error') : 'success')
       if (!err) {
         setSelectedDate(null)

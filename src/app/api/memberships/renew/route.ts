@@ -92,10 +92,14 @@ export async function POST(req: Request) {
 
   // Mark previous active membership as expired
   if (currentMembership?.status === 'active') {
-    await supabase
+    const { error: expireError } = await supabase
       .from('memberships')
       .update({ status: 'expired' })
       .eq('id', currentMembership.id)
+    if (expireError) {
+      console.error('[memberships/renew] failed to expire previous membership:', expireError)
+      return NextResponse.json({ error: 'failed_to_expire_previous_membership' }, { status: 500 })
+    }
   }
 
   const usingSplitPayment = isPack && !!split_payment && !!plan?.allows_split_payment
@@ -135,6 +139,7 @@ export async function POST(req: Request) {
 
   if (paymentError) {
     console.error('[POST /api/memberships/renew] payment insert:', paymentError)
+    return NextResponse.json({ error: 'failed_to_record_payment' }, { status: 500 })
   }
 
   return NextResponse.json({

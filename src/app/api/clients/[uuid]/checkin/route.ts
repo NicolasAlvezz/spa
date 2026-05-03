@@ -58,7 +58,7 @@ export async function GET(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabaseAny = supabase as any
 
-  const [{ data: visits }, { data: lastPaymentArr }, { data: todayAppt }] = await Promise.all([
+  const [visitsRes, paymentsRes, apptRes] = await Promise.all([
     supabase
       .from('visits')
       .select('*')
@@ -82,6 +82,14 @@ export async function GET(
       .limit(1)
       .maybeSingle(),
   ])
+
+  if (visitsRes.error) console.error('[checkin] visits query error:', visitsRes.error)
+  if (paymentsRes.error) console.error('[checkin] payments query error:', paymentsRes.error)
+  if (apptRes.error) console.error('[checkin] appointments query error:', apptRes.error)
+
+  const visits = visitsRes.data
+  const lastPaymentArr = paymentsRes.data
+  const todayAppt = apptRes.data
 
   const isPack = membership?.membership_plans?.plan_type === 'pack'
   const sessionsUsed = isPack

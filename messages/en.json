@@ -141,13 +141,19 @@
   "invite": {
     "give_access": "Send invitation",
     "remove_access": "Remove app access",
+    "removing": "Removing...",
+    "confirm_remove": "Remove app access for this client?",
     "dialog_title": "Invite client",
     "dialog_description": "Enter the client's email. They will receive a link to set their own password.",
     "email": "Email",
     "cancel": "Cancel",
     "create_access": "Send invitation",
     "creating": "Sending...",
-    "success": "Invitation sent! The client will receive an email shortly."
+    "success": "Invitation sent! The client will receive an email shortly.",
+    "error_fill_all_fields": "Please enter an email address.",
+    "error_already_linked": "This client already has app access.",
+    "error_email_taken": "That email is already registered.",
+    "error_generic": "Something went wrong. Try again."
   },
   "setpassword": {
     "title": "Set your password",
@@ -235,7 +241,8 @@
     "no_expiry": "No expiry",
     "sessions_remaining": "Sessions remaining",
     "today_appointment": "Today's appointment",
-    "appointment_service": "Service"
+    "appointment_service": "Service",
+    "split_installment": "2nd pack installment"
   },
   "payment": {
     "method_cash": "Cash",
@@ -249,7 +256,13 @@
     "date": "Date",
     "notes": "Notes (optional)",
     "confirm": "Confirm payment",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "payment_option": "Payment option",
+    "col_date": "Date",
+    "col_concept": "Concept",
+    "col_method": "Method",
+    "col_amount": "Amount",
+    "col_notes": "Notes"
   },
   "clients": {
     "title": "Clients",
@@ -287,7 +300,21 @@
     "period_3m": "3 months",
     "period_6m": "6 months",
     "period_1y": "1 year",
-    "period_all": "All time"
+    "period_all": "All time",
+    "detail_phone": "Phone",
+    "detail_email": "Email",
+    "detail_address": "Address",
+    "detail_heard": "Heard from",
+    "detail_first_visit": "First visit",
+    "detail_language": "Language",
+    "detail_notes": "Notes",
+    "total_paid": "Total paid",
+    "healthcare_worker": "Healthcare",
+    "id_verified_badge": "ID Verified",
+    "visit_col_date": "Date",
+    "visit_col_service": "Service",
+    "visit_col_type": "Type",
+    "visit_col_notes": "Notes"
   },
   "scan": {
     "instructions": "Point the camera at the client's QR code",
@@ -355,6 +382,13 @@
     "error_contract": "You must accept the release and waiver to continue.",
     "error_dob": "Date of birth is required.",
     "error_generic": "Something went wrong. Please try again."
+  },
+  "consent": {
+    "medical_title": "Medical Disclosure",
+    "medical_body": "I certify that I am free of any ailment which might be affected by the service, test or procedure to be performed on me. I certify that to the best of my knowledge I do not have any communicable or infectious disease. I understand that if I am ill or become ill I should see my own physician and rely on his/her advice and consultation.",
+    "agreement_title": "Agreement to Participate",
+    "agreement_body": "I agree to participate in the massage therapy services that will be performed on me today at VM Integral Massage Inc.",
+    "accept_button": "I Accept"
   },
   "errors": {
     "client_not_found": "No client found with that QR code.",

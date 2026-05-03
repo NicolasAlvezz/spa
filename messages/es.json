@@ -141,13 +141,19 @@
   "invite": {
     "give_access": "Enviar invitación",
     "remove_access": "Quitar acceso",
+    "removing": "Quitando...",
+    "confirm_remove": "¿Seguro que querés quitar el acceso a la app de este cliente?",
     "dialog_title": "Invitar cliente",
     "dialog_description": "Ingresá el email del cliente. Le llegará un link para elegir su propia contraseña.",
     "email": "Email",
     "cancel": "Cancelar",
     "create_access": "Enviar invitación",
     "creating": "Enviando...",
-    "success": "¡Invitación enviada! El cliente recibirá un email en breve."
+    "success": "¡Invitación enviada! El cliente recibirá un email en breve.",
+    "error_fill_all_fields": "Ingresá un email.",
+    "error_already_linked": "Este cliente ya tiene acceso a la app.",
+    "error_email_taken": "Ese email ya está registrado.",
+    "error_generic": "Ocurrió un error. Intentá de nuevo."
   },
   "setpassword": {
     "title": "Elegí tu contraseña",
@@ -235,7 +241,8 @@
     "no_expiry": "Sin vencimiento",
     "sessions_remaining": "Sesiones restantes",
     "today_appointment": "Cita de hoy",
-    "appointment_service": "Servicio"
+    "appointment_service": "Servicio",
+    "split_installment": "2do pago del paquete"
   },
   "payment": {
     "method_cash": "Efectivo",
@@ -249,7 +256,13 @@
     "date": "Fecha",
     "notes": "Observaciones (opcional)",
     "confirm": "Confirmar pago",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "payment_option": "Forma de pago",
+    "col_date": "Fecha",
+    "col_concept": "Concepto",
+    "col_method": "Método",
+    "col_amount": "Monto",
+    "col_notes": "Notas"
   },
   "clients": {
     "title": "Clientes",
@@ -287,7 +300,21 @@
     "period_3m": "3 meses",
     "period_6m": "6 meses",
     "period_1y": "1 año",
-    "period_all": "Todo"
+    "period_all": "Todo",
+    "detail_phone": "Teléfono",
+    "detail_email": "Email",
+    "detail_address": "Dirección",
+    "detail_heard": "Cómo supo",
+    "detail_first_visit": "Primera visita",
+    "detail_language": "Idioma",
+    "detail_notes": "Notas",
+    "total_paid": "Total pagado",
+    "healthcare_worker": "Trabajador de salud",
+    "id_verified_badge": "ID Verificado",
+    "visit_col_date": "Fecha",
+    "visit_col_service": "Servicio",
+    "visit_col_type": "Tipo",
+    "visit_col_notes": "Notas"
   },
   "scan": {
     "instructions": "Apuntá la cámara al código QR del cliente",
@@ -355,6 +382,13 @@
     "error_contract": "Debés aceptar la exención de responsabilidad para continuar.",
     "error_dob": "La fecha de nacimiento es obligatoria.",
     "error_generic": "Ocurrió un error. Intentá de nuevo."
+  },
+  "consent": {
+    "medical_title": "Declaración médica",
+    "medical_body": "Certifico que estoy libre de cualquier dolencia que pueda verse afectada por el servicio, la prueba o el procedimiento a realizarme. Certifico que a mi leal saber y entender no tengo ninguna enfermedad contagiosa. Entiendo que si estoy enfermo o me enfermo debo ver a mis propios médicos y confiar en sus consejos y consultas.",
+    "agreement_title": "Acuerdo para participar",
+    "agreement_body": "Estoy de acuerdo en participar en los servicios de terapia de masajes que me realizarán hoy en VM Integral Massage Inc.",
+    "accept_button": "Acepto"
   },
   "errors": {
     "client_not_found": "No se encontró ningún cliente con ese código QR.",

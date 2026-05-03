@@ -54,6 +54,7 @@ export async function POST(req: Request) {
   }
 
   let session_type: SessionType = 'additional'
+  let updatedSessionsRemaining: number | null = null
 
   if (membership_id) {
     const { data: membership } = await supabase
@@ -92,6 +93,7 @@ export async function POST(req: Request) {
 
         session_type = 'included'
         const newRemaining = sessionsRemaining - 1
+        updatedSessionsRemaining = newRemaining
 
         const updates: { sessions_remaining: number; status?: 'expired' } = {
           sessions_remaining: newRemaining,
@@ -100,7 +102,14 @@ export async function POST(req: Request) {
           updates.status = 'expired'
         }
 
-        await supabase.from('memberships').update(updates).eq('id', membership_id)
+        const { error: packUpdateError } = await supabase
+          .from('memberships')
+          .update(updates)
+          .eq('id', membership_id)
+        if (packUpdateError) {
+          console.error('[visits] pack membership update error:', packUpdateError)
+          return NextResponse.json({ error: 'failed_to_update_membership' }, { status: 500 })
+        }
 
       } else {
         // Monthly plan logic
@@ -119,7 +128,14 @@ export async function POST(req: Request) {
           updates.rollover_sessions = membership.rollover_sessions - 1
         }
 
-        await supabase.from('memberships').update(updates).eq('id', membership_id)
+        const { error: monthlyUpdateError } = await supabase
+          .from('memberships')
+          .update(updates)
+          .eq('id', membership_id)
+        if (monthlyUpdateError) {
+          console.error('[visits] monthly membership update error:', monthlyUpdateError)
+          return NextResponse.json({ error: 'failed_to_update_membership' }, { status: 500 })
+        }
       }
     }
   }
@@ -170,5 +186,6 @@ export async function POST(req: Request) {
     visited_at: visit.visited_at,
     session_type: visit.session_type,
     split_payment_warning,
+    sessions_remaining: updatedSessionsRemaining,
   })
 }

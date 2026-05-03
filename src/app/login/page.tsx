@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useTranslations } from 'next-intl'
 import { useTransition, useState } from 'react'
 import { Loader2 } from 'lucide-react'
@@ -37,9 +38,11 @@ export default function LoginPage() {
 
           {/* Brand */}
           <div className="text-center mb-10">
-            <img
+            <Image
               src="/images/logo.png"
               alt="VM Integral Massage"
+              width={160}
+              height={160}
               className="w-32 h-32 sm:w-40 sm:h-40 mx-auto mb-4 drop-shadow-2xl"
             />
             <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
