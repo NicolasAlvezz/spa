@@ -4,6 +4,17 @@ import { createServiceClient } from '@/lib/supabase/server'
 // Timezone utility — business is in Kissimmee, FL (America/New_York)
 // ---------------------------------------------------------------------------
 
+/** Returns UTC ISO bounds for an arbitrary YYYY-MM-DD date in Eastern Time. */
+export function dateBoundsET(dateStr: string): { start: string; end: string } {
+  const TZ = 'America/New_York'
+  const midnightUTC = new Date(`${dateStr}T00:00:00Z`)
+  const midnightET  = new Date(midnightUTC.toLocaleString('en-US', { timeZone: TZ }))
+  const offsetMs    = midnightUTC.getTime() - midnightET.getTime()
+  const start = new Date(midnightUTC.getTime() + offsetMs)
+  const end   = new Date(start.getTime() + 86_400_000)
+  return { start: start.toISOString(), end: end.toISOString() }
+}
+
 /** Returns start/end UTC ISO strings for "today" in Eastern Time. */
 export function todayBoundsET(): { start: string; end: string } {
   const TZ = 'America/New_York'
@@ -164,5 +175,46 @@ export async function getTodayAppointments(): Promise<TodayAppointment[]> {
     notes:        r.notes ?? null,
     client: r.clients,
     service: r.service_types ?? null,
+  }))
+}
+
+// ---------------------------------------------------------------------------
+// Calendar appointments (full join with phone + price + duration)
+// ---------------------------------------------------------------------------
+
+export interface CalendarAppointment {
+  id: string
+  scheduled_at: string
+  status: string
+  notes: string | null
+  client: { first_name: string; last_name: string; phone: string }
+  service: {
+    name_en: string
+    name_es: string
+    price_usd: number | null
+    duration_minutes: number | null
+  } | null
+}
+
+export async function getCalendarAppointments(dateStr: string): Promise<CalendarAppointment[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = createServiceClient() as any
+  const { start, end } = dateBoundsET(dateStr)
+
+  const { data } = await supabase
+    .from('appointments')
+    .select('id, scheduled_at, status, notes, clients(first_name, last_name, phone), service_types(name_en, name_es, price_usd, duration_minutes)')
+    .gte('scheduled_at', start)
+    .lt('scheduled_at', end)
+    .order('scheduled_at', { ascending: true })
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data ?? []).map((r: any) => ({
+    id:           r.id,
+    scheduled_at: r.scheduled_at,
+    status:       r.status,
+    notes:        r.notes ?? null,
+    client:       r.clients,
+    service:      r.service_types ?? null,
   }))
 }

@@ -44,7 +44,12 @@
     "conflict_retry": "That time was just taken. Please choose another slot.",
     "appointment_cancelled": "Cancelled",
     "appointment_completed": "Completed",
-    "appointment_no_show": "No show"
+    "appointment_no_show": "No show",
+    "cal_today_btn": "Today",
+    "cal_closed": "Closed — no appointments on Sundays",
+    "cal_mark_completed": "Mark as completed",
+    "cal_mark_no_show": "Mark as no-show",
+    "cal_cancel": "Cancel appointment"
   },
   "stats": {
     "title": "Statistics",

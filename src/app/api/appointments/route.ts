@@ -1,6 +1,30 @@
 import { NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { hasSchedulingConflict } from '@/lib/supabase/queries/appointments'
+import { getCalendarAppointments } from '@/lib/supabase/queries/dashboard'
+
+export async function GET(req: Request) {
+  const authClient = await createClient()
+  const { data: { user } } = await authClient.auth.getUser()
+  if (!user || user.app_metadata?.role !== 'admin') {
+    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  }
+
+  const { searchParams } = new URL(req.url)
+  const date = searchParams.get('date')
+
+  if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return NextResponse.json({ error: 'invalid_date' }, { status: 400 })
+  }
+
+  try {
+    const appointments = await getCalendarAppointments(date)
+    return NextResponse.json(appointments)
+  } catch (err) {
+    console.error('[GET /api/appointments] error:', err)
+    return NextResponse.json({ error: 'failed_to_load' }, { status: 500 })
+  }
+}
 
 export async function POST(req: Request) {
   const authClient = await createClient()

@@ -44,7 +44,12 @@
     "conflict_retry": "Ese horario ya se ocupó. Elegí otro turno.",
     "appointment_cancelled": "Cancelada",
     "appointment_completed": "Completada",
-    "appointment_no_show": "No se presentó"
+    "appointment_no_show": "No se presentó",
+    "cal_today_btn": "Hoy",
+    "cal_closed": "Cerrado — sin citas los domingos",
+    "cal_mark_completed": "Marcar como completada",
+    "cal_mark_no_show": "Marcar como no se presentó",
+    "cal_cancel": "Cancelar cita"
   },
   "stats": {
     "title": "Estadísticas",

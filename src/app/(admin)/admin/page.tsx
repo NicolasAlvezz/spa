@@ -1,41 +1,28 @@
 import { getTranslations } from 'next-intl/server'
-import { Users, Activity, DollarSign, AlertTriangle, Clock } from 'lucide-react'
+import { Users, Activity, DollarSign, AlertTriangle } from 'lucide-react'
 import {
   getDashboardStats,
   getTodayVisits,
-  getTodayAppointments,
+  getCalendarAppointments,
 } from '@/lib/supabase/queries/dashboard'
 import {
   getClientSelectList,
   getServiceTypes,
 } from '@/lib/supabase/queries/clients'
-import { AddAppointmentModal } from '@/components/spa/AddAppointmentModal'
+import { DayCalendar } from '@/components/spa/DayCalendar'
 
 export default async function AdminDashboardPage() {
-  const [t, stats, visits, appointments, clients, serviceTypes] = await Promise.all([
+  const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date())
+
+  const [t, tNav, stats, visits, appointments, clients, serviceTypes] = await Promise.all([
     getTranslations('dashboard'),
+    getTranslations('nav'),
     getDashboardStats(),
     getTodayVisits(),
-    getTodayAppointments(),
+    getCalendarAppointments(todayStr),
     getClientSelectList(),
     getServiceTypes(),
   ])
-
-  const tNav = await getTranslations('nav')
-  const occupiedToday = Array.from(
-    new Set(
-      appointments
-        .filter((appointment) => appointment.status === 'scheduled')
-        .map((appointment) =>
-          new Date(appointment.scheduled_at).toLocaleTimeString('en-US', {
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true,
-            timeZone: 'America/New_York',
-          })
-        )
-    )
-  )
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8 max-w-5xl">
@@ -122,70 +109,13 @@ export default async function AdminDashboardPage() {
           )}
         </div>
 
-        {/* Right: Appointments today */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-            <div className="flex items-center gap-2">
-              <Clock size={14} className="text-gray-400" />
-              <h2 className="text-sm font-semibold text-gray-700">{t('today_appointments')}</h2>
-            </div>
-            <AddAppointmentModal clients={clients} serviceTypes={serviceTypes} />
-          </div>
-          {occupiedToday.length > 0 && (
-            <div className="px-5 py-2.5 border-b border-gray-100 bg-amber-50/40">
-              <p className="text-[11px] font-medium text-amber-700">
-                {t('occupied_today')}: {occupiedToday.join(', ')}
-              </p>
-            </div>
-          )}
-
-          {appointments.length === 0 ? (
-            <div className="px-5 py-10 text-center">
-              <p className="text-sm text-gray-400">{t('no_appointments_today')}</p>
-            </div>
-          ) : (
-            <ul className="divide-y divide-gray-50">
-              {appointments.map((a) => (
-                <li key={a.id} className="flex items-center gap-3 px-5 py-3.5">
-                  <div className={`flex items-center justify-center w-8 h-8 rounded-lg flex-shrink-0 ${
-                    a.status === 'scheduled'  ? 'bg-brand-50' :
-                    a.status === 'completed'  ? 'bg-green-50' :
-                    a.status === 'no_show'    ? 'bg-red-50'   : 'bg-gray-50'
-                  }`}>
-                    <Clock size={14} className={
-                      a.status === 'scheduled'  ? 'text-brand-500' :
-                      a.status === 'completed'  ? 'text-green-500' :
-                      a.status === 'no_show'    ? 'text-red-400'   : 'text-gray-400'
-                    } />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {a.client.first_name} {a.client.last_name}
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      {a.service?.name_en ?? 'Appointment'}
-                      {a.notes && ` · ${a.notes}`}
-                    </p>
-                  </div>
-                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                    <time className="text-xs text-gray-400 tabular-nums">
-                      {formatTime(a.scheduled_at)}
-                    </time>
-                    {a.status !== 'scheduled' && (
-                      <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
-                        a.status === 'completed' ? 'bg-green-100 text-green-700' :
-                        a.status === 'no_show'   ? 'bg-red-100 text-red-600'    :
-                        'bg-gray-100 text-gray-500'
-                      }`}>
-                        {t(`appointment_${a.status}` as Parameters<typeof t>[0])}
-                      </span>
-                    )}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        {/* Right: Day Calendar */}
+        <DayCalendar
+          initialAppointments={appointments}
+          initialDateStr={todayStr}
+          clients={clients}
+          serviceTypes={serviceTypes}
+        />
       </div>
     </div>
   )

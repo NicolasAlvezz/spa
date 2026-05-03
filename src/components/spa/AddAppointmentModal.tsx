@@ -39,12 +39,28 @@ function toEasternISO(dateStr: string, hour: number): string {
 interface Props {
   clients: ClientSelectItem[]
   serviceTypes: ServiceTypeItem[]
+  // Controlled mode (used by DayCalendar)
+  controlledOpen?: boolean
+  onControlledClose?: () => void
+  defaultDate?: string
+  defaultHour?: number
+  onSuccess?: () => void
 }
 
-export function AddAppointmentModal({ clients, serviceTypes }: Props) {
+export function AddAppointmentModal({
+  clients,
+  serviceTypes,
+  controlledOpen,
+  onControlledClose,
+  defaultDate,
+  defaultHour,
+  onSuccess,
+}: Props) {
   const t      = useTranslations('dashboard')
   const locale = useLocale() as 'en' | 'es'
   const router = useRouter()
+
+  const isControlled = controlledOpen !== undefined
 
   const [open, setOpen]           = useState(false)
   const [success, setSuccess]     = useState(false)
@@ -63,18 +79,37 @@ export function AddAppointmentModal({ clients, serviceTypes }: Props) {
   const timeStrRef = useRef(timeStr)
   timeStrRef.current = timeStr
 
+  const isOpen = isControlled ? (controlledOpen ?? false) : open
+
   function todayLocal() {
     return new Date().toLocaleDateString('en-CA') // 'YYYY-MM-DD'
   }
 
-  function reset() {
-    setClientId(''); setServiceId(''); setDateStr(todayLocal()); setTimeStr('10:00'); setNotes('')
+  function reset(overrides?: { date?: string; hour?: number }) {
+    setClientId(''); setServiceId('')
+    setDateStr(overrides?.date ?? todayLocal())
+    setTimeStr(overrides?.hour !== undefined ? toTimeString(overrides.hour) : '10:00')
+    setNotes('')
     setOccupiedExactHours([])
     setError(null); setSuccess(false)
   }
 
+  // When controlled modal opens, reset with provided defaults
+  useEffect(() => {
+    if (isControlled && controlledOpen) {
+      reset({ date: defaultDate, hour: defaultHour })
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isControlled, controlledOpen, defaultDate, defaultHour])
+
   function handleOpen() { reset(); setOpen(true) }
-  function handleClose() { setOpen(false) }
+  function handleClose() {
+    if (isControlled) {
+      onControlledClose?.()
+    } else {
+      setOpen(false)
+    }
+  }
 
   function getCandidateSlots(date: string): number[] {
     const parsed = new Date(`${date}T00:00:00`)
@@ -173,7 +208,8 @@ export function AddAppointmentModal({ clients, serviceTypes }: Props) {
 
       setSuccess(true)
       router.refresh()
-      setTimeout(() => { setOpen(false); reset() }, 1500)
+      onSuccess?.()
+      setTimeout(() => { handleClose(); reset() }, 1500)
     })
   }
 
@@ -182,17 +218,19 @@ export function AddAppointmentModal({ clients, serviceTypes }: Props) {
 
   return (
     <>
-      {/* Trigger */}
-      <button
-        onClick={handleOpen}
-        className="inline-flex items-center gap-2 h-9 px-3.5 rounded-lg bg-brand-500 hover:bg-brand-400 active:bg-brand-600 text-white text-sm font-semibold transition-colors shadow-sm"
-      >
-        <Plus size={15} />
-        <span className="hidden sm:inline">{t('add_appointment')}</span>
-      </button>
+      {/* Trigger — only rendered in uncontrolled mode */}
+      {!isControlled && (
+        <button
+          onClick={handleOpen}
+          className="inline-flex items-center gap-2 h-9 px-3.5 rounded-lg bg-brand-500 hover:bg-brand-400 active:bg-brand-600 text-white text-sm font-semibold transition-colors shadow-sm"
+        >
+          <Plus size={15} />
+          <span className="hidden sm:inline">{t('add_appointment')}</span>
+        </button>
+      )}
 
       {/* Overlay */}
-      {open && (
+      {isOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
           {/* Backdrop */}
           <div className="absolute inset-0 bg-black/50" onClick={handleClose} />
