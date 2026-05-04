@@ -96,7 +96,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isPending}
-                className="w-full h-11 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 text-white font-semibold text-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
+                className="w-full h-11 rounded-xl bg-brand-700 hover:bg-brand-600 active:bg-brand-800 text-white font-semibold text-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
               >
                 {isPending && <Loader2 size={16} className="animate-spin" />}
                 {isPending ? t('logging_in') : t('login')}
