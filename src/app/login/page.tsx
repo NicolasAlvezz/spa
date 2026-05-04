@@ -33,7 +33,7 @@ export default function LoginPage() {
       </div>
 
       {/* Centered content */}
-      <div className="flex-1 flex items-center justify-center px-4 pb-16">
+      <main className="flex-1 flex items-center justify-center px-4 pb-16">
         <div className="w-full max-w-sm">
 
           {/* Brand */}
@@ -108,7 +108,7 @@ export default function LoginPage() {
             VM Integral Massage Inc. &copy; {new Date().getFullYear()}
           </p>
         </div>
-      </div>
+      </main>
     </div>
   )
 }

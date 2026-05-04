@@ -1,6 +1,7 @@
 User-agent: *
 Disallow: /admin/
 Disallow: /api/
+Disallow: /scan
 Allow: /login
 Allow: /
 
