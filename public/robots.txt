@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /api/
+Allow: /login
+Allow: /
+
+Sitemap: https://vmintegralmassage.vercel.app/sitemap.xml
