@@ -43,6 +43,7 @@ export default function LoginPage() {
               alt="VM Integral Massage"
               width={160}
               height={160}
+              priority
               className="w-32 h-32 sm:w-40 sm:h-40 mx-auto mb-4 drop-shadow-2xl"
             />
             <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
