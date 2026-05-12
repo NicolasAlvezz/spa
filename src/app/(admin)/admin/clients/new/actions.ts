@@ -2,11 +2,23 @@
 
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { buildE164, phoneToAuthEmail } from '@/lib/phone'
+import twilio from 'twilio'
 
 export type InviteNewClientState =
   | { status: 'success'; phone: string }
   | { status: 'error'; message: string }
   | undefined
+
+async function sendInviteMessage(e164: string, channel: 'sms' | 'whatsapp') {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://vmintegralmassage.vercel.app'
+  const body = `Hola! 💆‍♀️ VM Integral Massage te invita a completar tu registro y acceder a tu perfil personal: ${appUrl}/setup`
+
+  const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
+  const from = channel === 'whatsapp' ? process.env.TWILIO_WHATSAPP_FROM : process.env.TWILIO_SMS_FROM
+  const to = channel === 'whatsapp' ? `whatsapp:${e164}` : e164
+
+  await client.messages.create({ from, to, body })
+}
 
 export async function inviteNewClientAction(
   _prev: InviteNewClientState,
@@ -29,7 +41,6 @@ export async function inviteNewClientAction(
   const e164 = buildE164(localPhone, prefix)
   const supabase = createServiceClient()
 
-  // Check if phone already registered
   const { data: existing } = await supabase
     .from('clients')
     .select('id')
@@ -54,12 +65,12 @@ export async function inviteNewClientAction(
     return { status: 'error', message: 'generic_error' }
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
-  fetch(`${appUrl}/api/invite`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ phone: e164, channel }),
-  }).catch(() => {})
+  try {
+    await sendInviteMessage(e164, channel)
+  } catch (err) {
+    console.error('[invite] Twilio error:', err)
+    // Auth user was created — don't fail the whole action, just log
+  }
 
   return { status: 'success', phone: e164 }
 }
