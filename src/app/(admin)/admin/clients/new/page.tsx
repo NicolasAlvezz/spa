@@ -2,12 +2,12 @@
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, CheckCircle2 } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, MessageSquare, Smartphone } from 'lucide-react'
 import { inviteNewClientAction } from './actions'
 
 const ERROR_LABELS: Record<string, { en: string; es: string }> = {
-  fill_all_fields: { en: 'Please enter an email address.', es: 'Ingresá un email.' },
-  email_taken:     { en: 'That email is already registered.', es: 'Ese email ya está registrado.' },
+  fill_all_fields: { en: 'Please enter a phone number.', es: 'Ingresá un número de celular.' },
+  phone_taken:     { en: 'That phone number is already registered.', es: 'Ese número ya está registrado.' },
   unauthorized:    { en: 'Unauthorized.', es: 'No autorizado.' },
   generic_error:   { en: 'Something went wrong. Try again.', es: 'Ocurrió un error. Intentá de nuevo.' },
 }
@@ -21,20 +21,24 @@ export default function NewClientPage() {
   const [isPending, startTransition] = useTransition()
   const [success, setSuccess] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [channel, setChannel] = useState<'sms' | 'whatsapp'>('whatsapp')
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setError(null)
     const formData = new FormData(e.currentTarget)
+    formData.set('channel', channel)
     startTransition(async () => {
       const result = await inviteNewClientAction(undefined, formData)
       if (result?.status === 'error') {
         setError(ERROR_LABELS[result.message]?.[locale] ?? ERROR_LABELS.generic_error[locale])
       } else if (result?.status === 'success') {
-        setSuccess(result.email)
+        setSuccess(result.phone)
       }
     })
   }
+
+  const label = (en: string, es: string) => locale === 'es' ? es : en
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-md">
@@ -43,17 +47,18 @@ export default function NewClientPage() {
         className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 transition-colors"
       >
         <ArrowLeft size={14} />
-        {locale === 'es' ? 'Volver a clientes' : 'Back to clients'}
+        {label('Back to clients', 'Volver a clientes')}
       </Link>
 
       <div>
         <h1 className="text-2xl font-bold text-gray-900">
-          {locale === 'es' ? 'Invitar nuevo cliente' : 'Invite a new client'}
+          {label('Invite new client', 'Invitar nuevo cliente')}
         </h1>
         <p className="text-sm text-gray-400 mt-0.5">
-          {locale === 'es'
-            ? 'Ingresá el email del cliente. Recibirá un link para crear su cuenta.'
-            : "Enter the client's email. They'll receive a link to set up their account."}
+          {label(
+            "Enter the client's phone number. They'll receive a link to complete their own registration.",
+            'Ingresá el celular del cliente. Recibirá un link para completar su registro.'
+          )}
         </p>
       </div>
 
@@ -61,28 +66,66 @@ export default function NewClientPage() {
         <div className="flex flex-col items-center gap-3 py-10 text-center">
           <CheckCircle2 size={44} className="text-green-500" />
           <p className="text-base font-semibold text-green-700">
-            {locale === 'es' ? '¡Invitación enviada!' : 'Invitation sent!'}
+            {label('Invitation sent!', '¡Invitación enviada!')}
           </p>
           <p className="text-sm text-gray-500">{success}</p>
           <button
             onClick={() => setSuccess(null)}
             className="mt-4 text-sm text-brand-600 hover:underline"
           >
-            {locale === 'es' ? 'Invitar otro cliente' : 'Invite another client'}
+            {label('Invite another client', 'Invitar otro cliente')}
           </button>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-gray-700">Email</label>
+            <label className="text-sm font-medium text-gray-700">
+              {label('Phone / Cell', 'Celular')} *
+            </label>
             <input
-              name="email"
-              type="email"
+              name="phone"
+              type="tel"
               required
               disabled={isPending}
-              placeholder="client@example.com"
+              placeholder="(407) 555-0100"
               className="input"
             />
+          </div>
+
+          {/* Channel selector */}
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium text-gray-700">
+              {label('Send via', 'Enviar por')}
+            </label>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setChannel('whatsapp')}
+                disabled={isPending}
+                className={`flex-1 flex items-center justify-center gap-2 h-11 rounded-xl border text-sm font-medium transition-colors ${
+                  channel === 'whatsapp'
+                    ? 'border-green-500 bg-green-50 text-green-700'
+                    : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <MessageSquare size={16} />
+                WhatsApp
+              </button>
+              <button
+                type="button"
+                onClick={() => setChannel('sms')}
+                disabled={isPending}
+                className={`flex-1 flex items-center justify-center gap-2 h-11 rounded-xl border text-sm font-medium transition-colors ${
+                  channel === 'sms'
+                    ? 'border-blue-500 bg-blue-50 text-blue-700'
+                    : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <Smartphone size={16} />
+                SMS
+              </button>
+            </div>
           </div>
 
           {error && (
@@ -97,8 +140,8 @@ export default function NewClientPage() {
             className="h-12 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 disabled:opacity-60 text-white font-bold transition-colors shadow-lg shadow-brand-900/20"
           >
             {isPending
-              ? (locale === 'es' ? 'Enviando...' : 'Sending...')
-              : (locale === 'es' ? 'Enviar invitación' : 'Send invitation')}
+              ? label('Sending...', 'Enviando...')
+              : label('Send invitation', 'Enviar invitación')}
           </button>
         </form>
       )}

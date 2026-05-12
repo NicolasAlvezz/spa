@@ -1,9 +1,10 @@
 'use server'
 
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { toE164, phoneToAuthEmail } from '@/lib/phone'
 
 export type LinkAuthState =
-  | { status: 'success'; email: string }
+  | { status: 'success' }
   | { status: 'error'; message: string }
   | undefined
 
@@ -18,43 +19,42 @@ export async function linkClientToAuth(
     return { status: 'error', message: 'generic_error' }
   }
 
-  const email = (formData.get('email') as string).trim().toLowerCase()
-
-  if (!email) {
-    return { status: 'error', message: 'fill_all_fields' }
-  }
+  const channel = (formData.get('channel') as 'sms' | 'whatsapp') ?? 'sms'
 
   const supabase = createServiceClient()
 
   const { data: client } = await supabase
     .from('clients')
-    .select('user_id')
+    .select('user_id, phone, first_name')
     .eq('id', clientId)
     .single()
 
-  if (client?.user_id) {
-    return { status: 'error', message: 'already_linked' }
-  }
-
-  const { data: authData, error: authError } = await supabase.auth.admin.inviteUserByEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/confirm`,
-  })
-
-  if (authError) {
-    if (authError.message.includes('already registered')) {
-      return { status: 'error', message: 'email_taken' }
-    }
+  if (!client) {
     return { status: 'error', message: 'generic_error' }
   }
 
-  // Set role in app_metadata (inviteUserByEmail only accepts user_metadata)
-  const { error: roleError } = await supabase.auth.admin.updateUserById(authData.user.id, {
+  if (client.user_id) {
+    return { status: 'error', message: 'already_linked' }
+  }
+
+  if (!client.phone) {
+    return { status: 'error', message: 'fill_all_fields' }
+  }
+
+  const e164 = toE164(client.phone)
+  const authEmail = phoneToAuthEmail(client.phone)
+
+  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+    email: authEmail,
+    password: e164,
+    email_confirm: true,
     app_metadata: { role: 'client' },
   })
 
-  if (roleError) {
-    console.error('[linkClientToAuth] failed to set role:', roleError)
-    await supabase.auth.admin.deleteUser(authData.user.id)
+  if (authError || !authData.user) {
+    if (authError?.message?.includes('already registered')) {
+      return { status: 'error', message: 'phone_taken' }
+    }
     return { status: 'error', message: 'generic_error' }
   }
 
@@ -68,7 +68,15 @@ export async function linkClientToAuth(
     return { status: 'error', message: 'generic_error' }
   }
 
-  return { status: 'success', email }
+  // Send Twilio invite
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
+  fetch(`${appUrl}/api/invite`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone: e164, clientName: client.first_name, channel }),
+  }).catch(() => {})
+
+  return { status: 'success' }
 }
 
 export async function unlinkClientFromAuth(
@@ -90,7 +98,6 @@ export async function unlinkClientFromAuth(
 
   if (!client?.user_id) return {}
 
-  // Clear DB link first so the user is functionally unlinked even if auth deletion fails
   const { error: clearError } = await supabase
     .from('clients')
     .update({ user_id: null })

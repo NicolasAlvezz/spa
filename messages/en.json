@@ -2,11 +2,15 @@
   "auth": {
     "email": "Email",
     "password": "Password",
+    "first_name": "First name",
+    "phone": "Phone number",
     "login": "Log in",
     "logging_in": "Logging in...",
     "logout": "Log out",
     "error_invalid": "Invalid email or password.",
-    "error_generic": "Something went wrong. Please try again."
+    "error_not_found": "We couldn't find your account. Check your name and phone number.",
+    "error_generic": "Something went wrong. Please try again.",
+    "staff_login": "Staff login"
   },
   "nav": {
     "clients": "Clients",
@@ -172,15 +176,17 @@
     "removing": "Removing...",
     "confirm_remove": "Remove app access for this client?",
     "dialog_title": "Invite client",
-    "dialog_description": "Enter the client's email. They will receive a link to set their own password.",
-    "email": "Email",
+    "dialog_description": "The client will receive their app link via SMS or WhatsApp. They log in with their name and phone number.",
+    "channel_label": "Send via",
+    "channel_sms": "SMS",
+    "channel_whatsapp": "WhatsApp",
     "cancel": "Cancel",
     "create_access": "Send invitation",
     "creating": "Sending...",
-    "success": "Invitation sent! The client will receive an email shortly.",
-    "error_fill_all_fields": "Please enter an email address.",
+    "success": "Invitation sent! The client will receive the link shortly.",
+    "error_fill_all_fields": "Missing required fields.",
     "error_already_linked": "This client already has app access.",
-    "error_email_taken": "That email is already registered.",
+    "error_phone_taken": "That phone number is already registered.",
     "error_generic": "Something went wrong. Try again."
   },
   "setpassword": {

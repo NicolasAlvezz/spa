@@ -3,11 +3,9 @@
 import { useState, useTransition, useEffect, useRef } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
-import { Smartphone, Loader2, CheckCircle2 } from 'lucide-react'
+import { Smartphone, Loader2, CheckCircle2, MessageSquare } from 'lucide-react'
 import { linkClientToAuth, unlinkClientFromAuth } from '@/app/(admin)/admin/clients/[id]/link-auth-action'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import {
   Dialog,
   DialogContent,
@@ -19,7 +17,7 @@ import {
 
 interface Props {
   clientId: string
-  clientEmail: string | null
+  clientPhone: string
   isLinked: boolean
   className?: string
 }
@@ -27,16 +25,17 @@ interface Props {
 const ERROR_KEY_MAP: Record<string, string> = {
   fill_all_fields: 'error_fill_all_fields',
   already_linked:  'error_already_linked',
-  email_taken:     'error_email_taken',
+  phone_taken:     'error_phone_taken',
 }
 
-export function InviteClientButton({ clientId, clientEmail, isLinked, className }: Props) {
+export function InviteClientButton({ clientId, clientPhone, isLinked, className }: Props) {
   const t = useTranslations('invite')
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [channel, setChannel] = useState<'sms' | 'whatsapp'>('whatsapp')
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -48,7 +47,8 @@ export function InviteClientButton({ clientId, clientEmail, isLinked, className 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setError(null)
-    const formData = new FormData(e.currentTarget)
+    const formData = new FormData()
+    formData.set('channel', channel)
     startTransition(async () => {
       const result = await linkClientToAuth(clientId, undefined, formData)
       if (result?.status === 'error') {
@@ -105,7 +105,12 @@ export function InviteClientButton({ clientId, clientEmail, isLinked, className 
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>{t('dialog_title')}</DialogTitle>
-            <DialogDescription>{t('dialog_description')}</DialogDescription>
+            <DialogDescription>
+              {t('dialog_description')}
+              {clientPhone && (
+                <span className="block mt-1 font-medium text-gray-700">{clientPhone}</span>
+              )}
+            </DialogDescription>
           </DialogHeader>
 
           {success ? (
@@ -116,16 +121,35 @@ export function InviteClientButton({ clientId, clientEmail, isLinked, className 
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4 py-2">
               <div className="space-y-1.5">
-                <Label htmlFor="invite-email">{t('email')}</Label>
-                <Input
-                  id="invite-email"
-                  name="email"
-                  type="email"
-                  defaultValue={clientEmail ?? ''}
-                  required
-                  disabled={isPending}
-                  placeholder="client@example.com"
-                />
+                <p className="text-sm font-medium text-gray-700">{t('channel_label')}</p>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setChannel('whatsapp')}
+                    disabled={isPending}
+                    className={`flex-1 flex items-center justify-center gap-2 h-10 rounded-lg border text-sm font-medium transition-colors ${
+                      channel === 'whatsapp'
+                        ? 'border-green-500 bg-green-50 text-green-700'
+                        : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    <MessageSquare size={15} />
+                    {t('channel_whatsapp')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setChannel('sms')}
+                    disabled={isPending}
+                    className={`flex-1 flex items-center justify-center gap-2 h-10 rounded-lg border text-sm font-medium transition-colors ${
+                      channel === 'sms'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    <Smartphone size={15} />
+                    {t('channel_sms')}
+                  </button>
+                </div>
               </div>
 
               {error && (

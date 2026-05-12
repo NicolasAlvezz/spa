@@ -2,11 +2,15 @@
   "auth": {
     "email": "Email",
     "password": "Contraseña",
+    "first_name": "Nombre",
+    "phone": "Número de celular",
     "login": "Ingresar",
     "logging_in": "Ingresando...",
     "logout": "Cerrar sesión",
     "error_invalid": "Email o contraseña incorrectos.",
-    "error_generic": "Ocurrió un error. Intentá de nuevo."
+    "error_not_found": "No encontramos tu cuenta. Verificá tu nombre y número de celular.",
+    "error_generic": "Ocurrió un error. Intentá de nuevo.",
+    "staff_login": "Acceso para staff"
   },
   "nav": {
     "clients": "Clientes",
@@ -172,15 +176,17 @@
     "removing": "Quitando...",
     "confirm_remove": "¿Seguro que querés quitar el acceso a la app de este cliente?",
     "dialog_title": "Invitar cliente",
-    "dialog_description": "Ingresá el email del cliente. Le llegará un link para elegir su propia contraseña.",
-    "email": "Email",
+    "dialog_description": "El cliente recibirá el link de la app por SMS o WhatsApp. Ingresa con su nombre y número de celular.",
+    "channel_label": "Enviar por",
+    "channel_sms": "SMS",
+    "channel_whatsapp": "WhatsApp",
     "cancel": "Cancelar",
     "create_access": "Enviar invitación",
     "creating": "Enviando...",
-    "success": "¡Invitación enviada! El cliente recibirá un email en breve.",
-    "error_fill_all_fields": "Ingresá un email.",
+    "success": "¡Invitación enviada! El cliente recibirá el link en breve.",
+    "error_fill_all_fields": "Faltan campos requeridos.",
     "error_already_linked": "Este cliente ya tiene acceso a la app.",
-    "error_email_taken": "Ese email ya está registrado.",
+    "error_phone_taken": "Ese número de celular ya está registrado.",
     "error_generic": "Ocurrió un error. Intentá de nuevo."
   },
   "setpassword": {

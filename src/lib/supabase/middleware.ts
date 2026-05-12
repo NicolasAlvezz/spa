@@ -35,17 +35,18 @@ export async function updateSession(request: NextRequest) {
   const role = (user?.app_metadata?.role ?? null) as 'admin' | 'client' | null
 
   // Public paths that don't require authentication
-  const publicPaths = ['/login', '/auth/confirm', '/set-password']
+  const publicPaths = ['/login', '/admin/login', '/setup']
   if (!user && !publicPaths.includes(pathname)) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Admin-only routes
+  // Admin-only routes (excluding /admin/login which is public)
   const isAdminRoute =
-    pathname.startsWith('/admin') || pathname.startsWith('/scan')
+    (pathname.startsWith('/admin') && pathname !== '/admin/login') ||
+    pathname.startsWith('/scan')
 
   if (isAdminRoute && role !== 'admin') {
-    if (!user) return NextResponse.redirect(new URL('/login', request.url))
+    if (!user) return NextResponse.redirect(new URL('/admin/login', request.url))
     // role='client' → their area; unknown role → login (prevents /my-qr ↔ /admin loop)
     return NextResponse.redirect(
       new URL(role === 'client' ? '/my-qr' : '/login?error=no_role', request.url)
@@ -71,8 +72,8 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(new URL('/admin', request.url))
   }
 
-  // Redirect authenticated users away from /login
-  if (user && (pathname === '/login' || pathname === '/auth/confirm')) {
+  // Redirect authenticated users away from login pages
+  if (user && (pathname === '/login' || pathname === '/admin/login')) {
     const destination = role === 'admin' ? '/admin' : '/my-qr'
     return NextResponse.redirect(new URL(destination, request.url))
   }

@@ -121,7 +121,7 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto sm:flex-shrink-0">
           <InviteClientButton
             clientId={client.id}
-            clientEmail={client.email}
+            clientPhone={client.phone}
             isLinked={!!client.user_id}
             className="w-full sm:w-auto justify-center"
           />

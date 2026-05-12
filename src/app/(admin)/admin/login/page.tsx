@@ -1,16 +1,15 @@
 'use client'
 
 import Image from 'next/image'
-import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useTransition, useState } from 'react'
 import { Loader2 } from 'lucide-react'
-import { loginWithNameAndPhone } from './actions'
+import { adminLogin } from './actions'
 import { LanguageToggle } from '@/components/spa/LanguageToggle'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
-export default function LoginPage() {
+export default function AdminLoginPage() {
   const t = useTranslations('auth')
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -20,7 +19,7 @@ export default function LoginPage() {
     setError(null)
     const formData = new FormData(e.currentTarget)
     startTransition(async () => {
-      const result = await loginWithNameAndPhone(formData)
+      const result = await adminLogin(formData)
       if (result?.error) setError(t(result.error as Parameters<typeof t>[0]))
     })
   }
@@ -47,40 +46,39 @@ export default function LoginPage() {
             <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
               VM Integral Massage
             </h1>
-            <p className="text-slate-400 text-sm mt-1.5">Kissimmee, Florida</p>
+            <p className="text-slate-400 text-sm mt-1.5">Staff</p>
           </div>
 
           <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-5 sm:p-8">
             <form onSubmit={handleSubmit} className="space-y-5">
 
               <div className="space-y-2">
-                <Label htmlFor="first_name" className="text-slate-300 text-sm font-medium">
-                  {t('first_name')}
+                <Label htmlFor="email" className="text-slate-300 text-sm font-medium">
+                  {t('email')}
                 </Label>
                 <Input
-                  id="first_name"
-                  name="first_name"
-                  type="text"
-                  autoComplete="given-name"
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
                   required
                   disabled={isPending}
-                  placeholder="Maria"
+                  placeholder="admin@vmintegralmassage.com"
                   className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 focus:border-brand-500 focus:ring-brand-500/20 h-11"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="phone" className="text-slate-300 text-sm font-medium">
-                  {t('phone')}
+                <Label htmlFor="password" className="text-slate-300 text-sm font-medium">
+                  {t('password')}
                 </Label>
                 <Input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  autoComplete="tel"
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
                   required
                   disabled={isPending}
-                  placeholder="(407) 555-0100"
                   className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 focus:border-brand-500 focus:ring-brand-500/20 h-11"
                 />
               </div>
@@ -102,16 +100,7 @@ export default function LoginPage() {
             </form>
           </div>
 
-          <p className="text-center mt-6">
-            <Link
-              href="/admin/login"
-              className="text-slate-600 hover:text-slate-400 text-xs transition-colors"
-            >
-              {t('staff_login')} →
-            </Link>
-          </p>
-
-          <p className="text-center text-slate-700 text-xs mt-2">
+          <p className="text-center text-slate-600 text-xs mt-6">
             VM Integral Massage Inc. &copy; {new Date().getFullYear()}
           </p>
         </div>
