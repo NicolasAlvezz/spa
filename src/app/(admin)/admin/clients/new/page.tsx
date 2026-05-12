@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useRef } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, CheckCircle2, MessageSquare, Smartphone } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, MessageSquare, Smartphone, AlertCircle } from 'lucide-react'
 import { inviteNewClientAction } from './actions'
 import { PhoneInput } from '@/components/spa/PhoneInput'
 
@@ -23,12 +23,34 @@ export default function NewClientPage() {
   const [success, setSuccess] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [channel, setChannel] = useState<'sms' | 'whatsapp'>('whatsapp')
+  const [alreadyInvited, setAlreadyInvited] = useState<string | null>(null)
+  const formRef = useRef<HTMLFormElement>(null)
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setError(null)
+    setAlreadyInvited(null)
     const formData = new FormData(e.currentTarget)
     formData.set('channel', channel)
+    startTransition(async () => {
+      const result = await inviteNewClientAction(undefined, formData)
+      if (result?.status === 'error') {
+        setError(ERROR_LABELS[result.message]?.[locale] ?? ERROR_LABELS.generic_error[locale])
+      } else if (result?.status === 'already_invited') {
+        setAlreadyInvited(result.phone)
+      } else if (result?.status === 'success') {
+        setSuccess(result.phone)
+      }
+    })
+  }
+
+  function handleConfirmResend() {
+    if (!formRef.current) return
+    setAlreadyInvited(null)
+    setError(null)
+    const formData = new FormData(formRef.current)
+    formData.set('channel', channel)
+    formData.set('confirm_resend', 'true')
     startTransition(async () => {
       const result = await inviteNewClientAction(undefined, formData)
       if (result?.status === 'error') {
@@ -71,14 +93,14 @@ export default function NewClientPage() {
           </p>
           <p className="text-sm text-gray-500">{success}</p>
           <button
-            onClick={() => setSuccess(null)}
+            onClick={() => { setSuccess(null); setAlreadyInvited(null) }}
             className="mt-4 text-sm text-brand-600 hover:underline"
           >
             {label('Invite another client', 'Invitar otro cliente')}
           </button>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-4">
 
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-gray-700">
@@ -122,21 +144,56 @@ export default function NewClientPage() {
             </div>
           </div>
 
+          {/* Already invited confirmation */}
+          {alreadyInvited && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-4 flex flex-col gap-3">
+              <div className="flex items-start gap-2.5">
+                <AlertCircle size={18} className="text-amber-600 mt-0.5 shrink-0" />
+                <p className="text-sm text-amber-800">
+                  {label(
+                    `An invitation was already sent to ${alreadyInvited}. Send again?`,
+                    `Ya se envió una invitación a ${alreadyInvited}. ¿Querés enviarla de nuevo?`
+                  )}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={handleConfirmResend}
+                  disabled={isPending}
+                  className="flex-1 h-10 rounded-lg bg-amber-500 hover:bg-amber-400 text-white text-sm font-semibold transition-colors disabled:opacity-60"
+                >
+                  {label('Yes, resend', 'Sí, reenviar')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAlreadyInvited(null)}
+                  disabled={isPending}
+                  className="flex-1 h-10 rounded-lg border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-colors"
+                >
+                  {label('No, cancel', 'No, cancelar')}
+                </button>
+              </div>
+            </div>
+          )}
+
           {error && (
             <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
               {error}
             </p>
           )}
 
-          <button
-            type="submit"
-            disabled={isPending}
-            className="h-12 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 disabled:opacity-60 text-white font-bold transition-colors shadow-lg shadow-brand-900/20"
-          >
-            {isPending
-              ? label('Sending...', 'Enviando...')
-              : label('Send invitation', 'Enviar invitación')}
-          </button>
+          {!alreadyInvited && (
+            <button
+              type="submit"
+              disabled={isPending}
+              className="h-12 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 disabled:opacity-60 text-white font-bold transition-colors shadow-lg shadow-brand-900/20"
+            >
+              {isPending
+                ? label('Sending...', 'Enviando...')
+                : label('Send invitation', 'Enviar invitación')}
+            </button>
+          )}
         </form>
       )}
     </div>
