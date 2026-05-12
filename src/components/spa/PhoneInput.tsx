@@ -32,7 +32,6 @@ interface Props {
 
 export function PhoneInput({ variant, disabled, defaultPrefix = '1' }: Props) {
   const [prefix, setPrefix] = useState(defaultPrefix)
-  const selected = COUNTRIES.find(c => c.code === prefix) ?? COUNTRIES[0]
 
   const isDark = variant === 'dark'
 
