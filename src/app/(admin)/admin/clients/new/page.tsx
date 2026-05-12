@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, CheckCircle2, MessageSquare, Smartphone } from 'lucide-react'
 import { inviteNewClientAction } from './actions'
+import { PhoneInput } from '@/components/spa/PhoneInput'
 
 const ERROR_LABELS: Record<string, { en: string; es: string }> = {
   fill_all_fields: { en: 'Please enter a phone number.', es: 'Ingresá un número de celular.' },
@@ -83,14 +84,7 @@ export default function NewClientPage() {
             <label className="text-sm font-medium text-gray-700">
               {label('Phone / Cell', 'Celular')} *
             </label>
-            <input
-              name="phone"
-              type="tel"
-              required
-              disabled={isPending}
-              placeholder="(407) 555-0100"
-              className="input"
-            />
+            <PhoneInput variant="light" disabled={isPending} />
           </div>
 
           {/* Channel selector */}

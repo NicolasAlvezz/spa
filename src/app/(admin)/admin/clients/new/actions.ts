@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient, createServiceClient } from '@/lib/supabase/server'
-import { toE164, phoneToAuthEmail } from '@/lib/phone'
+import { buildE164, phoneToAuthEmail } from '@/lib/phone'
 
 export type InviteNewClientState =
   | { status: 'success'; phone: string }
@@ -18,14 +18,15 @@ export async function inviteNewClientAction(
     return { status: 'error', message: 'unauthorized' }
   }
 
-  const phone = (formData.get('phone') as string).trim()
+  const prefix = (formData.get('phone_prefix') as string).trim()
+  const localPhone = (formData.get('phone_local') as string).trim()
   const channel = formData.get('channel') as 'sms' | 'whatsapp'
 
-  if (!phone || !channel) {
+  if (!prefix || !localPhone || !channel) {
     return { status: 'error', message: 'fill_all_fields' }
   }
 
-  const e164 = toE164(phone)
+  const e164 = buildE164(localPhone, prefix)
   const supabase = createServiceClient()
 
   // Check if phone already registered
@@ -39,9 +40,8 @@ export async function inviteNewClientAction(
     return { status: 'error', message: 'phone_taken' }
   }
 
-  // Create auth user with phone-derived credentials (no clients record yet — client fills that in)
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-    email: phoneToAuthEmail(phone),
+    email: phoneToAuthEmail(e164),
     password: e164,
     email_confirm: true,
     app_metadata: { role: 'client' },
@@ -54,7 +54,6 @@ export async function inviteNewClientAction(
     return { status: 'error', message: 'generic_error' }
   }
 
-  // Send Twilio invite linking to /setup so the client can fill in their own name
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
   fetch(`${appUrl}/api/invite`, {
     method: 'POST',

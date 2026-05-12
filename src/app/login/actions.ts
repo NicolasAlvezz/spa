@@ -1,22 +1,23 @@
 'use server'
 
 import { createClient, createServiceClient } from '@/lib/supabase/server'
-import { phoneToAuthEmail, toE164 } from '@/lib/phone'
+import { buildE164, phoneToAuthEmail } from '@/lib/phone'
 import { redirect } from 'next/navigation'
 
 export async function loginWithNameAndPhone(
   formData: FormData
 ): Promise<{ error: string } | never> {
   const firstName = (formData.get('first_name') as string).trim()
-  const phone = (formData.get('phone') as string).trim()
+  const prefix = (formData.get('phone_prefix') as string).trim()
+  const localPhone = (formData.get('phone_local') as string).trim()
 
-  if (!firstName || !phone) {
+  if (!firstName || !prefix || !localPhone) {
     return { error: 'error_not_found' }
   }
 
-  const e164 = toE164(phone)
+  const e164 = buildE164(localPhone, prefix)
 
-  // Verify the client exists with this name + phone (bypass RLS with service client)
+  // Verify the client exists with this name + phone
   const service = createServiceClient()
   const { data: client } = await service
     .from('clients')
@@ -31,7 +32,7 @@ export async function loginWithNameAndPhone(
 
   const supabase = await createClient()
   const { data, error } = await supabase.auth.signInWithPassword({
-    email: phoneToAuthEmail(phone),
+    email: phoneToAuthEmail(e164),
     password: e164,
   })
 

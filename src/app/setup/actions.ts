@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient, createServiceClient } from '@/lib/supabase/server'
-import { toE164, phoneToAuthEmail } from '@/lib/phone'
+import { buildE164, phoneToAuthEmail } from '@/lib/phone'
 import { redirect } from 'next/navigation'
 
 export async function setupAccount(
@@ -9,18 +9,18 @@ export async function setupAccount(
 ): Promise<{ error: string } | never> {
   const firstName = (formData.get('first_name') as string).trim()
   const lastName = (formData.get('last_name') as string).trim()
-  const phone = (formData.get('phone') as string).trim()
+  const prefix = (formData.get('phone_prefix') as string).trim()
+  const localPhone = (formData.get('phone_local') as string).trim()
 
-  if (!firstName || !lastName || !phone) {
+  if (!firstName || !lastName || !prefix || !localPhone) {
     return { error: 'fill_all_fields' }
   }
 
-  const e164 = toE164(phone)
+  const e164 = buildE164(localPhone, prefix)
 
-  // Sign in using phone-derived credentials
   const supabase = await createClient()
   const { data, error: authError } = await supabase.auth.signInWithPassword({
-    email: phoneToAuthEmail(phone),
+    email: phoneToAuthEmail(e164),
     password: e164,
   })
 
@@ -28,7 +28,6 @@ export async function setupAccount(
     return { error: 'phone_not_found' }
   }
 
-  // Ensure no clients record already exists for this phone
   const service = createServiceClient()
   const { data: existing } = await service
     .from('clients')
@@ -37,11 +36,9 @@ export async function setupAccount(
     .maybeSingle()
 
   if (existing) {
-    // Already registered — just go to the app
     redirect('/my-qr')
   }
 
-  // Create the clients record
   const { error: insertError } = await service.from('clients').insert({
     user_id: data.user.id,
     first_name: firstName,

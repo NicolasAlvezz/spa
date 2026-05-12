@@ -7,6 +7,7 @@ import { useTransition, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 import { loginWithNameAndPhone } from './actions'
 import { LanguageToggle } from '@/components/spa/LanguageToggle'
+import { PhoneInput } from '@/components/spa/PhoneInput'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
@@ -70,19 +71,10 @@ export default function LoginPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="phone" className="text-slate-300 text-sm font-medium">
+                <Label className="text-slate-300 text-sm font-medium">
                   {t('phone')}
                 </Label>
-                <Input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  autoComplete="tel"
-                  required
-                  disabled={isPending}
-                  placeholder="(407) 555-0100"
-                  className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 focus:border-brand-500 focus:ring-brand-500/20 h-11"
-                />
+                <PhoneInput variant="dark" disabled={isPending} />
               </div>
 
               {error && (

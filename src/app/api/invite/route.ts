@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server'
-import { toE164 } from '@/lib/phone'
 import { NextResponse } from 'next/server'
 import twilio from 'twilio'
 
@@ -20,7 +19,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
   }
 
-  const e164 = toE164(phone)
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://vmintegralmassage.com'
   const body = `Hola! 💆‍♀️ VM Integral Massage te invita a completar tu registro y acceder a tu perfil personal: ${appUrl}/setup`
 
@@ -34,7 +32,7 @@ export async function POST(request: Request) {
       ? process.env.TWILIO_WHATSAPP_FROM
       : process.env.TWILIO_SMS_FROM
 
-  const to = channel === 'whatsapp' ? `whatsapp:${e164}` : e164
+  const to = channel === 'whatsapp' ? `whatsapp:${phone}` : phone
 
   await client.messages.create({ from, to, body })
 

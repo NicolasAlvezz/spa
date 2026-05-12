@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient, createServiceClient } from '@/lib/supabase/server'
-import { toE164, phoneToAuthEmail } from '@/lib/phone'
+import { phoneToAuthEmail } from '@/lib/phone'
 
 export type LinkAuthState =
   | { status: 'success' }
@@ -41,8 +41,8 @@ export async function linkClientToAuth(
     return { status: 'error', message: 'fill_all_fields' }
   }
 
-  const e164 = toE164(client.phone)
-  const authEmail = phoneToAuthEmail(client.phone)
+  const e164 = client.phone  // already stored as E.164
+  const authEmail = phoneToAuthEmail(e164)
 
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({
     email: authEmail,

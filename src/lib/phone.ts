@@ -1,8 +1,9 @@
-export function toE164(phone: string): string {
-  const digits = phone.replace(/\D/g, '')
-  return digits.startsWith('1') ? `+${digits}` : `+1${digits}`
+// Build E.164 from a local phone number + country prefix (e.g. "598" + "98352367" → "+59898352367")
+export function buildE164(localPhone: string, prefix: string): string {
+  const digits = localPhone.replace(/\D/g, '')
+  return `+${prefix}${digits}`
 }
 
-export function phoneToAuthEmail(phone: string): string {
-  return `${toE164(phone)}@vmintegralmassage.com`
+export function phoneToAuthEmail(e164: string): string {
+  return `${e164}@vmintegralmassage.com`
 }
