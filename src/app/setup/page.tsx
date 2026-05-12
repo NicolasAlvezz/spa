@@ -17,7 +17,7 @@ const ERRORS: Record<string, { en: string; es: string }> = {
 
 export default function SetupPage() {
   const t = useTranslations('auth')
-  const [locale, setLocale] = useState<'en' | 'es'>(() =>
+  const [locale] = useState<'en' | 'es'>(() =>
     typeof document !== 'undefined'
       ? ((document.cookie.match(/locale=(\w+)/)?.[1] as 'en' | 'es') ?? 'en')
       : 'en'
