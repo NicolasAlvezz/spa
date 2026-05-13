@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { createClient } from '@/lib/supabase/server'
-import { getClientByUserId, getServiceTypes } from '@/lib/supabase/queries/clients'
+import { getClientByUserId } from '@/lib/supabase/queries/clients'
 import {
   getClientNextAppointment,
   getClientRecentVisits,
@@ -24,10 +24,9 @@ export default async function MyQrPage() {
     )
   }
 
-  const [nextAppointment, recentVisits, serviceTypes] = await Promise.all([
+  const [nextAppointment, recentVisits] = await Promise.all([
     getClientNextAppointment(client.id),
     getClientRecentVisits(client.id, 5),
-    getServiceTypes(),
   ])
 
   return (
@@ -35,7 +34,6 @@ export default async function MyQrPage() {
       client={client}
       nextAppointment={nextAppointment}
       recentVisits={recentVisits}
-      serviceTypes={serviceTypes}
     />
   )
 }

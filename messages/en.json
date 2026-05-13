@@ -92,7 +92,10 @@
     "no_upcoming": "No upcoming appointments",
     "recent_visits": "Recent visits",
     "no_recent_visits": "No visits registered yet",
-    "view_all": "View all visits"
+    "view_all": "View all visits",
+    "booksy_label": "Book an Appointment",
+    "booksy_subtitle": "5.0 · 166 reviews on Booksy",
+    "booksy_cta": "Book on Booksy"
   },
   "clientnav": {
     "my_qr": "My QR",

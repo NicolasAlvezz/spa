@@ -7,20 +7,19 @@ import { useTranslations, useLocale } from 'next-intl'
 import enMessages from '../../../messages/en.json'
 import esMessages from '../../../messages/es.json'
 import { useEffect, useState } from 'react'
-import { CalendarDays, Activity, RotateCcw, Clock, ChevronRight } from 'lucide-react'
+import { CalendarDays, Activity, RotateCcw, Clock, ChevronRight, ExternalLink } from 'lucide-react'
 import { MembershipBadge } from './MembershipBadge'
-import { BookingSection } from './BookingSection'
 import { formatDate, formatDateTime } from '@/lib/utils/dates'
 import { getCurrentMembership } from '@/lib/utils/membership'
 import type { ClientDetail } from '@/types'
 import type { ClientNextAppointment, ClientVisitRow } from '@/lib/supabase/queries/client-portal'
-import type { ServiceTypeItem } from '@/lib/supabase/queries/clients'
+
+const BOOKSY_URL = 'https://booksy.com/en-us/1687378_vm-integral-massage-inc_massage_134766_kissimmee#ba_s=seo'
 
 interface Props {
   client: ClientDetail
   nextAppointment: ClientNextAppointment | null
   recentVisits: ClientVisitRow[]
-  serviceTypes: ServiceTypeItem[]
 }
 
 const SESSION_LABELS: Record<string, { en: string; es: string }> = {
@@ -30,7 +29,7 @@ const SESSION_LABELS: Record<string, { en: string; es: string }> = {
   welcome_offer: { en: 'Welcome offer',        es: 'Bienvenida' },
 }
 
-export function QrDisplay({ client, nextAppointment, recentVisits, serviceTypes }: Props) {
+export function QrDisplay({ client, nextAppointment, recentVisits }: Props) {
   const t = useTranslations('myqr')
   const tCheck = useTranslations('checkin')
   const locale = useLocale() as 'en' | 'es'
@@ -251,8 +250,28 @@ export function QrDisplay({ client, nextAppointment, recentVisits, serviceTypes 
         )}
       </div>
 
-      {/* ── Book an appointment ────────────────────────────────────────── */}
-      <BookingSection locale={locale} serviceTypes={serviceTypes} />
+      {/* ── Book on Booksy ─────────────────────────────────────────────── */}
+      <a
+        href={BOOKSY_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="w-full block"
+      >
+        <div className="w-full bg-white rounded-2xl border border-gray-200 shadow-sm px-5 py-4 flex items-center gap-4 hover:border-brand-300 hover:shadow-md transition-all group">
+          <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-brand-50 flex-shrink-0 group-hover:bg-brand-100 transition-colors">
+            <ExternalLink size={20} className="text-brand-500" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-900">{t('booksy_label')}</p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              ★ {t('booksy_subtitle')}
+            </p>
+          </div>
+          <span className="flex-shrink-0 text-xs font-semibold text-white bg-brand-500 group-hover:bg-brand-400 transition-colors px-3 py-1.5 rounded-lg">
+            {t('booksy_cta')}
+          </span>
+        </div>
+      </a>
 
       {/* ── Member since ───────────────────────────────────────────────── */}
       <p className="text-xs text-gray-300 font-medium">

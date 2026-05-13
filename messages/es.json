@@ -92,7 +92,10 @@
     "no_upcoming": "Sin citas próximas",
     "recent_visits": "Visitas recientes",
     "no_recent_visits": "No hay visitas registradas aún",
-    "view_all": "Ver todas las visitas"
+    "view_all": "Ver todas las visitas",
+    "booksy_label": "Reservar turno",
+    "booksy_subtitle": "5.0 · 166 reseñas en Booksy",
+    "booksy_cta": "Reservar en Booksy"
   },
   "clientnav": {
     "my_qr": "Mi QR",
