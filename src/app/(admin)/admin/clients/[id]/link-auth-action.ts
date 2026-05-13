@@ -72,7 +72,7 @@ export async function linkClientToAuth(
   // Send Twilio invite directly
   try {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://vmintegralmassage.vercel.app'
-    const body = `Hola! 💆‍♀️ VM Integral Massage te invita a completar tu registro: ${appUrl}/setup`
+    const body = `Hola! 💆‍♀️ VM Integral Massage te invita a completar tu registro: ${appUrl}/setup?phone=${encodeURIComponent(e164)}`
     const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
     const from = channel === 'whatsapp' ? process.env.TWILIO_WHATSAPP_FROM : process.env.TWILIO_SMS_FROM
     const to = channel === 'whatsapp' ? `whatsapp:${e164}` : e164

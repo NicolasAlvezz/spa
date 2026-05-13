@@ -2,13 +2,15 @@
 
 import Image from 'next/image'
 import { useTranslations } from 'next-intl'
-import { useTransition, useState } from 'react'
+import { useTransition, useState, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { setupAccount } from './actions'
 import { LanguageToggle } from '@/components/spa/LanguageToggle'
 import { PhoneInput } from '@/components/spa/PhoneInput'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { parseE164 } from '@/lib/phone'
 
 const ERRORS: Record<string, { en: string; es: string }> = {
   fill_all_fields: { en: 'Please fill in all fields.', es: 'Completá todos los campos.' },
@@ -16,8 +18,9 @@ const ERRORS: Record<string, { en: string; es: string }> = {
   generic_error:   { en: 'Something went wrong. Please try again.', es: 'Ocurrió un error. Intentá de nuevo.' },
 }
 
-export default function SetupPage() {
+function SetupForm() {
   const t = useTranslations('auth')
+  const searchParams = useSearchParams()
   const [locale] = useState<'en' | 'es'>(() =>
     typeof document !== 'undefined'
       ? ((document.cookie.match(/locale=(\w+)/)?.[1] as 'en' | 'es') ?? 'en')
@@ -25,6 +28,9 @@ export default function SetupPage() {
   )
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+
+  const rawPhone = searchParams.get('phone') ?? ''
+  const parsed = rawPhone ? parseE164(rawPhone) : null
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -114,7 +120,12 @@ export default function SetupPage() {
                 <Label className="text-slate-300 text-sm font-medium">
                   {t('phone')}
                 </Label>
-                <PhoneInput variant="dark" disabled={isPending} />
+                <PhoneInput
+                  variant="dark"
+                  disabled={isPending}
+                  defaultPrefix={parsed?.prefix ?? '1'}
+                  defaultLocalPhone={parsed?.local}
+                />
               </div>
 
               {error && (
@@ -142,5 +153,13 @@ export default function SetupPage() {
         </div>
       </main>
     </div>
+  )
+}
+
+export default function SetupPage() {
+  return (
+    <Suspense>
+      <SetupForm />
+    </Suspense>
   )
 }

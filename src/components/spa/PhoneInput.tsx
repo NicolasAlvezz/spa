@@ -28,9 +28,10 @@ interface Props {
   variant: 'dark' | 'light'
   disabled?: boolean
   defaultPrefix?: string
+  defaultLocalPhone?: string
 }
 
-export function PhoneInput({ variant, disabled, defaultPrefix = '1' }: Props) {
+export function PhoneInput({ variant, disabled, defaultPrefix = '1', defaultLocalPhone }: Props) {
   const [prefix, setPrefix] = useState(defaultPrefix)
 
   const isDark = variant === 'dark'
@@ -64,6 +65,7 @@ export function PhoneInput({ variant, disabled, defaultPrefix = '1' }: Props) {
         type="tel"
         required
         disabled={disabled}
+        defaultValue={defaultLocalPhone}
         placeholder={prefix === '1' ? '(407) 555-0100' : '98 352 367'}
         className={inputClass}
         aria-label="Phone number"

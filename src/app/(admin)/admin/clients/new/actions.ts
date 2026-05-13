@@ -12,7 +12,7 @@ export type InviteNewClientState =
 
 async function sendInviteMessage(e164: string, channel: 'sms' | 'whatsapp') {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://vmintegralmassage.vercel.app'
-  const body = `Hola! 💆‍♀️ VM Integral Massage te invita a completar tu registro y acceder a tu perfil personal: ${appUrl}/setup`
+  const body = `Hola! 💆‍♀️ VM Integral Massage te invita a completar tu registro y acceder a tu perfil personal: ${appUrl}/setup?phone=${encodeURIComponent(e164)}`
   const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
   const from = channel === 'whatsapp' ? process.env.TWILIO_WHATSAPP_FROM : process.env.TWILIO_SMS_FROM
   const to = channel === 'whatsapp' ? `whatsapp:${e164}` : e164
