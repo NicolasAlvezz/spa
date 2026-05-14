@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useEffect } from 'react'
+import { useState, useTransition, useEffect, useMemo } from 'react'
 import { Loader2, Plus, Pencil, Trash2, X } from 'lucide-react'
 import {
   createServiceAction,
@@ -279,8 +279,11 @@ interface Props {
   initialServices: ServiceTypeAdminItem[]
 }
 
+type SortOrder = 'az' | 'za' | 'price_asc' | 'price_desc'
+
 export function ServicesClient({ initialServices }: Props) {
   const [services, setServices] = useState(initialServices)
+  const [sortOrder, setSortOrder] = useState<SortOrder>('az')
   const [showForm, setShowForm] = useState(false)
   const [editTarget, setEditTarget] = useState<ServiceTypeAdminItem | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -341,24 +344,45 @@ export function ServicesClient({ initialServices }: Props) {
     })
   }
 
+  const sorted = useMemo(() => {
+    return [...services].sort((a, b) => {
+      if (sortOrder === 'za') return b.name_en.localeCompare(a.name_en)
+      if (sortOrder === 'price_asc') return (a.price_usd ?? 0) - (b.price_usd ?? 0)
+      if (sortOrder === 'price_desc') return (b.price_usd ?? 0) - (a.price_usd ?? 0)
+      return a.name_en.localeCompare(b.name_en)
+    })
+  }, [services, sortOrder])
+
   return (
     <div className="space-y-6">
 
       {/* Header */}
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Services</h1>
           <p className="text-sm text-gray-400 mt-0.5">
             {services.length} service{services.length !== 1 ? 's' : ''} · inactive types are hidden from client booking
           </p>
         </div>
-        <button
-          onClick={openCreate}
-          className="inline-flex items-center gap-2 h-9 px-4 rounded-lg bg-brand-500 hover:bg-brand-400 active:bg-brand-600 text-white text-sm font-semibold transition-colors shadow-sm"
-        >
-          <Plus size={14} />
-          New service
-        </button>
+        <div className="flex items-center gap-2">
+          <select
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value as SortOrder)}
+            className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm outline-none focus:border-brand-400 transition-colors"
+          >
+            <option value="az">Name A-Z</option>
+            <option value="za">Name Z-A</option>
+            <option value="price_asc">Price ↑</option>
+            <option value="price_desc">Price ↓</option>
+          </select>
+          <button
+            onClick={openCreate}
+            className="inline-flex items-center gap-2 h-9 px-4 rounded-lg bg-brand-500 hover:bg-brand-400 active:bg-brand-600 text-white text-sm font-semibold transition-colors shadow-sm"
+          >
+            <Plus size={14} />
+            New service
+          </button>
+        </div>
       </div>
 
       {/* Table */}
@@ -377,7 +401,7 @@ export function ServicesClient({ initialServices }: Props) {
         )}
 
         <div className="divide-y divide-gray-100">
-          {services.map((s) => (
+          {sorted.map((s) => (
             <div key={s.id} className="flex flex-col sm:grid sm:grid-cols-[1fr_1fr_80px_80px_60px_88px] sm:items-center gap-2 sm:gap-3 px-5 py-3.5">
 
               {/* Name EN */}

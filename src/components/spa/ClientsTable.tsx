@@ -14,16 +14,18 @@ interface Props {
 }
 
 type StatusFilter = MembershipStatus | 'all'
+type SortOrder = 'recent' | 'name_az' | 'name_za'
 
 export function ClientsTable({ clients }: Props) {
   const locale = useLocale() as 'en' | 'es'
   const t = useTranslations('clients')
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
+  const [sortOrder, setSortOrder] = useState<SortOrder>('recent')
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase()
-    return clients.filter((c) => {
+    const result = clients.filter((c) => {
       const matchesSearch =
         !q ||
         c.first_name.toLowerCase().includes(q) ||
@@ -36,7 +38,13 @@ export function ClientsTable({ clients }: Props) {
 
       return matchesSearch && matchesStatus
     })
-  }, [clients, search, statusFilter])
+
+    return result.sort((a, b) => {
+      if (sortOrder === 'name_az') return `${a.first_name} ${a.last_name}`.localeCompare(`${b.first_name} ${b.last_name}`)
+      if (sortOrder === 'name_za') return `${b.first_name} ${b.last_name}`.localeCompare(`${a.first_name} ${a.last_name}`)
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    })
+  }, [clients, search, statusFilter, sortOrder])
 
   return (
     <div className="space-y-4">
@@ -63,6 +71,15 @@ export function ClientsTable({ clients }: Props) {
           <option value="active">{locale === 'es' ? 'Activa' : 'Active'}</option>
           <option value="expired">{locale === 'es' ? 'Vencida' : 'Expired'}</option>
           <option value="no_membership">{locale === 'es' ? 'Sin plan' : 'No plan'}</option>
+        </select>
+        <select
+          value={sortOrder}
+          onChange={(e) => setSortOrder(e.target.value as SortOrder)}
+          className="w-full md:w-auto h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm outline-none focus:border-brand-400 transition-colors"
+        >
+          <option value="recent">{locale === 'es' ? 'Más recientes' : 'Most recent'}</option>
+          <option value="name_az">{locale === 'es' ? 'Nombre A-Z' : 'Name A-Z'}</option>
+          <option value="name_za">{locale === 'es' ? 'Nombre Z-A' : 'Name Z-A'}</option>
         </select>
       </div>
 
