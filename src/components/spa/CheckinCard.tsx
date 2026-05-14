@@ -12,6 +12,7 @@ interface Props {
   onRegisterVisit: () => void
   onRenew: () => void
   onAssignMembership: () => void
+  onRegisterServiceVisit?: () => void
   onConfirmSplitPayment?: () => void
   onPostOpVisit?: () => void
   splitPaymentBlocked?: boolean
@@ -23,6 +24,7 @@ export function CheckinCard({
   onRegisterVisit,
   onRenew,
   onAssignMembership,
+  onRegisterServiceVisit,
   onConfirmSplitPayment,
   onPostOpVisit,
   splitPaymentBlocked = false,
@@ -235,14 +237,20 @@ export function CheckinCard({
 
       <div className="flex flex-col gap-3 pt-1">
         <button
+          onClick={onRegisterServiceVisit}
+          className="w-full h-16 rounded-xl bg-green-500 hover:bg-green-400 active:bg-green-600 text-white text-xl font-bold transition-colors shadow-lg shadow-green-900/30"
+        >
+          {locale === 'es' ? 'Registrar visita' : 'Register visit'}
+        </button>
+        <button
           onClick={onAssignMembership}
-          className="w-full h-16 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 text-white text-xl font-bold transition-colors shadow-lg shadow-brand-900/30"
+          className="w-full h-12 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 text-white text-sm font-semibold transition-colors shadow-lg shadow-brand-900/30"
         >
           {tCheck('assign_button')}
         </button>
         <button
           onClick={onPostOpVisit}
-          className="w-full h-12 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-semibold transition-colors"
+          className="w-full h-11 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium transition-colors"
         >
           {tCheck('post_op_visit')}
         </button>

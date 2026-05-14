@@ -17,6 +17,8 @@ type Phase =
   | 'assigning'
   | 'confirming_split'
   | 'registering_postop'
+  | 'service_visit'
+  | 'registering_service'
   | 'success'
   | 'error'
   | 'camera_error'
@@ -261,12 +263,43 @@ export default function ScanPage() {
     }
   }, [result, tCheck, locale])
 
+  const handleServiceVisit = useCallback(async (serviceTypeId: string) => {
+    if (!result) return
+    setPhase('registering_service')
+    try {
+      const res = await fetch('/api/visits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          client_id: result.client.id,
+          membership_id: null,
+          service_type_id: serviceTypeId,
+        }),
+      })
+      if (!res.ok) {
+        setErrorKey('network_error')
+        setPhase('error')
+        return
+      }
+      setSuccessInfo({
+        title: tCheck('visit_registered'),
+        detail: tCheck('session_additional'),
+      })
+      setPhase('success')
+    } catch {
+      setErrorKey('network_error')
+      setPhase('error')
+    }
+  }, [result, tCheck])
+
   const cameraPaused =
     phase === 'result' ||
     phase === 'registering' ||
     phase === 'registering_postop' ||
+    phase === 'registering_service' ||
     phase === 'renewing' ||
     phase === 'assigning' ||
+    phase === 'service_visit' ||
     phase === 'confirming_split' ||
     phase === 'success' ||
     phase === 'error'
@@ -326,6 +359,7 @@ export default function ScanPage() {
               onRegisterVisit={handleRegisterVisit}
               onRenew={() => setPhase('renewing')}
               onAssignMembership={() => setPhase('assigning')}
+              onRegisterServiceVisit={() => setPhase('service_visit')}
               onConfirmSplitPayment={() => setPhase('confirming_split')}
               onPostOpVisit={handlePostOpVisit}
               splitPaymentBlocked={splitPaymentBlocked}
@@ -333,7 +367,17 @@ export default function ScanPage() {
           </div>
         )}
 
-        {(phase === 'registering' || phase === 'registering_postop') && (
+        {phase === 'service_visit' && result && (
+          <div className="w-full max-w-md">
+            <ServiceVisitPanel
+              result={result}
+              onConfirm={handleServiceVisit}
+              onCancel={() => setPhase('result')}
+            />
+          </div>
+        )}
+
+        {(phase === 'registering' || phase === 'registering_postop' || phase === 'registering_service') && (
           <div className="text-center space-y-4">
             <Loader2 size={44} className="text-green-400 animate-spin mx-auto" />
             <p className="text-slate-300 text-xl font-medium">{tCheck('registering')}</p>
@@ -715,6 +759,125 @@ function ConfirmSplitPanel({ result, onConfirm, onCancel }: ConfirmSplitPanelPro
         </button>
         <button onClick={onCancel} disabled={submitting}
           className="w-full h-12 rounded-xl bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-slate-300 text-base font-medium transition-colors">
+          {t('cancel')}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+interface ServiceType {
+  id: string
+  slug: string
+  name_en: string
+  name_es: string
+  price_usd: number | null
+  duration_minutes: number | null
+}
+
+interface ServiceVisitPanelProps {
+  result: CheckinResult
+  onConfirm: (serviceTypeId: string) => Promise<void>
+  onCancel: () => void
+}
+
+function ServiceVisitPanel({ result, onConfirm, onCancel }: ServiceVisitPanelProps) {
+  const t = useTranslations('checkin')
+  const locale = useLocale() as 'en' | 'es'
+
+  const [services, setServices] = useState<ServiceType[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/service-types')
+      .then(r => r.json())
+      .then((data: ServiceType[]) => { setServices(data); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [])
+
+  const handleConfirm = async () => {
+    if (!selectedId || submitting) return
+    setSubmitting(true)
+    await onConfirm(selectedId)
+  }
+
+  return (
+    <div className="w-full flex flex-col gap-6">
+      <div className="flex items-center gap-3">
+        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-brand-500/20">
+          <Star size={18} className="text-brand-400" />
+        </div>
+        <span className="text-brand-400 text-lg font-semibold uppercase tracking-wide">
+          {locale === 'es' ? 'Registrar visita' : 'Register visit'}
+        </span>
+      </div>
+
+      <h2 className="text-2xl md:text-4xl font-bold text-white leading-tight">
+        {result.client.first_name} {result.client.last_name}
+      </h2>
+
+      <div>
+        <p className="text-slate-400 text-xs uppercase tracking-wide mb-3">
+          {locale === 'es' ? '¿Qué servicio va a recibir?' : 'Which service will they receive?'}
+        </p>
+        {loading ? (
+          <p className="text-slate-400 text-sm">{t('loading_plans')}</p>
+        ) : services.length === 0 ? (
+          <p className="text-slate-400 text-sm">
+            {locale === 'es' ? 'No hay servicios activos.' : 'No active services found.'}
+          </p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {services.map((s) => {
+              const isSelected = selectedId === s.id
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => setSelectedId(s.id)}
+                  disabled={submitting}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-left transition-colors disabled:opacity-50 ${
+                    isSelected
+                      ? 'bg-brand-500 text-white'
+                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                  }`}
+                >
+                  <div>
+                    <span className="font-semibold block">
+                      {locale === 'es' ? s.name_es : s.name_en}
+                    </span>
+                    {s.duration_minutes && (
+                      <span className={`text-xs ${isSelected ? 'text-brand-100' : 'text-slate-400'}`}>
+                        {s.duration_minutes} min
+                      </span>
+                    )}
+                  </div>
+                  {s.price_usd !== null && (
+                    <span className="text-lg font-bold ml-4 flex-shrink-0">${s.price_usd}</span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-3 pt-2">
+        <button
+          onClick={handleConfirm}
+          disabled={!selectedId || submitting}
+          className="w-full h-16 rounded-xl bg-green-500 hover:bg-green-400 active:bg-green-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xl font-bold transition-colors"
+        >
+          {submitting
+            ? (locale === 'es' ? 'Registrando...' : 'Registering...')
+            : (locale === 'es' ? 'Confirmar visita' : 'Confirm visit')}
+        </button>
+        <button
+          onClick={onCancel}
+          disabled={submitting}
+          className="w-full h-12 rounded-xl bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-slate-300 text-base font-medium transition-colors"
+        >
           {t('cancel')}
         </button>
       </div>
