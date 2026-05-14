@@ -1,11 +1,11 @@
 import Link from 'next/link'
 import { UserPlus } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
-import { getClients } from '@/lib/supabase/queries/clients'
+import { getClients, getActivePlans } from '@/lib/supabase/queries/clients'
 import { ClientsTable } from '@/components/spa/ClientsTable'
 
 export default async function ClientsPage() {
-  const [clients, t] = await Promise.all([getClients(), getTranslations('clients')])
+  const [clients, plans, t] = await Promise.all([getClients(), getActivePlans(), getTranslations('clients')])
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-6xl pb-24 md:pb-8">
@@ -27,7 +27,7 @@ export default async function ClientsPage() {
         </Link>
       </div>
 
-      <ClientsTable clients={clients} />
+      <ClientsTable clients={clients} plans={plans} />
 
       {/* Mobile: FAB — floating action button, bottom-right */}
       <Link
