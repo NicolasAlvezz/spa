@@ -6,7 +6,9 @@ import {
   getClientById,
   getClientVisits,
   getClientPayments,
+  getClientHistorySummary,
 } from '@/lib/supabase/queries/clients'
+import { DangerZone } from '@/components/spa/DangerZone'
 import { getCurrentMembership } from '@/lib/utils/membership'
 import { formatDate, formatDateTime } from '@/lib/utils/dates'
 import { MembershipBadge } from '@/components/spa/MembershipBadge'
@@ -45,9 +47,10 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
 
   const since = periodSince(period)
 
-  const [visits, payments] = await Promise.all([
+  const [visits, payments, history] = await Promise.all([
     getClientVisits(client.id, since),
     getClientPayments(client.id),
+    getClientHistorySummary(client.id),
   ])
 
   const membership = getCurrentMembership(client.memberships)
@@ -351,6 +354,14 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
           </div>
         )}
       </div>
+      {/* ── Danger Zone ────────────────────────────────────────────────── */}
+      <DangerZone
+        clientId={client.id}
+        clientName={`${client.first_name} ${client.last_name}`}
+        isActive={client.is_active}
+        history={history}
+      />
+
     </div>
   )
 }

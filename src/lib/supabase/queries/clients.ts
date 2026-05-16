@@ -14,15 +14,39 @@ export type { ClientListRow, ClientDetail, MembershipWithPlan, VisitWithService 
 // protected by middleware. Using service client avoids JWT-staleness issues
 // (e.g. app_metadata.role set in Supabase but not yet reflected in the session JWT).
 
-export async function getClients(): Promise<ClientListRow[]> {
+export async function getClients(opts?: { includeInactive?: boolean }): Promise<ClientListRow[]> {
   const supabase = createServiceClient()
-  const { data, error } = await supabase
+  const query = supabase
     .from('clients')
     .select(`*, memberships(*, membership_plans(*))`)
     .order('created_at', { ascending: false })
 
+  const { data, error } = opts?.includeInactive
+    ? await query
+    : await query.eq('is_active', true)
+
   if (error) throw error
   return (data ?? []) as unknown as ClientListRow[]
+}
+
+export interface ClientHistorySummary {
+  memberships: number
+  visits: number
+  payments: number
+}
+
+export async function getClientHistorySummary(clientId: string): Promise<ClientHistorySummary> {
+  const supabase = createServiceClient()
+  const [{ count: memberships }, { count: visits }, { count: payments }] = await Promise.all([
+    supabase.from('memberships').select('id', { count: 'exact', head: true }).eq('client_id', clientId),
+    supabase.from('visits').select('id', { count: 'exact', head: true }).eq('client_id', clientId),
+    supabase.from('payments').select('id', { count: 'exact', head: true }).eq('client_id', clientId),
+  ])
+  return {
+    memberships: memberships ?? 0,
+    visits: visits ?? 0,
+    payments: payments ?? 0,
+  }
 }
 
 export async function getClientById(id: string): Promise<ClientDetail | null> {

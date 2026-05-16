@@ -5,7 +5,7 @@ import { getClients, getActivePlans } from '@/lib/supabase/queries/clients'
 import { ClientsTable } from '@/components/spa/ClientsTable'
 
 export default async function ClientsPage() {
-  const [clients, plans, t] = await Promise.all([getClients(), getActivePlans(), getTranslations('clients')])
+  const [clients, plans, t] = await Promise.all([getClients({ includeInactive: true }), getActivePlans(), getTranslations('clients')])
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-6xl pb-24 md:pb-8">

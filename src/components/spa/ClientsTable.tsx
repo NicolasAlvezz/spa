@@ -309,11 +309,17 @@ export function ClientsTable({ clients, plans }: Props) {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [sortOrder, setSortOrder] = useState<SortOrder>('recent')
+  const [showInactive, setShowInactive] = useState(false)
   const [planClient, setPlanClient] = useState<ClientListRow | null>(null)
+
+  const activeCount = useMemo(() => clients.filter(c => c.is_active).length, [clients])
+  const inactiveCount = useMemo(() => clients.filter(c => !c.is_active).length, [clients])
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase()
     const result = clients.filter((c) => {
+      if (!showInactive && !c.is_active) return false
+
       const matchesSearch =
         !q ||
         c.first_name.toLowerCase().includes(q) ||
@@ -368,6 +374,21 @@ export function ClientsTable({ clients, plans }: Props) {
           <option value="name_az">{locale === 'es' ? 'Nombre A-Z' : 'Name A-Z'}</option>
           <option value="name_za">{locale === 'es' ? 'Nombre Z-A' : 'Name Z-A'}</option>
         </select>
+        {inactiveCount > 0 && (
+          <button
+            onClick={() => setShowInactive(v => !v)}
+            className={[
+              'w-full md:w-auto h-10 px-3 rounded-lg border text-sm font-medium transition-colors whitespace-nowrap',
+              showInactive
+                ? 'border-gray-400 bg-gray-100 text-gray-700'
+                : 'border-gray-200 bg-white text-gray-400 hover:text-gray-600 hover:border-gray-300',
+            ].join(' ')}
+          >
+            {showInactive
+              ? (locale === 'es' ? `Ocultar inactivos (${inactiveCount})` : `Hide inactive (${inactiveCount})`)
+              : (locale === 'es' ? `Mostrar inactivos (${inactiveCount})` : `Show inactive (${inactiveCount})`)}
+          </button>
+        )}
       </div>
 
       {filtered.length === 0 ? (
@@ -411,7 +432,10 @@ export function ClientsTable({ clients, plans }: Props) {
 
                     {/* Badge + chevron */}
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <MembershipBadge membership={membership} locale={locale} />
+                      {!client.is_active
+                        ? <span className="text-[10px] bg-gray-100 text-gray-400 px-2 py-0.5 rounded-full font-semibold">{locale === 'es' ? 'Inactivo' : 'Inactive'}</span>
+                        : <MembershipBadge membership={membership} locale={locale} />
+                      }
                       <Link href={`/admin/clients/${client.id}`} className="text-gray-300 hover:text-brand-600">
                         <ChevronRight size={15} />
                       </Link>
@@ -484,7 +508,10 @@ export function ClientsTable({ clients, plans }: Props) {
                       </td>
                       {/* Status */}
                       <td className="px-5 py-3.5">
-                        <MembershipBadge membership={membership} locale={locale} />
+                        {!client.is_active
+                          ? <span className="text-xs bg-gray-100 text-gray-400 px-2.5 py-1 rounded-full font-semibold">{locale === 'es' ? 'Inactivo' : 'Inactive'}</span>
+                          : <MembershipBadge membership={membership} locale={locale} />
+                        }
                       </td>
                       {/* Ver plan */}
                       <td className="px-5 py-3.5">
@@ -514,7 +541,10 @@ export function ClientsTable({ clients, plans }: Props) {
       )}
 
       <p className="text-xs text-gray-400">
-        {filtered.length} / {clients.length} {locale === 'es' ? 'clientes' : 'clients'}
+        {filtered.length} / {activeCount} {locale === 'es' ? 'clientes activos' : 'active clients'}
+        {inactiveCount > 0 && (
+          <span className="ml-2 text-gray-300">· {inactiveCount} {locale === 'es' ? 'inactivos' : 'inactive'}</span>
+        )}
       </p>
 
       {/* Plan panel */}

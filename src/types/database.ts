@@ -37,6 +37,7 @@ export interface Database {
           preferred_language: 'en' | 'es'
           notes: string | null
           qr_code: string
+          is_active: boolean
           created_at: string
           updated_at: string
         }
@@ -54,6 +55,7 @@ export interface Database {
           work_id_verified?: boolean
           preferred_language?: 'en' | 'es'
           notes?: string | null
+          is_active?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -70,6 +72,7 @@ export interface Database {
           work_id_verified?: boolean
           preferred_language?: 'en' | 'es'
           notes?: string | null
+          is_active?: boolean
           updated_at?: string
         }
         Relationships: Relationship[]
