@@ -145,9 +145,9 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <StatCard
           icon={Calendar}
-          label={isPack ? tCheck('sessions_remaining') : tCheck('sessions_used')}
+          label={tCheck('sessions_used')}
           value={isPack
-            ? `${membership?.sessions_remaining ?? 0} / ${plan?.total_sessions ?? '—'}`
+            ? `${(plan?.total_sessions ?? 0) - (membership?.sessions_remaining ?? 0)} / ${plan?.total_sessions ?? '—'}`
             : `${membership?.sessions_used_this_month ?? 0} / ${plan?.sessions_per_month ?? '—'}`}
           color="brand"
         />
@@ -301,6 +301,7 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
                 <th className="px-6 py-3 font-medium">{t('visit_col_date')}</th>
                 <th className="px-6 py-3 font-medium">{t('visit_col_service')}</th>
                 <th className="px-6 py-3 font-medium">{t('visit_col_type')}</th>
+                <th className="px-6 py-3 font-medium">{locale === 'es' ? 'Precio' : 'Price'}</th>
                 <th className="px-6 py-3 font-medium">{t('visit_col_notes')}</th>
               </tr>
             </thead>
@@ -317,6 +318,9 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
                   </td>
                   <td className="px-6 py-3.5">
                     <SessionTypeBadge label={sessionTypeLabel[v.session_type] ?? v.session_type} type={v.session_type} />
+                  </td>
+                  <td className="px-6 py-3.5 text-gray-700 text-sm font-medium">
+                    {v.service_types?.price_usd != null ? `$${v.service_types.price_usd}` : <span className="text-gray-300">—</span>}
                   </td>
                   <td className="px-6 py-3.5 text-gray-400 text-xs">{v.notes ?? '—'}</td>
                 </tr>

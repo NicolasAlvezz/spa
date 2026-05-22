@@ -48,7 +48,7 @@ export type ClientDetail = ClientListRow
 
 // Visit row joined with its service type
 export type VisitWithService = DbVisit & {
-  service_types: { slug: string; name_en: string; name_es: string } | null
+  service_types: { slug: string; name_en: string; name_es: string; price_usd: number | null } | null
 }
 
 // ─── API response shapes ──────────────────────────────────────────────────────

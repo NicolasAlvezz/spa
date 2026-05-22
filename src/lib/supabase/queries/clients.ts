@@ -65,7 +65,7 @@ export async function getClientVisits(clientId: string, since?: string): Promise
   const supabase = createServiceClient()
   const query = supabase
     .from('visits')
-    .select(`*, service_types(slug, name_en, name_es)`)
+    .select(`*, service_types(slug, name_en, name_es, price_usd)`)
     .eq('client_id', clientId)
     .order('visited_at', { ascending: false })
 
