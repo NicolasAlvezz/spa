@@ -11,14 +11,21 @@ export async function POST(req: Request) {
 
   const supabase = createServiceClient()
 
-  // Prevent duplicate client records
+  // Check for existing client record (created by /setup) and health form
   const { data: existing } = await supabase
     .from('clients')
-    .select('id')
+    .select('id, client_health_forms(id)')
     .eq('user_id', user.id)
     .maybeSingle()
 
-  if (existing) {
+  const hasHealthForm = existing
+    ? (Array.isArray(existing.client_health_forms)
+        ? existing.client_health_forms.length > 0
+        : !!existing.client_health_forms)
+    : false
+
+  // Already fully completed onboarding
+  if (existing && hasHealthForm) {
     return NextResponse.json({ error: 'already_registered' }, { status: 409 })
   }
 
@@ -65,36 +72,52 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'contract_not_accepted' }, { status: 400 })
   }
 
-  // Create client record
-  const { data: client, error: clientError } = await supabase
-    .from('clients')
-    .insert({
-      user_id: user.id,
-      first_name: first_name.trim(),
-      last_name: last_name.trim(),
-      phone: phone.trim(),
-      address: address.trim(),
-      email: user.email ?? null,
-      preferred_language: preferred_language ?? 'en',
-      how_did_you_hear: how_did_you_hear || null,
-    })
-    .select('id')
-    .single()
-
-  if (clientError || !client) {
-    console.error('[POST /api/onboarding] client insert:', clientError)
-    return NextResponse.json({
-      error: 'failed_to_create_client',
-      detail: clientError?.message ?? 'unknown',
-      code: clientError?.code ?? null,
-    }, { status: 500 })
+  // Update existing record (created by /setup) or insert a new one
+  let clientId: string
+  if (existing) {
+    const { error: updateError } = await supabase
+      .from('clients')
+      .update({
+        first_name: first_name.trim(),
+        last_name: last_name.trim(),
+        phone: phone.trim(),
+        address: address.trim(),
+        preferred_language: preferred_language ?? 'en',
+        how_did_you_hear: how_did_you_hear || null,
+      })
+      .eq('id', existing.id)
+    if (updateError) {
+      console.error('[POST /api/onboarding] client update:', updateError)
+      return NextResponse.json({ error: 'failed_to_create_client', detail: updateError.message }, { status: 500 })
+    }
+    clientId = existing.id
+  } else {
+    const { data: client, error: clientError } = await supabase
+      .from('clients')
+      .insert({
+        user_id: user.id,
+        first_name: first_name.trim(),
+        last_name: last_name.trim(),
+        phone: phone.trim(),
+        address: address.trim(),
+        email: user.email ?? null,
+        preferred_language: preferred_language ?? 'en',
+        how_did_you_hear: how_did_you_hear || null,
+      })
+      .select('id')
+      .single()
+    if (clientError || !client) {
+      console.error('[POST /api/onboarding] client insert:', clientError)
+      return NextResponse.json({ error: 'failed_to_create_client', detail: clientError?.message ?? 'unknown', code: clientError?.code ?? null }, { status: 500 })
+    }
+    clientId = client.id
   }
 
   // Create health form record
   const { error: formError } = await supabase
     .from('client_health_forms')
     .insert({
-      client_id: client.id,
+      client_id: clientId,
       date_of_birth: date_of_birth || null,
       under_medical_treatment: !!under_medical_treatment,
       medical_treatment_details: under_medical_treatment ? (medical_treatment_details || null) : null,
@@ -118,7 +141,7 @@ export async function POST(req: Request) {
   if (formError) {
     console.error('[POST /api/onboarding] health form insert:', formError)
     // Clean up orphaned client record so the user can retry onboarding
-    await supabase.from('clients').delete().eq('id', client.id)
+    if (!existing) await supabase.from('clients').delete().eq('id', clientId)
     return NextResponse.json({
       error: 'failed_to_save_health_form',
       detail: formError?.message ?? 'unknown',

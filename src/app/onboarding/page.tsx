@@ -9,9 +9,16 @@ export default async function OnboardingPage() {
 
   const { data: client } = await supabase
     .from('clients')
-    .select('first_name, last_name, phone')
+    .select('first_name, last_name, phone, address, client_health_forms(id)')
     .eq('user_id', user.id)
     .maybeSingle()
+
+  // Already completed onboarding → go straight to QR
+  const hasHealthForm = Array.isArray(client?.client_health_forms)
+    ? client.client_health_forms.length > 0
+    : !!client?.client_health_forms
+
+  if (client && hasHealthForm) redirect('/my-qr')
 
   return (
     <OnboardingForm
