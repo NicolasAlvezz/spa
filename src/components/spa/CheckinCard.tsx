@@ -13,7 +13,6 @@ interface Props {
   onAssignMembership: () => void
   onRegisterServiceVisit?: () => void
   onConfirmSplitPayment?: () => void
-  onPostOpVisit?: () => void
   splitPaymentBlocked?: boolean
 }
 
@@ -24,7 +23,6 @@ export function CheckinCard({
   onAssignMembership,
   onRegisterServiceVisit,
   onConfirmSplitPayment,
-  onPostOpVisit,
   splitPaymentBlocked = false,
 }: Props) {
   const t = useTranslations('scan')
@@ -186,12 +184,6 @@ export function CheckinCard({
           className="w-full h-12 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 text-white text-sm font-semibold transition-colors shadow-lg shadow-brand-900/30"
         >
           {tCheck('assign_button')}
-        </button>
-        <button
-          onClick={onPostOpVisit}
-          className="w-full h-11 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium transition-colors"
-        >
-          {t('post_op_visit')}
         </button>
         <button
           onClick={onScanAgain}

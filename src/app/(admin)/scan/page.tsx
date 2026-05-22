@@ -16,7 +16,7 @@ type Phase =
   | 'renewing'
   | 'assigning'
   | 'confirming_split'
-  | 'registering_postop'
+
   | 'service_visit'
   | 'registering_service'
   | 'success'
@@ -129,35 +129,6 @@ export default function ScanPage() {
       setSuccessInfo({
         title: tCheck('visit_registered'),
         detail,
-      })
-      setPhase('success')
-    } catch {
-      setErrorKey('network_error')
-      setPhase('error')
-    }
-  }, [result, tCheck])
-
-  const handlePostOpVisit = useCallback(async () => {
-    if (!result) return
-    setPhase('registering_postop')
-    try {
-      const res = await fetch('/api/visits', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          client_id: result.client.id,
-          membership_id: null,
-          session_type: 'post_op',
-        }),
-      })
-      if (!res.ok) {
-        setErrorKey('network_error')
-        setPhase('error')
-        return
-      }
-      setSuccessInfo({
-        title: tCheck('visit_registered'),
-        detail: tCheck('post_op_visit'),
       })
       setPhase('success')
     } catch {
@@ -296,7 +267,6 @@ export default function ScanPage() {
   const cameraPaused =
     phase === 'result' ||
     phase === 'registering' ||
-    phase === 'registering_postop' ||
     phase === 'registering_service' ||
     phase === 'renewing' ||
     phase === 'assigning' ||
@@ -361,7 +331,6 @@ export default function ScanPage() {
               onAssignMembership={() => setPhase('assigning')}
               onRegisterServiceVisit={() => setPhase('service_visit')}
               onConfirmSplitPayment={() => setPhase('confirming_split')}
-              onPostOpVisit={handlePostOpVisit}
               splitPaymentBlocked={splitPaymentBlocked}
             />
           </div>
@@ -377,7 +346,7 @@ export default function ScanPage() {
           </div>
         )}
 
-        {(phase === 'registering' || phase === 'registering_postop' || phase === 'registering_service') && (
+        {(phase === 'registering' || phase === 'registering_service') && (
           <div className="text-center space-y-4">
             <Loader2 size={44} className="text-green-400 animate-spin mx-auto" />
             <p className="text-slate-300 text-xl font-medium">{tCheck('registering')}</p>
