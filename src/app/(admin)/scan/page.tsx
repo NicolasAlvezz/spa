@@ -263,7 +263,7 @@ export default function ScanPage() {
     }
   }, [result, tCheck, locale])
 
-  const handleServiceVisit = useCallback(async (serviceTypeId: string) => {
+  const handleServiceVisit = useCallback(async (serviceTypeId: string, serviceName: string, priceUsd: number | null) => {
     if (!result) return
     setPhase('registering_service')
     try {
@@ -283,7 +283,7 @@ export default function ScanPage() {
       }
       setSuccessInfo({
         title: tCheck('visit_registered'),
-        detail: tCheck('session_additional'),
+        detail: priceUsd !== null ? `${serviceName} — $${priceUsd}` : serviceName,
       })
       setPhase('success')
     } catch {
@@ -777,7 +777,7 @@ interface ServiceType {
 
 interface ServiceVisitPanelProps {
   result: CheckinResult
-  onConfirm: (serviceTypeId: string) => Promise<void>
+  onConfirm: (serviceTypeId: string, serviceName: string, priceUsd: number | null) => Promise<void>
   onCancel: () => void
 }
 
@@ -799,8 +799,9 @@ function ServiceVisitPanel({ result, onConfirm, onCancel }: ServiceVisitPanelPro
 
   const handleConfirm = async () => {
     if (!selectedId || submitting) return
+    const service = services.find(s => s.id === selectedId)!
     setSubmitting(true)
-    await onConfirm(selectedId)
+    await onConfirm(selectedId, locale === 'es' ? service.name_es : service.name_en, service.price_usd)
   }
 
   return (
