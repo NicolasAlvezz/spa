@@ -60,8 +60,9 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
   const sessionTypeLabel: Record<string, string> = {
     included:      tCheck('session_included'),
     rollover:      tCheck('session_rollover'),
-    additional:    tCheck('session_additional'),
+    additional:    locale === 'es' ? 'Individual' : 'Individual',
     welcome_offer: tCheck('session_welcome_offer'),
+    post_op:       locale === 'es' ? 'Post-op' : 'Post-op',
   }
 
   const conceptKey: Record<string, Parameters<typeof tPay>[0]> = {
@@ -410,8 +411,9 @@ function SessionTypeBadge({ label, type }: { label: string; type: string }) {
   const styles: Record<string, string> = {
     included:      'bg-green-50 text-green-700',
     rollover:      'bg-brand-50 text-brand-700',
-    additional:    'bg-blue-50 text-blue-700',
+    additional:    'bg-gray-50 text-gray-500',
     welcome_offer: 'bg-purple-50 text-purple-700',
+    post_op:       'bg-orange-50 text-orange-700',
   }
   return (
     <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${styles[type] ?? 'bg-gray-50 text-gray-600'}`}>
