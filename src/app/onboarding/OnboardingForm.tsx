@@ -263,35 +263,6 @@ export function OnboardingForm({ initialFirstName = '', initialLastName = '', in
         <p className="text-sm text-gray-500 mt-1">{s.subtitle}</p>
       </div>
 
-      {/* Language toggle */}
-      <div className="flex items-center gap-3">
-        <span className="text-sm text-gray-500">Language / Idioma:</span>
-        <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden text-sm font-medium">
-          <button
-            type="button"
-            onClick={() => handleLangChange('en')}
-            className={`px-4 py-2 transition-colors ${
-              lang === 'en'
-                ? 'bg-brand-500 text-white'
-                : 'bg-white text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            English
-          </button>
-          <button
-            type="button"
-            onClick={() => handleLangChange('es')}
-            className={`px-4 py-2 transition-colors border-l border-gray-200 ${
-              lang === 'es'
-                ? 'bg-brand-500 text-white'
-                : 'bg-white text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            Español
-          </button>
-        </div>
-      </div>
-
       {/* Personal info */}
       <Section label={s.section_personal}>
         <div className="grid grid-cols-2 gap-3">
