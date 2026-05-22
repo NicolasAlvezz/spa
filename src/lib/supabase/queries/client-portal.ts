@@ -14,8 +14,13 @@ export interface ClientVisitRow {
   id: string
   visited_at: string
   session_type: string
+  notes: string | null
+  registered_by: string | null
+  has_membership: boolean
   service_name_en: string | null
   service_name_es: string | null
+  service_price_usd: number | null
+  service_duration_minutes: number | null
 }
 
 // ─── Queries ─────────────────────────────────────────────────────────────────
@@ -66,7 +71,7 @@ export async function getClientRecentVisits(
 
   const { data } = await supabase
     .from('visits')
-    .select('id, visited_at, session_type, service_types(name_en, name_es)')
+    .select('id, visited_at, session_type, notes, registered_by, membership_id, service_types(name_en, name_es, price_usd, duration_minutes)')
     .eq('client_id', clientId)
     .order('visited_at', { ascending: false })
     .limit(limit)
@@ -77,8 +82,13 @@ export async function getClientRecentVisits(
     id: v.id,
     visited_at: v.visited_at,
     session_type: v.session_type,
+    notes: v.notes ?? null,
+    registered_by: v.registered_by ?? null,
+    has_membership: !!v.membership_id,
     service_name_en: v.service_types?.name_en ?? null,
     service_name_es: v.service_types?.name_es ?? null,
+    service_price_usd: v.service_types?.price_usd ?? null,
+    service_duration_minutes: v.service_types?.duration_minutes ?? null,
   }))
 }
 
@@ -101,7 +111,7 @@ export async function getClientVisitsPaginated(
   const [dataRes, countRes] = await Promise.all([
     supabase
       .from('visits')
-      .select('id, visited_at, session_type, service_types(name_en, name_es)')
+      .select('id, visited_at, session_type, notes, registered_by, membership_id, service_types(name_en, name_es, price_usd, duration_minutes)')
       .eq('client_id', clientId)
       .gte('visited_at', sinceIso)
       .order('visited_at', { ascending: false })
@@ -118,8 +128,13 @@ export async function getClientVisitsPaginated(
     id: v.id,
     visited_at: v.visited_at,
     session_type: v.session_type,
+    notes: v.notes ?? null,
+    registered_by: v.registered_by ?? null,
+    has_membership: !!v.membership_id,
     service_name_en: v.service_types?.name_en ?? null,
     service_name_es: v.service_types?.name_es ?? null,
+    service_price_usd: v.service_types?.price_usd ?? null,
+    service_duration_minutes: v.service_types?.duration_minutes ?? null,
   }))
 
   return { visits, total: countRes.count ?? 0 }

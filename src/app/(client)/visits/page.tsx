@@ -5,7 +5,7 @@ import { Activity, ChevronLeft, ChevronRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getClientByUserId } from '@/lib/supabase/queries/clients'
 import { getClientVisitsPaginated } from '@/lib/supabase/queries/client-portal'
-import { formatDateTime } from '@/lib/utils/dates'
+import { VisitsList } from './VisitsList'
 
 interface Props {
   searchParams: { page?: string; period?: string }
@@ -23,20 +23,6 @@ function periodSince(period: string): string | undefined {
   const since = new Date()
   since.setDate(since.getDate() - d)
   return since.toISOString()
-}
-
-const SESSION_LABELS: Record<string, { en: string; es: string }> = {
-  included:      { en: 'Included',      es: 'Incluida'   },
-  rollover:      { en: 'Rollover',      es: 'Rollover'   },
-  additional:    { en: 'Additional',    es: 'Adicional'  },
-  welcome_offer: { en: 'Welcome offer', es: 'Bienvenida' },
-}
-
-const SESSION_COLORS: Record<string, string> = {
-  included:      'bg-green-50 text-green-700',
-  rollover:      'bg-brand-50 text-brand-700',
-  additional:    'bg-blue-50 text-blue-700',
-  welcome_offer: 'bg-purple-50 text-purple-700',
 }
 
 export default async function VisitsPage({ searchParams }: Props) {
@@ -61,14 +47,6 @@ export default async function VisitsPage({ searchParams }: Props) {
 
   const locale: 'en' | 'es' = client.preferred_language === 'es' ? 'es' : 'en'
   const totalPages = Math.ceil(total / PAGE_SIZE)
-
-  function sessionLabel(type: string) {
-    return SESSION_LABELS[type]?.[locale] ?? type
-  }
-
-  function serviceName(nameEn: string | null, nameEs: string | null) {
-    return locale === 'es' ? nameEs : nameEn
-  }
 
   const periodLabels: Record<Period, string> = {
     '1m':  t('period_1m'),
@@ -113,60 +91,13 @@ export default async function VisitsPage({ searchParams }: Props) {
         ))}
       </div>
 
-      {/* Table / empty */}
+      {/* Visits list / empty */}
       {visits.length === 0 ? (
         <div className="flex-1 flex items-center justify-center py-20 text-center">
           <p className="text-sm text-gray-400">{t('no_visits')}</p>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-
-          {/* Desktop header (hidden on mobile) */}
-          <div className="hidden sm:grid sm:grid-cols-3 px-5 py-3 bg-gray-50 border-b border-gray-100 text-xs font-semibold text-gray-400 uppercase tracking-wide">
-            <span>{t('col_date')}</span>
-            <span>{t('col_service')}</span>
-            <span>{t('col_type')}</span>
-          </div>
-
-          {/* Rows */}
-          <div className="divide-y divide-gray-50">
-            {visits.map((v) => {
-              const svc = serviceName(v.service_name_en, v.service_name_es)
-              const typeLabel = sessionLabel(v.session_type)
-              const typeCls = SESSION_COLORS[v.session_type] ?? 'bg-gray-50 text-gray-600'
-
-              return (
-                <div key={v.id} className="px-4 sm:px-5 py-3.5">
-                  {/* Mobile layout */}
-                  <div className="sm:hidden flex items-center justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-gray-800">
-                        {formatDateTime(v.visited_at, locale)}
-                      </p>
-                      {svc && (
-                        <p className="text-xs text-gray-400 mt-0.5 truncate">{svc}</p>
-                      )}
-                    </div>
-                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${typeCls}`}>
-                      {typeLabel}
-                    </span>
-                  </div>
-
-                  {/* Desktop layout */}
-                  <div className="hidden sm:grid sm:grid-cols-3 sm:items-center gap-2">
-                    <p className="text-sm text-gray-700 tabular-nums">
-                      {formatDateTime(v.visited_at, locale)}
-                    </p>
-                    <p className="text-sm text-gray-600">{svc ?? '—'}</p>
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full w-fit ${typeCls}`}>
-                      {typeLabel}
-                    </span>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
+        <VisitsList visits={visits} locale={locale} />
       )}
 
       {/* Pagination */}
