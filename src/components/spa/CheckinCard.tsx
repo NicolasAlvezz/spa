@@ -208,6 +208,12 @@ export function CheckinCard({
             {tCheck('renew')}
           </button>
           <button
+            onClick={onRegisterServiceVisit}
+            className="w-full h-12 rounded-xl bg-green-600 hover:bg-green-500 active:bg-green-700 text-white text-sm font-semibold transition-colors"
+          >
+            {locale === 'es' ? 'Registrar visita individual' : 'Register individual visit'}
+          </button>
+          <button
             onClick={onScanAgain}
             className="w-full h-11 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium transition-colors"
           >
