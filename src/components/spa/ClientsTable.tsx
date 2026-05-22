@@ -338,7 +338,7 @@ export function ClientsTable({ clients, plans }: Props) {
       if (sortOrder === 'name_za') return `${b.first_name} ${b.last_name}`.localeCompare(`${a.first_name} ${a.last_name}`)
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     })
-  }, [clients, search, statusFilter, sortOrder])
+  }, [clients, search, statusFilter, sortOrder, showInactive])
 
   return (
     <div className="space-y-4">

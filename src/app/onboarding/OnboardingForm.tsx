@@ -183,11 +183,6 @@ export function OnboardingForm({ initialFirstName = '', initialLastName = '', in
     setForm(prev => ({ ...prev, [key]: value }))
   }
 
-  function handleLangChange(newLang: Lang) {
-    setLang(newLang)
-    setField('preferred_language', newLang)
-  }
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
