@@ -77,6 +77,20 @@ export async function getClientVisits(clientId: string, since?: string): Promise
   return (data ?? []) as unknown as VisitWithService[]
 }
 
+export async function getServiceVisitsTotalPaid(clientId: string): Promise<number> {
+  const supabase = createServiceClient()
+  const { data } = await supabase
+    .from('visits')
+    .select('service_types(price_usd)')
+    .eq('client_id', clientId)
+    .is('membership_id', null)
+    .not('service_type_id', 'is', null)
+
+  if (!data) return 0
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data as any[]).reduce((sum, v) => sum + Number(v.service_types?.price_usd ?? 0), 0)
+}
+
 export async function getClientPayments(clientId: string): Promise<DbPayment[]> {
   const supabase = createServiceClient()
   const { data, error } = await supabase

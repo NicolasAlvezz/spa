@@ -7,6 +7,7 @@ import {
   getClientVisits,
   getClientPayments,
   getClientHistorySummary,
+  getServiceVisitsTotalPaid,
 } from '@/lib/supabase/queries/clients'
 import { DangerZone } from '@/components/spa/DangerZone'
 import { getCurrentMembership } from '@/lib/utils/membership'
@@ -47,10 +48,11 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
 
   const since = periodSince(period)
 
-  const [visits, payments, history] = await Promise.all([
+  const [visits, payments, history, serviceVisitsTotal] = await Promise.all([
     getClientVisits(client.id, since),
     getClientPayments(client.id),
     getClientHistorySummary(client.id),
+    getServiceVisitsTotalPaid(client.id),
   ])
 
   const membership = getCurrentMembership(client.memberships)
@@ -72,7 +74,7 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
     welcome_offer:      'concept_welcome',
   }
 
-  const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount_usd), 0)
+  const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount_usd), 0) + serviceVisitsTotal
 
   const periodLabels: Record<Period, string> = {
     '1m':  t('period_1m'),
@@ -223,10 +225,14 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
                 {isPack ? (
                   <>
                     <div className="flex justify-between">
-                      <span className="text-gray-400">{tCheck('sessions_remaining')}</span>
+                      <span className="text-gray-400">{tCheck('sessions_used')}</span>
                       <span className="font-medium text-gray-700">
-                        {membership.sessions_remaining} / {plan.total_sessions}
+                        {(plan.total_sessions ?? 0) - (membership.sessions_remaining ?? 0)} / {plan.total_sessions}
                       </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">{tCheck('sessions_remaining')}</span>
+                      <span className="font-medium text-gray-700">{membership.sessions_remaining}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-400">{tCheck('no_expiry')}</span>

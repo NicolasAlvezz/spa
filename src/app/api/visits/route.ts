@@ -159,26 +159,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'failed_to_register_visit' }, { status: 500 })
   }
 
-  // Record payment for standalone service visits
-  if (!membership_id && service_type_id && payment_method) {
-    const { data: serviceType } = await supabase
-      .from('service_types')
-      .select('price_usd')
-      .eq('id', service_type_id)
-      .single()
-
-    if (serviceType?.price_usd) {
-      await supabase.from('payments').insert({
-        client_id,
-        membership_id: null,
-        amount_usd: serviceType.price_usd,
-        method: payment_method as 'cash' | 'debit' | 'credit',
-        concept: 'additional_visit',
-        paid_at: new Date().toISOString().split('T')[0],
-      })
-    }
-  }
-
   // After registering, check if this was the 4th session on a pack with split pending
   // to include a warning in the response
   let split_payment_warning = false
