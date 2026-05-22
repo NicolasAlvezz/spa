@@ -24,6 +24,28 @@ const COUNTRIES = [
   { code: '58',  flag: '🇻🇪', name: 'Venezuela +58' },
 ] as const
 
+const PLACEHOLDERS: Record<string, string> = {
+  '1':   '(555) 000-0000',
+  '54':  '11 0000-0000',
+  '55':  '11 00000-0000',
+  '56':  '9 0000-0000',
+  '57':  '300 000-0000',
+  '506': '0000-0000',
+  '53':  '5 000-0000',
+  '593': '99 000-0000',
+  '503': '0000-0000',
+  '502': '0000-0000',
+  '504': '0000-0000',
+  '52':  '55 0000-0000',
+  '505': '0000-0000',
+  '507': '000-0000',
+  '595': '981 000-000',
+  '51':  '900 000-000',
+  '598': '98 000-0000',
+  '58':  '412 000-0000',
+  '591': '70000000',
+}
+
 interface Props {
   variant: 'dark' | 'light'
   disabled?: boolean
@@ -66,7 +88,7 @@ export function PhoneInput({ variant, disabled, defaultPrefix = '1', defaultLoca
         required
         disabled={disabled}
         defaultValue={defaultLocalPhone}
-        placeholder={prefix === '1' ? '(407) 555-0100' : '98 352 367'}
+        placeholder={PLACEHOLDERS[prefix] ?? '000 000 000'}
         className={inputClass}
         aria-label="Phone number"
       />

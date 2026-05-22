@@ -252,7 +252,7 @@ export function CheckinCard({
           onClick={onPostOpVisit}
           className="w-full h-11 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium transition-colors"
         >
-          {tCheck('post_op_visit')}
+          {t('post_op_visit')}
         </button>
         <button
           onClick={onScanAgain}
