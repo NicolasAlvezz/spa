@@ -829,7 +829,7 @@ function ServiceVisitPanel({ result, onConfirm, onCancel }: ServiceVisitPanelPro
             {locale === 'es' ? 'No hay servicios activos.' : 'No active services found.'}
           </p>
         ) : (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 max-h-64 overflow-y-auto pr-1">
             {services.map((s) => {
               const isSelected = selectedId === s.id
               return (
