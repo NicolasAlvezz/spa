@@ -263,7 +263,7 @@ export default function ScanPage() {
     }
   }, [result, tCheck, locale])
 
-  const handleServiceVisit = useCallback(async (serviceTypeId: string, serviceName: string, priceUsd: number | null) => {
+  const handleServiceVisit = useCallback(async (serviceTypeId: string, serviceName: string, priceUsd: number | null, paymentMethod: PaymentMethod) => {
     if (!result) return
     setPhase('registering_service')
     try {
@@ -274,6 +274,7 @@ export default function ScanPage() {
           client_id: result.client.id,
           membership_id: null,
           service_type_id: serviceTypeId,
+          payment_method: paymentMethod,
         }),
       })
       if (!res.ok) {
@@ -777,17 +778,19 @@ interface ServiceType {
 
 interface ServiceVisitPanelProps {
   result: CheckinResult
-  onConfirm: (serviceTypeId: string, serviceName: string, priceUsd: number | null) => Promise<void>
+  onConfirm: (serviceTypeId: string, serviceName: string, priceUsd: number | null, paymentMethod: PaymentMethod) => Promise<void>
   onCancel: () => void
 }
 
 function ServiceVisitPanel({ result, onConfirm, onCancel }: ServiceVisitPanelProps) {
   const t = useTranslations('checkin')
+  const tPayment = useTranslations('payment')
   const locale = useLocale() as 'en' | 'es'
 
   const [services, setServices] = useState<ServiceType[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [method, setMethod] = useState<PaymentMethod | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
@@ -798,10 +801,10 @@ function ServiceVisitPanel({ result, onConfirm, onCancel }: ServiceVisitPanelPro
   }, [])
 
   const handleConfirm = async () => {
-    if (!selectedId || submitting) return
+    if (!selectedId || !method || submitting) return
     const service = services.find(s => s.id === selectedId)!
     setSubmitting(true)
-    await onConfirm(selectedId, locale === 'es' ? service.name_es : service.name_en, service.price_usd)
+    await onConfirm(selectedId, locale === 'es' ? service.name_es : service.name_en, service.price_usd, method)
   }
 
   return (
@@ -864,10 +867,23 @@ function ServiceVisitPanel({ result, onConfirm, onCancel }: ServiceVisitPanelPro
         )}
       </div>
 
+      {/* Payment method */}
+      <div>
+        <p className="text-slate-400 text-xs uppercase tracking-wide mb-3">{tPayment('method')}</p>
+        <div className="grid grid-cols-3 gap-3">
+          {METHODS.map((m) => (
+            <button key={m} onClick={() => setMethod(m)} disabled={submitting}
+              className={`h-14 rounded-xl text-base font-semibold transition-colors disabled:opacity-50 ${method === m ? 'bg-green-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
+              {tPayment(methodKeys[m])}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="flex flex-col gap-3 pt-2">
         <button
           onClick={handleConfirm}
-          disabled={!selectedId || submitting}
+          disabled={!selectedId || !method || submitting}
           className="w-full h-16 rounded-xl bg-green-500 hover:bg-green-400 active:bg-green-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xl font-bold transition-colors"
         >
           {submitting

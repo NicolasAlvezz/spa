@@ -55,6 +55,7 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
 
   const membership = getCurrentMembership(client.memberships)
   const plan = membership?.membership_plans
+  const isPack = plan?.plan_type === 'pack'
   const locale: 'en' | 'es' = client.preferred_language === 'es' ? 'es' : 'en'
 
   const sessionTypeLabel: Record<string, string> = {
@@ -144,8 +145,10 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <StatCard
           icon={Calendar}
-          label={tCheck('sessions_used')}
-          value={`${membership?.sessions_used_this_month ?? 0} / ${plan?.sessions_per_month ?? '—'}`}
+          label={isPack ? tCheck('sessions_remaining') : tCheck('sessions_used')}
+          value={isPack
+            ? `${membership?.sessions_remaining ?? 0} / ${plan?.total_sessions ?? '—'}`
+            : `${membership?.sessions_used_this_month ?? 0} / ${plan?.sessions_per_month ?? '—'}`}
           color="brand"
         />
         <StatCard
@@ -217,22 +220,39 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
               </div>
 
               <div className="space-y-2.5 text-sm border-t border-gray-100 pt-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-400">{tCheck('expires')}</span>
-                  <span className="font-medium text-gray-700">
-                    {formatDate(membership.expires_at, locale)}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">{tCheck('sessions_used')}</span>
-                  <span className="font-medium text-gray-700">
-                    {membership.sessions_used_this_month} / {plan.sessions_per_month}
-                  </span>
-                </div>
-                {membership.rollover_sessions > 0 && (
-                  <p className="text-xs text-brand-600 font-medium pt-1">
-                    {tCheck('rollover')}
-                  </p>
+                {isPack ? (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">{tCheck('sessions_remaining')}</span>
+                      <span className="font-medium text-gray-700">
+                        {membership.sessions_remaining} / {plan.total_sessions}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">{tCheck('no_expiry')}</span>
+                      <span className="font-medium text-gray-700">∞</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">{tCheck('expires')}</span>
+                      <span className="font-medium text-gray-700">
+                        {formatDate(membership.expires_at, locale)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">{tCheck('sessions_used')}</span>
+                      <span className="font-medium text-gray-700">
+                        {membership.sessions_used_this_month} / {plan.sessions_per_month}
+                      </span>
+                    </div>
+                    {membership.rollover_sessions > 0 && (
+                      <p className="text-xs text-brand-600 font-medium pt-1">
+                        {tCheck('rollover')}
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
             </div>
