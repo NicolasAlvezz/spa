@@ -1,7 +1,7 @@
 'use client'
 
 import { useTranslations, useLocale } from 'next-intl'
-import { CheckCircle2, XCircle, MinusCircle, Calendar, Activity, RotateCcw, Star, AlertTriangle, CreditCard, Scissors } from 'lucide-react'
+import { CheckCircle2, MinusCircle, Calendar, Activity, RotateCcw, Star, AlertTriangle, CreditCard, Scissors } from 'lucide-react'
 import { formatDate } from '@/lib/utils/dates'
 import { getAvailableSessions } from '@/lib/utils/membership'
 import type { CheckinResult } from '@/types'
@@ -10,7 +10,6 @@ interface Props {
   data: CheckinResult
   onScanAgain: () => void
   onRegisterVisit: () => void
-  onRenew: () => void
   onAssignMembership: () => void
   onRegisterServiceVisit?: () => void
   onConfirmSplitPayment?: () => void
@@ -22,7 +21,6 @@ export function CheckinCard({
   data,
   onScanAgain,
   onRegisterVisit,
-  onRenew,
   onAssignMembership,
   onRegisterServiceVisit,
   onConfirmSplitPayment,
@@ -158,71 +156,6 @@ export function CheckinCard({
     )
   }
 
-  if (membership_status === 'expired' || membership_status === 'cancelled') {
-    return (
-      <div className="w-full flex flex-col gap-5">
-        {/* Status badge */}
-        <div className="flex items-center gap-2.5">
-          <XCircle size={20} className="text-red-400 flex-shrink-0" />
-          <span className="text-red-400 text-sm font-semibold uppercase tracking-widest">
-            {t('expired_title')}
-          </span>
-        </div>
-
-        {/* Client name + plan */}
-        <div>
-          <h2 className="text-3xl md:text-5xl font-bold text-white leading-none tracking-tight">{clientName}</h2>
-          {planName && (
-            <p className="text-slate-500 text-lg mt-2">{planName}</p>
-          )}
-        </div>
-
-        {/* Today's appointment */}
-        {today_appointment && (
-          <TodayAppointmentBox appointment={today_appointment} locale={locale} tCheck={tCheck} />
-        )}
-
-        {/* Expired date (only for monthly plans) */}
-        {membership && !isPack && (
-          <div className="bg-red-950/40 border border-red-800/60 rounded-xl p-4">
-            <p className="text-red-400 text-xs uppercase tracking-wide mb-1">{tCheck('expired_on')}</p>
-            <p className="text-red-200 text-2xl font-bold">
-              {formatDate(membership.expires_at, locale)}
-            </p>
-          </div>
-        )}
-
-        {isPack && (
-          <div className="bg-red-950/40 border border-red-800/60 rounded-xl p-4">
-            <p className="text-red-400 text-xs uppercase tracking-wide mb-1">{tCheck('sessions_remaining')}</p>
-            <p className="text-red-200 text-2xl font-bold">0</p>
-          </div>
-        )}
-
-        {/* Actions */}
-        <div className="flex flex-col gap-3 pt-1">
-          <button
-            onClick={onRenew}
-            className="w-full h-16 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 text-white text-xl font-bold transition-colors shadow-lg shadow-brand-900/30"
-          >
-            {tCheck('renew')}
-          </button>
-          <button
-            onClick={onRegisterServiceVisit}
-            className="w-full h-12 rounded-xl bg-green-600 hover:bg-green-500 active:bg-green-700 text-white text-sm font-semibold transition-colors"
-          >
-            {locale === 'es' ? 'Registrar visita individual' : 'Register individual visit'}
-          </button>
-          <button
-            onClick={onScanAgain}
-            className="w-full h-11 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium transition-colors"
-          >
-            {t('scan_again')}
-          </button>
-        </div>
-      </div>
-    )
-  }
 
   // no_membership
   return (
