@@ -15,11 +15,10 @@ export async function POST(req: Request) {
     membership_id: string | null
     session_type?: SessionType
     service_type_id?: string
-    payment_method?: string
     notes?: string
   } = await req.json()
 
-  const { client_id, membership_id, service_type_id, payment_method, notes } = body
+  const { client_id, membership_id, service_type_id, notes } = body
 
   if (!client_id) {
     return NextResponse.json({ error: 'client_id is required' }, { status: 400 })
