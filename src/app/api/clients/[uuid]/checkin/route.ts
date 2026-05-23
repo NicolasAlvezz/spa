@@ -31,7 +31,7 @@ export async function GET(
   // Client + memberships
   const { data: client, error } = await supabase
     .from('clients')
-    .select('id, first_name, last_name, phone, preferred_language, memberships(*, membership_plans(*))')
+    .select('id, first_name, last_name, phone, preferred_language, notes, memberships(*, membership_plans(*))')
     .eq('id', uuid)
     .single()
 
@@ -58,7 +58,7 @@ export async function GET(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabaseAny = supabase as any
 
-  const [visitsRes, paymentsRes, apptRes] = await Promise.all([
+  const [visitsRes, paymentsRes, apptRes, lastVisitRes] = await Promise.all([
     supabase
       .from('visits')
       .select('*')
@@ -81,6 +81,13 @@ export async function GET(
       .order('scheduled_at', { ascending: true })
       .limit(1)
       .maybeSingle(),
+    supabase
+      .from('visits')
+      .select('visited_at, service_types(name_en, name_es)')
+      .eq('client_id', uuid)
+      .order('visited_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ])
 
   if (visitsRes.error) console.error('[checkin] visits query error:', visitsRes.error)
@@ -90,6 +97,8 @@ export async function GET(
   const visits = visitsRes.data
   const lastPaymentArr = paymentsRes.data
   const todayAppt = apptRes.data
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const lastVisitData = lastVisitRes.data as any
 
   const isPack = membership?.membership_plans?.plan_type === 'pack'
   const sessionsUsed = isPack
@@ -103,6 +112,8 @@ export async function GET(
       last_name: client.last_name,
       phone: client.phone,
       preferred_language: client.preferred_language,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      notes: (client as any).notes ?? null,
     },
     membership,
     membership_status,
@@ -110,6 +121,13 @@ export async function GET(
     rollover_sessions: isPack ? 0 : (membership?.rollover_sessions ?? 0),
     visits_this_month: visits ?? [],
     last_payment: lastPaymentArr?.[0] ?? null,
+    last_visit: lastVisitData
+      ? {
+          visited_at: lastVisitData.visited_at,
+          service_name_en: lastVisitData.service_types?.name_en ?? null,
+          service_name_es: lastVisitData.service_types?.name_es ?? null,
+        }
+      : null,
     today_appointment: todayAppt
       ? {
           id: todayAppt.id,

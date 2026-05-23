@@ -1,8 +1,8 @@
 'use client'
 
 import { useTranslations, useLocale } from 'next-intl'
-import { CheckCircle2, MinusCircle, Calendar, Activity, RotateCcw, Star, AlertTriangle, CreditCard, Scissors } from 'lucide-react'
-import { formatDate } from '@/lib/utils/dates'
+import { CheckCircle2, MinusCircle, Calendar, Activity, RotateCcw, Star, AlertTriangle, CreditCard, Scissors, Phone, Clock, FileText } from 'lucide-react'
+import { formatDate, formatDateTime } from '@/lib/utils/dates'
 import { getAvailableSessions } from '@/lib/utils/membership'
 import type { CheckinResult } from '@/types'
 
@@ -71,6 +71,8 @@ export function CheckinCard({
             <p className="text-slate-400 text-lg mt-2">{planName}</p>
           )}
         </div>
+
+        <ClientInfoBar client={client} lastVisit={data.last_visit} locale={locale} />
 
         {/* Today's appointment */}
         {today_appointment && (
@@ -167,6 +169,8 @@ export function CheckinCard({
 
       <h2 className="text-5xl font-bold text-white leading-none tracking-tight">{clientName}</h2>
 
+      <ClientInfoBar client={client} lastVisit={data.last_visit} locale={locale} />
+
       {/* Today's appointment */}
       {today_appointment && (
         <TodayAppointmentBox appointment={today_appointment} locale={locale} tCheck={tCheck} />
@@ -226,6 +230,39 @@ function TodayAppointmentBox({
           <p className="text-slate-400 text-xs mt-0.5">{appointment.notes}</p>
         )}
       </div>
+    </div>
+  )
+}
+
+function ClientInfoBar({
+  client,
+  lastVisit,
+  locale,
+}: {
+  client: CheckinResult['client']
+  lastVisit: CheckinResult['last_visit']
+  locale: 'en' | 'es'
+}) {
+  const lastVisitLabel = lastVisit
+    ? formatDateTime(lastVisit.visited_at, locale)
+    : (locale === 'es' ? 'Sin visitas previas' : 'No previous visits')
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-2 text-slate-400 text-sm">
+        <Phone size={13} className="flex-shrink-0" />
+        <span>{client.phone}</span>
+      </div>
+      <div className="flex items-center gap-2 text-slate-400 text-sm">
+        <Clock size={13} className="flex-shrink-0" />
+        <span>{locale === 'es' ? 'Última visita: ' : 'Last visit: '}{lastVisitLabel}</span>
+      </div>
+      {client.notes && (
+        <div className="flex items-start gap-2 bg-slate-800/60 rounded-lg px-3 py-2 mt-1">
+          <FileText size={13} className="text-slate-400 flex-shrink-0 mt-0.5" />
+          <p className="text-slate-300 text-xs leading-relaxed">{client.notes}</p>
+        </div>
+      )}
     </div>
   )
 }

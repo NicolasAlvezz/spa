@@ -55,13 +55,14 @@ export type VisitWithService = DbVisit & {
 
 // Response from GET /api/clients/[uuid]/checkin
 export interface CheckinResult {
-  client: Pick<DbClient, 'id' | 'first_name' | 'last_name' | 'phone' | 'preferred_language'>
+  client: Pick<DbClient, 'id' | 'first_name' | 'last_name' | 'phone' | 'preferred_language'> & { notes: string | null }
   membership: MembershipWithPlan | null
   membership_status: MembershipStatus
   sessions_used_this_month: number
   rollover_sessions: number
   visits_this_month: DbVisit[]
   last_payment: DbPayment | null
+  last_visit: { visited_at: string; service_name_en: string | null; service_name_es: string | null } | null
   today_appointment: {
     id: string
     scheduled_at: string
