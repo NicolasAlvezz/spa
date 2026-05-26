@@ -22,7 +22,8 @@ const COUNTRIES = [
   { code: '51',  flag: '🇵🇪', name: 'Perú +51' },
   { code: '598', flag: '🇺🇾', name: 'Uruguay +598' },
   { code: '58',  flag: '🇻🇪', name: 'Venezuela +58' },
-] as const
+  { code: 'other', flag: '🌍', name: 'Otro / Other' },
+]
 
 const PLACEHOLDERS: Record<string, string> = {
   '1':   '(555) 000-0000',
@@ -66,6 +67,8 @@ export function PhoneInput({ variant, disabled, defaultPrefix = '1', defaultLoca
     ? 'flex-1 bg-slate-800 border border-slate-700 border-l-0 text-white placeholder:text-slate-500 h-11 rounded-r-lg px-3 text-sm focus:outline-none focus:border-brand-500'
     : 'flex-1 border border-gray-300 border-l-0 text-gray-800 placeholder:text-gray-400 h-11 rounded-r-lg px-3 text-sm focus:outline-none focus:border-brand-500'
 
+  const isOther = prefix === 'other'
+
   return (
     <div className="flex">
       <select
@@ -77,8 +80,8 @@ export function PhoneInput({ variant, disabled, defaultPrefix = '1', defaultLoca
         aria-label="Country code"
       >
         {COUNTRIES.map(c => (
-          <option key={c.code + c.name} value={c.code}>
-            {c.flag} +{c.code}
+          <option key={c.code} value={c.code}>
+            {c.flag} {c.code === 'other' ? 'Otro / Other' : `+${c.code}`}
           </option>
         ))}
       </select>
@@ -88,7 +91,7 @@ export function PhoneInput({ variant, disabled, defaultPrefix = '1', defaultLoca
         required
         disabled={disabled}
         defaultValue={defaultLocalPhone}
-        placeholder={PLACEHOLDERS[prefix] ?? '000 000 000'}
+        placeholder={isOther ? '+34 612 345 678' : (PLACEHOLDERS[prefix] ?? '000 000 000')}
         className={inputClass}
         aria-label="Phone number"
       />

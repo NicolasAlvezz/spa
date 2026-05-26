@@ -30,7 +30,8 @@ function SetupForm() {
   const [isPending, startTransition] = useTransition()
 
   const rawPhone = searchParams.get('phone') ?? ''
-  const parsed = rawPhone ? parseE164(rawPhone) : null
+  // parseE164 returns null for unknown prefixes (e.g. +34 Spain) — fall back to "other" mode
+  const parsed = rawPhone ? (parseE164(rawPhone) ?? { prefix: 'other', local: rawPhone }) : null
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
