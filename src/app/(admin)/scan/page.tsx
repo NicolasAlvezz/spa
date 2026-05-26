@@ -155,8 +155,8 @@ export default function ScanPage() {
       }
       setSplitPaymentBlocked(false)
       setSuccessInfo({
-        title: tCheck('split_confirmed'),
-        detail: tCheck('confirm_split'),
+        title: t('split_confirmed'),
+        detail: t('confirm_split'),
       })
       setPhase('success')
     } catch {
@@ -673,6 +673,7 @@ interface ConfirmSplitPanelProps {
 
 function ConfirmSplitPanel({ result, onConfirm, onCancel }: ConfirmSplitPanelProps) {
   const t = useTranslations('checkin')
+  const tScan = useTranslations('scan')
   const tPayment = useTranslations('payment')
 
   const [method, setMethod] = useState<PaymentMethod | null>(null)
@@ -724,7 +725,7 @@ function ConfirmSplitPanel({ result, onConfirm, onCancel }: ConfirmSplitPanelPro
       <div className="flex flex-col gap-3 pt-2">
         <button onClick={handleConfirm} disabled={!method || submitting}
           className="w-full h-16 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xl font-bold transition-colors">
-          {submitting ? t('confirming_split') : t('confirm_split')}
+          {submitting ? tScan('confirming_split') : tScan('confirm_split')}
         </button>
         <button onClick={onCancel} disabled={submitting}
           className="w-full h-12 rounded-xl bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-slate-300 text-base font-medium transition-colors">

@@ -84,7 +84,7 @@ export function CheckinCard({
           <div className="bg-brand-950/40 border border-brand-700/60 rounded-xl p-4 flex items-start gap-3">
             <AlertTriangle size={18} className="text-brand-400 flex-shrink-0 mt-0.5" />
             <p className="text-brand-300 text-sm font-medium">
-              {tCheck('split_payment_warning')}
+              {t('split_payment_warning')}
               {splitSecondAmount > 0 && ` — $${splitSecondAmount}`}
             </p>
           </div>
@@ -127,14 +127,14 @@ export function CheckinCard({
             <>
               <div className="bg-red-950/40 border border-red-800/60 rounded-xl p-4 flex items-start gap-3">
                 <AlertTriangle size={18} className="text-red-400 flex-shrink-0 mt-0.5" />
-                <p className="text-red-300 text-sm font-medium">{tCheck('split_payment_blocked')}</p>
+                <p className="text-red-300 text-sm font-medium">{t('split_payment_blocked')}</p>
               </div>
               <button
                 onClick={onConfirmSplitPayment}
                 className="w-full h-16 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 text-white text-xl font-bold transition-colors shadow-lg shadow-brand-900/30 flex items-center justify-center gap-2"
               >
                 <CreditCard size={20} />
-                {tCheck('confirm_split')}{splitSecondAmount > 0 && ` ($${splitSecondAmount})`}
+                {t('confirm_split')}{splitSecondAmount > 0 && ` ($${splitSecondAmount})`}
               </button>
             </>
           ) : (

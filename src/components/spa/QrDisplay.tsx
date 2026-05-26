@@ -47,6 +47,7 @@ export function QrDisplay({ client, nextAppointment, recentVisits }: Props) {
 
   const membership = getCurrentMembership(client.memberships)
   const plan = membership?.membership_plans
+  const isPack = plan?.plan_type === 'pack'
 
   function sessionLabel(type: string) {
     return SESSION_LABELS[type]?.[locale] ?? type
@@ -155,22 +156,24 @@ export function QrDisplay({ client, nextAppointment, recentVisits }: Props) {
             <div className="flex items-center justify-between px-5 py-3">
               <div className="flex items-center gap-2 text-sm text-gray-400">
                 <CalendarDays size={14} />
-                {tCheck('expires')}
+                {isPack ? tCheck('no_expiry') : tCheck('expires')}
               </div>
               <span className="text-sm font-semibold text-gray-700">
-                {formatDate(membership.expires_at, locale)}
+                {isPack ? '∞' : formatDate(membership.expires_at, locale)}
               </span>
             </div>
             <div className="flex items-center justify-between px-5 py-3">
               <div className="flex items-center gap-2 text-sm text-gray-400">
                 <Activity size={14} />
-                {tCheck('sessions_used')}
+                {isPack ? tCheck('sessions_remaining') : tCheck('sessions_used')}
               </div>
               <span className="text-sm font-semibold text-gray-700">
-                {membership.sessions_used_this_month} / {plan.sessions_per_month}
+                {isPack
+                  ? `${membership.sessions_remaining} / ${plan.total_sessions}`
+                  : `${membership.sessions_used_this_month} / ${plan.sessions_per_month}`}
               </span>
             </div>
-            {membership.rollover_sessions > 0 && (
+            {!isPack && membership.rollover_sessions > 0 && (
               <div className="flex items-center gap-2 px-5 py-3 text-sm text-brand-600 font-medium">
                 <RotateCcw size={13} />
                 {tCheck('rollover')}
