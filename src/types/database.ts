@@ -224,6 +224,7 @@ export interface Database {
           session_type: 'included' | 'rollover' | 'additional' | 'welcome_offer' | 'post_op'
           registered_by: string | null
           notes: string | null
+          payment_method: string | null
           created_at: string
         }
         Insert: {
@@ -235,11 +236,13 @@ export interface Database {
           session_type?: 'included' | 'rollover' | 'additional' | 'welcome_offer' | 'post_op'
           registered_by?: string | null
           notes?: string | null
+          payment_method?: string | null
           created_at?: string
         }
         Update: {
           service_type_id?: string | null
           notes?: string | null
+          payment_method?: string | null
         }
         Relationships: Relationship[]
       }
