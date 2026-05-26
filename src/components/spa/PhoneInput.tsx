@@ -60,17 +60,17 @@ export function PhoneInput({ variant, disabled, defaultPrefix = '1', defaultLoca
   const isDark = variant === 'dark'
 
   const selectClass = isDark
-    ? 'bg-slate-800 border border-slate-700 text-white h-11 rounded-l-lg pl-2 pr-1 text-sm focus:outline-none focus:border-brand-500'
-    : 'bg-white border border-gray-300 text-gray-800 h-11 rounded-l-lg pl-2 pr-1 text-sm focus:outline-none focus:border-brand-500 border-r-0'
+    ? 'w-24 shrink-0 bg-slate-800 border border-slate-700 text-white h-11 rounded-l-lg pl-2 pr-1 text-sm focus:outline-none focus:border-brand-500'
+    : 'w-24 shrink-0 bg-white border border-gray-300 text-gray-800 h-11 rounded-l-lg pl-2 pr-1 text-sm focus:outline-none focus:border-brand-500 border-r-0'
 
   const inputClass = isDark
-    ? 'flex-1 bg-slate-800 border border-slate-700 border-l-0 text-white placeholder:text-slate-500 h-11 rounded-r-lg px-3 text-sm focus:outline-none focus:border-brand-500'
-    : 'flex-1 border border-gray-300 border-l-0 text-gray-800 placeholder:text-gray-400 h-11 rounded-r-lg px-3 text-sm focus:outline-none focus:border-brand-500'
+    ? 'flex-1 min-w-0 bg-slate-800 border border-slate-700 border-l-0 text-white placeholder:text-slate-500 h-11 rounded-r-lg px-3 text-sm focus:outline-none focus:border-brand-500'
+    : 'flex-1 min-w-0 border border-gray-300 border-l-0 text-gray-800 placeholder:text-gray-400 h-11 rounded-r-lg px-3 text-sm focus:outline-none focus:border-brand-500'
 
   const isOther = prefix === 'other'
 
   return (
-    <div className="flex">
+    <div className="flex w-full overflow-hidden">
       <select
         name="phone_prefix"
         value={prefix}
