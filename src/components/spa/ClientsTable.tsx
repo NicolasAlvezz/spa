@@ -141,19 +141,34 @@ function PlanPanel({
               </div>
 
               <div className="bg-gray-50 rounded-xl p-4 space-y-2.5 text-sm">
-                <Row
-                  label={locale === 'es' ? 'Vence' : 'Expires'}
-                  value={formatDate(membership.expires_at, locale)}
-                />
-                <Row
-                  label={locale === 'es' ? 'Sesiones usadas' : 'Sessions used'}
-                  value={`${membership.sessions_used_this_month} / ${plan.sessions_per_month}`}
-                />
-                {membership.rollover_sessions > 0 && (
-                  <Row
-                    label={locale === 'es' ? 'Rollover' : 'Rollover'}
-                    value={String(membership.rollover_sessions)}
-                  />
+                {plan.plan_type === 'pack' ? (
+                  <>
+                    <Row
+                      label={locale === 'es' ? 'Vence' : 'Expires'}
+                      value="∞"
+                    />
+                    <Row
+                      label={locale === 'es' ? 'Sesiones restantes' : 'Sessions remaining'}
+                      value={`${membership.sessions_remaining ?? 0} / ${plan.total_sessions}`}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <Row
+                      label={locale === 'es' ? 'Vence' : 'Expires'}
+                      value={formatDate(membership.expires_at, locale)}
+                    />
+                    <Row
+                      label={locale === 'es' ? 'Sesiones usadas' : 'Sessions used'}
+                      value={`${membership.sessions_used_this_month} / ${plan.sessions_per_month}`}
+                    />
+                    {membership.rollover_sessions > 0 && (
+                      <Row
+                        label={locale === 'es' ? 'Rollover' : 'Rollover'}
+                        value={String(membership.rollover_sessions)}
+                      />
+                    )}
+                  </>
                 )}
                 <Row
                   label={locale === 'es' ? 'Tipo' : 'Type'}
@@ -493,7 +508,7 @@ export function ClientsTable({ clients, plans }: Props) {
                       {/* Expires */}
                       <td className="hidden xl:table-cell px-5 py-3.5 text-gray-500 tabular-nums">
                         {membership
-                          ? formatDate(membership.expires_at, locale)
+                          ? (plan?.plan_type === 'pack' ? '∞' : formatDate(membership.expires_at, locale))
                           : <span className="text-gray-300">—</span>}
                       </td>
                       {/* Visits */}
