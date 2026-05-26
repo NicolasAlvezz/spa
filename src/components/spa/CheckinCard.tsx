@@ -95,7 +95,7 @@ export function CheckinCard({
           {isPack ? (
             <>
               <StatBox icon={Star} label={tCheck('sessions_remaining')} value={String(sessionsRemaining)} highlight={sessionsRemaining === 0} />
-              <StatBox icon={Activity} label={tCheck('sessions_used')} value={`${sessionsUsed} / ${totalSessions}`} />
+              <StatBox icon={Activity} label={tCheck('sessions_used_total')} value={`${sessionsUsed} / ${totalSessions}`} />
               <StatBox icon={Activity} label={t('visits_this_month')} value={String(data.visits_this_month.length)} />
               <StatBox icon={Calendar} label={tCheck('no_expiry')} value="∞" />
             </>

@@ -277,6 +277,7 @@
     "pack_no_expiry": "Sin fecha de vencimiento",
     "no_expiry": "Sin vencimiento",
     "sessions_remaining": "Sesiones restantes",
+    "sessions_used_total": "Sesiones usadas",
     "today_appointment": "Cita de hoy",
     "appointment_service": "Servicio",
     "split_installment": "2do pago del paquete"

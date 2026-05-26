@@ -277,6 +277,7 @@
     "pack_no_expiry": "No expiry date",
     "no_expiry": "No expiry",
     "sessions_remaining": "Sessions remaining",
+    "sessions_used_total": "Sessions used",
     "today_appointment": "Today's appointment",
     "appointment_service": "Service",
     "split_installment": "2nd pack installment"

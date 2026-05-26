@@ -76,6 +76,7 @@ export async function inviteNewClientAction(
     await sendInviteMessage(e164, channel)
   } catch (err) {
     console.error('[invite] Twilio error:', err)
+    return { status: 'error', message: 'generic_error' }
   }
 
   return { status: 'success', phone: e164 }
