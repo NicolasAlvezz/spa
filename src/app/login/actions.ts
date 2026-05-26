@@ -17,14 +17,20 @@ export async function loginWithNameAndPhone(
 
   const e164 = buildE164(localPhone, prefix)
 
-  // Verify the client exists with this name + phone
+  // Verify the client exists with this name + phone.
+  // Postgres `ilike` is case-insensitive but accent-sensitive, so we fetch by
+  // phone and compare names normalized (diacritics stripped, lowercased) in JS.
   const service = createServiceClient()
-  const { data: client } = await service
+  const { data: candidates } = await service
     .from('clients')
-    .select('id')
+    .select('id, first_name')
     .eq('phone', e164)
-    .ilike('first_name', firstName)
-    .maybeSingle()
+
+  const normalize = (s: string) =>
+    s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()
+
+  const target = normalize(firstName)
+  const client = candidates?.find((c) => normalize(c.first_name) === target) ?? null
 
   if (!client) {
     return { error: 'error_not_found' }
