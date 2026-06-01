@@ -405,7 +405,14 @@
     "split_confirmed": "¡Pago confirmado!",
     "post_op_visit": "Visita post-op ($90)",
     "client_not_found": "Cliente no encontrado",
-    "error_network": "Error de conexión. Verificá el internet e intentá de nuevo."
+    "error_network": "Error de conexión. Verificá el internet e intentá de nuevo.",
+    "register_visit": "Registrar visita",
+    "service_question": "¿Qué servicio va a recibir?",
+    "no_services": "No hay servicios activos.",
+    "per_month_short": "/mes",
+    "split_now_suffix": "ahora",
+    "registering_visit": "Registrando...",
+    "confirm_visit": "Confirmar visita"
   },
   "onboarding": {
     "title": "Bienvenida a VM Integral Massage",

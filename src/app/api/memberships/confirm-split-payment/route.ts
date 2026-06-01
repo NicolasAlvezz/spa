@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import type { PaymentMethod } from '@/types'
 
+const VALID_PAYMENT_METHODS: PaymentMethod[] = ['cash', 'debit', 'credit']
+
 export async function POST(req: Request) {
   const authClient = await createClient()
   const { data: { user } } = await authClient.auth.getUser()
@@ -14,6 +16,10 @@ export async function POST(req: Request) {
 
   if (!membership_id || !payment_method) {
     return NextResponse.json({ error: 'membership_id and payment_method are required' }, { status: 400 })
+  }
+
+  if (!VALID_PAYMENT_METHODS.includes(payment_method)) {
+    return NextResponse.json({ error: 'invalid_payment_method' }, { status: 400 })
   }
 
   const supabase = createServiceClient()

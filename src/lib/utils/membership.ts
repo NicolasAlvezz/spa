@@ -72,18 +72,18 @@ export function getCurrentMembership(
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
-  const active = memberships.find((m) => {
+  // Sort newest first so duplicates resolve deterministically.
+  const sorted = [...memberships].sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  )
+
+  const active = sorted.find((m) => {
     if (m.status === 'cancelled') return false
     if (m.membership_plans?.plan_type === 'pack') {
       return (m.sessions_remaining ?? 0) > 0
     }
     return new Date(m.expires_at) >= today
   })
-  if (active) return active
 
-  return (
-    [...memberships].sort(
-      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    )[0] ?? null
-  )
+  return active ?? sorted[0] ?? null
 }

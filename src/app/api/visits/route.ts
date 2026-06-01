@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
-import type { SessionType } from '@/types'
+import type { SessionType, PaymentMethod } from '@/types'
+import { PACK_SPLIT_PAYMENT_THRESHOLD } from '@/lib/constants/membership'
+
+const VALID_PAYMENT_METHODS: PaymentMethod[] = ['cash', 'debit', 'credit']
 
 export async function POST(req: Request) {
   const authClient = await createClient()
@@ -15,7 +18,7 @@ export async function POST(req: Request) {
     membership_id: string | null
     session_type?: SessionType
     service_type_id?: string
-    payment_method?: string
+    payment_method?: PaymentMethod
     notes?: string
   } = await req.json()
 
@@ -23,6 +26,10 @@ export async function POST(req: Request) {
 
   if (!client_id) {
     return NextResponse.json({ error: 'client_id is required' }, { status: 400 })
+  }
+
+  if (payment_method !== undefined && !VALID_PAYMENT_METHODS.includes(payment_method)) {
+    return NextResponse.json({ error: 'invalid_payment_method' }, { status: 400 })
   }
 
   const supabase = createServiceClient()
@@ -81,8 +88,8 @@ export async function POST(req: Request) {
         // Sessions used so far = total - remaining
         const sessionsUsed = totalSessions - sessionsRemaining
 
-        // Block the 5th session if split payment is still pending
-        if (membership.split_payment_pending && sessionsUsed >= 4) {
+        // Block check-in once the threshold is reached if split payment is still pending
+        if (membership.split_payment_pending && sessionsUsed >= PACK_SPLIT_PAYMENT_THRESHOLD) {
           return NextResponse.json(
             { error: 'split_payment_required', sessions_used: sessionsUsed },
             { status: 402 }
@@ -176,8 +183,8 @@ export async function POST(req: Request) {
       if (plan?.plan_type === 'pack' && updatedMembership.split_payment_pending) {
         const totalSessions = plan.total_sessions ?? 0
         const sessionsUsed = totalSessions - (updatedMembership.sessions_remaining ?? 0)
-        // Warn after 4th session (next visit will be blocked)
-        if (sessionsUsed === 4) {
+        // Warn after the threshold-th session — the next visit will be blocked
+        if (sessionsUsed === PACK_SPLIT_PAYMENT_THRESHOLD) {
           split_payment_warning = true
         }
       }

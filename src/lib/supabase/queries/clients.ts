@@ -179,16 +179,15 @@ export async function getAllServiceTypes(): Promise<ServiceTypeAdminItem[]> {
 export async function getClientByUserId(userId: string): Promise<ClientDetail | null> {
   const supabase = createServiceClient()
 
-  console.log('[getClientByUserId] looking up userId:', userId)
-
   const { data, error } = await supabase
     .from('clients')
     .select(`*, memberships(*, membership_plans(*))`)
     .eq('user_id', userId)
     .single()
 
-  console.log('[getClientByUserId] result:', { found: !!data, error: error?.message ?? null })
-
-  if (error) return null
+  if (error) {
+    console.error('[getClientByUserId]', error.message)
+    return null
+  }
   return data as unknown as ClientDetail
 }

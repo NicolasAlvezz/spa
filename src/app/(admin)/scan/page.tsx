@@ -163,7 +163,7 @@ export default function ScanPage() {
       setErrorKey('network_error')
       setPhase('error')
     }
-  }, [result, tCheck])
+  }, [result, t])
 
   const handleAssignConfirm = useCallback(async (
     planId: string,
@@ -206,6 +206,11 @@ export default function ScanPage() {
   const handleRenewConfirm = useCallback(async (method: PaymentMethod) => {
     if (!result?.membership) return
     const plan = result.membership.membership_plans
+    if (!plan?.price_usd) {
+      setErrorKey('network_error')
+      setPhase('error')
+      return
+    }
     try {
       const res = await fetch('/api/memberships/renew', {
         method: 'POST',
@@ -214,7 +219,7 @@ export default function ScanPage() {
           client_id: result.client.id,
           plan_id: result.membership.plan_id,
           payment_method: method,
-          amount_usd: plan?.price_usd ?? 80,
+          amount_usd: plan.price_usd,
         }),
       })
       if (!res.ok) {
@@ -437,6 +442,7 @@ interface RenewPanelProps {
 
 function RenewPanel({ result, onConfirm, onCancel }: RenewPanelProps) {
   const t = useTranslations('checkin')
+  const tScan = useTranslations('scan')
   const tPayment = useTranslations('payment')
   const locale = useLocale() as 'en' | 'es'
 
@@ -474,7 +480,7 @@ function RenewPanel({ result, onConfirm, onCancel }: RenewPanelProps) {
         <p className="text-brand-400 text-3xl font-bold mt-2">
           ${amount}
           <span className="text-base font-normal text-slate-400 ml-1">
-            {locale === 'es' ? '/mes' : '/month'}
+            {tScan('per_month_short')}
           </span>
         </p>
       </div>
@@ -524,6 +530,7 @@ interface AssignMembershipPanelProps {
 
 function AssignMembershipPanel({ result, onConfirm, onCancel }: AssignMembershipPanelProps) {
   const t = useTranslations('checkin')
+  const tScan = useTranslations('scan')
   const tPayment = useTranslations('payment')
   const locale = useLocale() as 'en' | 'es'
 
@@ -602,7 +609,7 @@ function AssignMembershipPanel({ result, onConfirm, onCancel }: AssignMembership
                     ${plan.price_usd}
                     {!isPack && (
                       <span className="text-xs font-normal opacity-75 ml-1">
-                        {locale === 'es' ? '/mes' : '/mo'}
+                        {tScan('per_month_short')}
                       </span>
                     )}
                   </span>
@@ -624,7 +631,7 @@ function AssignMembershipPanel({ result, onConfirm, onCancel }: AssignMembership
             </button>
             <button onClick={() => setUseSplitPayment(true)} disabled={submitting}
               className={`w-full px-4 py-3 rounded-xl text-left text-sm font-medium transition-colors disabled:opacity-50 ${useSplitPayment ? 'bg-brand-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
-              {t('pack_payment_split')} — ${selectedPlan.split_first_amount} {locale === 'es' ? 'ahora' : 'now'}
+              {t('pack_payment_split')} — ${selectedPlan.split_first_amount} {tScan('split_now_suffix')}
             </button>
           </div>
           {useSplitPayment && (
@@ -680,7 +687,10 @@ function ConfirmSplitPanel({ result, onConfirm, onCancel }: ConfirmSplitPanelPro
   const [submitting, setSubmitting] = useState(false)
 
   const plan = result.membership?.membership_plans
-  const secondAmount = plan ? plan.price_usd - (plan.split_first_amount ?? 0) : 400
+  // Both price_usd and split_first_amount must exist for split payment plans;
+  // if either is missing, the renew flow shouldn't have allowed split in the first place.
+  const secondAmount =
+    plan && plan.split_first_amount != null ? plan.price_usd - plan.split_first_amount : 0
 
   const handleConfirm = async () => {
     if (!method || submitting) return
@@ -753,6 +763,7 @@ interface ServiceVisitPanelProps {
 
 function ServiceVisitPanel({ result, onConfirm, onCancel }: ServiceVisitPanelProps) {
   const t = useTranslations('checkin')
+  const tScan = useTranslations('scan')
   const tPayment = useTranslations('payment')
   const locale = useLocale() as 'en' | 'es'
 
@@ -783,7 +794,7 @@ function ServiceVisitPanel({ result, onConfirm, onCancel }: ServiceVisitPanelPro
           <Star size={18} className="text-brand-400" />
         </div>
         <span className="text-brand-400 text-lg font-semibold uppercase tracking-wide">
-          {locale === 'es' ? 'Registrar visita' : 'Register visit'}
+          {tScan('register_visit')}
         </span>
       </div>
 
@@ -793,14 +804,12 @@ function ServiceVisitPanel({ result, onConfirm, onCancel }: ServiceVisitPanelPro
 
       <div>
         <p className="text-slate-400 text-xs uppercase tracking-wide mb-3">
-          {locale === 'es' ? '¿Qué servicio va a recibir?' : 'Which service will they receive?'}
+          {tScan('service_question')}
         </p>
         {loading ? (
           <p className="text-slate-400 text-sm">{t('loading_plans')}</p>
         ) : services.length === 0 ? (
-          <p className="text-slate-400 text-sm">
-            {locale === 'es' ? 'No hay servicios activos.' : 'No active services found.'}
-          </p>
+          <p className="text-slate-400 text-sm">{tScan('no_services')}</p>
         ) : (
           <div className="flex flex-col gap-2 max-h-64 overflow-y-auto pr-1">
             {services.map((s) => {
@@ -855,9 +864,7 @@ function ServiceVisitPanel({ result, onConfirm, onCancel }: ServiceVisitPanelPro
           disabled={!selectedId || !method || submitting}
           className="w-full h-16 rounded-xl bg-green-500 hover:bg-green-400 active:bg-green-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xl font-bold transition-colors"
         >
-          {submitting
-            ? (locale === 'es' ? 'Registrando...' : 'Registering...')
-            : (locale === 'es' ? 'Confirmar visita' : 'Confirm visit')}
+          {submitting ? tScan('registering_visit') : tScan('confirm_visit')}
         </button>
         <button
           onClick={onCancel}

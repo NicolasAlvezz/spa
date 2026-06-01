@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { calculateRollover } from '@/lib/utils/membership'
+import { MONTHLY_PLAN_MIN_MONTHS } from '@/lib/constants/membership'
 import type { PaymentMethod } from '@/types'
+
+const VALID_PAYMENT_METHODS: PaymentMethod[] = ['cash', 'debit', 'credit']
 
 export async function POST(req: Request) {
   const authClient = await createClient()
@@ -21,8 +24,16 @@ export async function POST(req: Request) {
 
   const { client_id, plan_id, payment_method, amount_usd, split_payment } = body
 
-  if (!client_id || !plan_id || !payment_method || !amount_usd) {
+  if (!client_id || !plan_id || !payment_method) {
     return NextResponse.json({ error: 'missing_required_fields' }, { status: 400 })
+  }
+
+  if (!VALID_PAYMENT_METHODS.includes(payment_method)) {
+    return NextResponse.json({ error: 'invalid_payment_method' }, { status: 400 })
+  }
+
+  if (typeof amount_usd !== 'number' || !Number.isFinite(amount_usd) || amount_usd <= 0) {
+    return NextResponse.json({ error: 'invalid_amount' }, { status: 400 })
   }
 
   const supabase = createServiceClient()
@@ -114,7 +125,7 @@ export async function POST(req: Request) {
       status: 'active',
       sessions_used_this_month: 0,
       rollover_sessions: isPack ? 0 : rollover_sessions,
-      months_committed: isPack ? 0 : 3,
+      months_committed: isPack ? 0 : MONTHLY_PLAN_MIN_MONTHS,
       months_completed: isPack ? 0 : (currentMembership?.months_completed ?? 0) + 1,
       sessions_remaining: isPack ? (plan?.total_sessions ?? null) : null,
       split_payment_pending: usingSplitPayment,

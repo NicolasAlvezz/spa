@@ -18,10 +18,8 @@ export async function GET(
   }
 
   const { uuid } = params
-  console.log('[checkin] uuid received:', uuid)
 
   if (!UUID_RE.test(uuid)) {
-    console.error('[checkin] invalid uuid format:', uuid)
     return NextResponse.json({ error: 'invalid_uuid' }, { status: 400 })
   }
 
@@ -34,8 +32,6 @@ export async function GET(
     .select('id, first_name, last_name, phone, preferred_language, notes, memberships(*, membership_plans(*))')
     .eq('id', uuid)
     .single()
-
-  console.log('[checkin] query result — client:', client?.id ?? null, 'error:', error?.message ?? null)
 
   if (error || !client) {
     return NextResponse.json({ error: 'client_not_found' }, { status: 404 })
