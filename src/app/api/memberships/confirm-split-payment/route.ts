@@ -24,59 +24,36 @@ export async function POST(req: Request) {
 
   const supabase = createServiceClient()
 
-  const { data: membership, error: fetchError } = await supabase
-    .from('memberships')
-    .select('id, client_id, status, split_payment_pending, membership_plans(split_first_amount, price_usd, plan_type)')
-    .eq('id', membership_id)
-    .single()
+  // Atomic confirm via Postgres function: locks the membership row, validates
+  // status/plan_type/pending, updates split_payment_pending, and inserts the
+  // payment in one transaction. Two concurrent calls cannot both succeed —
+  // the second sees pending=false after the first commits and aborts cleanly,
+  // so the customer can never be double-charged.
+  const { data: rpcRows, error: rpcError } = await supabase.rpc(
+    'confirm_split_payment_atomic',
+    { p_membership_id: membership_id, p_payment_method: payment_method },
+  )
 
-  if (fetchError || !membership) {
-    return NextResponse.json({ error: 'membership_not_found' }, { status: 404 })
+  if (rpcError) {
+    switch (rpcError.code) {
+      case 'P0001':
+        return NextResponse.json({ error: 'membership_not_found' }, { status: 404 })
+      case 'P0002':
+        return NextResponse.json({ error: 'not_a_pack' }, { status: 400 })
+      case 'P0003':
+        return NextResponse.json({ error: 'membership_not_active' }, { status: 400 })
+      case 'P0004':
+        return NextResponse.json({ error: 'no_split_payment_pending' }, { status: 400 })
+      default:
+        console.error('[confirm-split-payment] rpc error:', rpcError)
+        return NextResponse.json({ error: 'failed_to_confirm_payment' }, { status: 500 })
+    }
   }
 
-  // Only collect the second payment on an active membership — a cancelled or
-  // expired membership shouldn't accept new charges.
-  if (membership.status !== 'active') {
-    return NextResponse.json({ error: 'membership_not_active' }, { status: 400 })
-  }
-
-  const plan = membership.membership_plans as unknown as {
-    split_first_amount: number | null
-    price_usd: number
-    plan_type: string
-  } | null
-
-  if (plan?.plan_type !== 'pack') {
-    return NextResponse.json({ error: 'not_a_pack' }, { status: 400 })
-  }
-
-  if (!membership.split_payment_pending) {
-    return NextResponse.json({ error: 'no_split_payment_pending' }, { status: 400 })
-  }
-
-  const firstAmount = plan.split_first_amount ?? 0
-  const secondAmount = plan.price_usd - firstAmount
-
-  const [{ error: updateError }, { error: paymentError }] = await Promise.all([
-    supabase
-      .from('memberships')
-      .update({ split_payment_pending: false })
-      .eq('id', membership_id),
-    supabase
-      .from('payments')
-      .insert({
-        client_id: membership.client_id,
-        membership_id,
-        amount_usd: secondAmount,
-        method: payment_method,
-        concept: 'pack_split_second',
-      }),
-  ])
-
-  if (updateError || paymentError) {
-    console.error('[confirm-split-payment] error:', updateError, paymentError)
+  const row = Array.isArray(rpcRows) ? rpcRows[0] : rpcRows
+  if (!row) {
     return NextResponse.json({ error: 'failed_to_confirm_payment' }, { status: 500 })
   }
 
-  return NextResponse.json({ success: true, amount_paid: secondAmount })
+  return NextResponse.json({ success: true, amount_paid: row.amount_paid })
 }

@@ -357,7 +357,23 @@ export interface Database {
       }
     }
     Views: { [_ in never]: never }
-    Functions: { [_ in never]: never }
+    Functions: {
+      consume_pack_session: {
+        Args: { p_membership_id: string }
+        Returns: {
+          sessions_remaining: number
+          total_sessions: number
+          split_payment_warning: boolean
+        }[]
+      }
+      confirm_split_payment_atomic: {
+        Args: { p_membership_id: string; p_payment_method: string }
+        Returns: {
+          payment_id: string
+          amount_paid: number
+        }[]
+      }
+    }
     Enums: { [_ in never]: never }
     CompositeTypes: { [_ in never]: never }
   }

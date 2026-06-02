@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import type { SessionType, PaymentMethod } from '@/types'
-import { PACK_SPLIT_PAYMENT_THRESHOLD } from '@/lib/constants/membership'
 
 const VALID_PAYMENT_METHODS: PaymentMethod[] = ['cash', 'debit', 'credit']
 
@@ -64,11 +63,13 @@ export async function POST(req: Request) {
 
   let session_type: SessionType = 'additional'
   let updatedSessionsRemaining: number | null = null
+  let splitPaymentWarning = false
 
   if (membership_id) {
+    // Peek at plan_type so we can dispatch to the pack RPC (atomic) or the monthly path.
     const { data: membership } = await supabase
       .from('memberships')
-      .select('sessions_used_this_month, rollover_sessions, sessions_remaining, split_payment_pending, membership_plans(sessions_per_month, plan_type, total_sessions)')
+      .select('sessions_used_this_month, rollover_sessions, membership_plans(sessions_per_month, plan_type)')
       .eq('id', membership_id)
       .single()
 
@@ -76,50 +77,39 @@ export async function POST(req: Request) {
       const plan = membership.membership_plans as unknown as {
         sessions_per_month: number
         plan_type: string
-        total_sessions: number | null
       } | null
 
       const isPack = plan?.plan_type === 'pack'
 
       if (isPack) {
-        const sessionsRemaining = membership.sessions_remaining ?? 0
-        const totalSessions = plan?.total_sessions ?? 0
+        // Atomic decrement + threshold check via Postgres function.
+        // Serializes concurrent visits on the same membership so we can't
+        // burn a session twice for the same physical visit.
+        const { data: rpcRows, error: rpcError } = await supabase.rpc('consume_pack_session', {
+          p_membership_id: membership_id,
+        })
 
-        // Sessions used so far = total - remaining
-        const sessionsUsed = totalSessions - sessionsRemaining
-
-        // Block check-in once the threshold is reached if split payment is still pending
-        if (membership.split_payment_pending && sessionsUsed >= PACK_SPLIT_PAYMENT_THRESHOLD) {
-          return NextResponse.json(
-            { error: 'split_payment_required', sessions_used: sessionsUsed },
-            { status: 402 }
-          )
-        }
-
-        if (sessionsRemaining <= 0) {
-          return NextResponse.json({ error: 'no_sessions_remaining' }, { status: 400 })
-        }
-
-        session_type = 'included'
-        const newRemaining = sessionsRemaining - 1
-        updatedSessionsRemaining = newRemaining
-
-        const updates: { sessions_remaining: number; status?: 'expired' } = {
-          sessions_remaining: newRemaining,
-        }
-        if (newRemaining === 0) {
-          updates.status = 'expired'
-        }
-
-        const { error: packUpdateError } = await supabase
-          .from('memberships')
-          .update(updates)
-          .eq('id', membership_id)
-        if (packUpdateError) {
-          console.error('[visits] pack membership update error:', packUpdateError)
+        if (rpcError) {
+          if (rpcError.code === 'P0003') {
+            return NextResponse.json({ error: 'split_payment_required' }, { status: 402 })
+          }
+          if (rpcError.code === 'P0002') {
+            return NextResponse.json({ error: 'no_sessions_remaining' }, { status: 400 })
+          }
+          if (rpcError.code === 'P0001') {
+            return NextResponse.json({ error: 'membership_not_found' }, { status: 404 })
+          }
+          console.error('[visits] consume_pack_session error:', rpcError)
           return NextResponse.json({ error: 'failed_to_update_membership' }, { status: 500 })
         }
 
+        const row = Array.isArray(rpcRows) ? rpcRows[0] : rpcRows
+        if (!row) {
+          return NextResponse.json({ error: 'failed_to_update_membership' }, { status: 500 })
+        }
+        session_type = 'included'
+        updatedSessionsRemaining = row.sessions_remaining as number
+        splitPaymentWarning = !!row.split_payment_warning
       } else {
         // Monthly plan logic
         const sessionsPerMonth = plan?.sessions_per_month ?? 1
@@ -168,34 +158,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'failed_to_register_visit' }, { status: 500 })
   }
 
-  // After registering, check if this was the 4th session on a pack with split pending
-  // to include a warning in the response
-  let split_payment_warning = false
-  if (membership_id) {
-    const { data: updatedMembership } = await supabase
-      .from('memberships')
-      .select('sessions_remaining, split_payment_pending, membership_plans(plan_type, total_sessions)')
-      .eq('id', membership_id)
-      .single()
-
-    if (updatedMembership) {
-      const plan = updatedMembership.membership_plans as unknown as { plan_type: string; total_sessions: number | null } | null
-      if (plan?.plan_type === 'pack' && updatedMembership.split_payment_pending) {
-        const totalSessions = plan.total_sessions ?? 0
-        const sessionsUsed = totalSessions - (updatedMembership.sessions_remaining ?? 0)
-        // Warn after the threshold-th session — the next visit will be blocked
-        if (sessionsUsed === PACK_SPLIT_PAYMENT_THRESHOLD) {
-          split_payment_warning = true
-        }
-      }
-    }
-  }
-
   return NextResponse.json({
     visit_id: visit.id,
     visited_at: visit.visited_at,
     session_type: visit.session_type,
-    split_payment_warning,
+    split_payment_warning: splitPaymentWarning,
     sessions_remaining: updatedSessionsRemaining,
   })
 }
