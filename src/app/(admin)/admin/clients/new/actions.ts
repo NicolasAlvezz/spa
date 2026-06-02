@@ -60,7 +60,7 @@ export async function inviteNewClientAction(
     return { status: 'success', phone: e164 }
   }
 
-  // New user — create auth account
+  // New auth user — create it.
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({
     email: phoneToAuthEmail(e164),
     password: e164,
@@ -70,6 +70,29 @@ export async function inviteNewClientAction(
 
   if (authError || !authData.user) {
     return { status: 'error', message: 'generic_error' }
+  }
+
+  // If there's already a clients row for this phone with no user_id (created by
+  // an admin without inviting), link it to the new auth user instead of leaving
+  // an orphan that /setup will silently duplicate.
+  const { data: existingClient } = await supabase
+    .from('clients')
+    .select('id, user_id')
+    .eq('phone', e164)
+    .is('user_id', null)
+    .maybeSingle()
+
+  if (existingClient) {
+    const { error: linkError } = await supabase
+      .from('clients')
+      .update({ user_id: authData.user.id })
+      .eq('id', existingClient.id)
+    if (linkError) {
+      console.error('[invite] failed to link existing client to auth user:', linkError)
+      // Roll back the auth user so the admin can retry cleanly.
+      await supabase.auth.admin.deleteUser(authData.user.id)
+      return { status: 'error', message: 'generic_error' }
+    }
   }
 
   try {

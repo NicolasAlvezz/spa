@@ -26,12 +26,18 @@ export async function POST(req: Request) {
 
   const { data: membership, error: fetchError } = await supabase
     .from('memberships')
-    .select('id, client_id, split_payment_pending, membership_plans(split_first_amount, price_usd, plan_type)')
+    .select('id, client_id, status, split_payment_pending, membership_plans(split_first_amount, price_usd, plan_type)')
     .eq('id', membership_id)
     .single()
 
   if (fetchError || !membership) {
     return NextResponse.json({ error: 'membership_not_found' }, { status: 404 })
+  }
+
+  // Only collect the second payment on an active membership — a cancelled or
+  // expired membership shouldn't accept new charges.
+  if (membership.status !== 'active') {
+    return NextResponse.json({ error: 'membership_not_active' }, { status: 400 })
   }
 
   const plan = membership.membership_plans as unknown as {

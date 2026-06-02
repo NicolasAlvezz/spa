@@ -50,7 +50,7 @@ export async function POST(req: Request) {
   // Get the most recent non-cancelled membership for rollover calculation
   const { data: currentMembership } = await supabase
     .from('memberships')
-    .select('id, status, expires_at, sessions_used_this_month, rollover_sessions, months_completed, membership_plans(sessions_per_month)')
+    .select('id, status, expires_at, sessions_used_this_month, rollover_sessions, months_completed, membership_plans(sessions_per_month, plan_type)')
     .eq('client_id', client_id)
     .neq('status', 'cancelled')
     .order('created_at', { ascending: false })
@@ -86,13 +86,17 @@ export async function POST(req: Request) {
         expires_at = newExpiry.toISOString().split('T')[0]
       }
 
-      const prevPlan = currentMembership.membership_plans as unknown as { sessions_per_month: number } | null
-      const sessionsPerMonth = prevPlan?.sessions_per_month ?? 1
-      rollover_sessions = calculateRollover(
-        currentMembership.sessions_used_this_month,
-        sessionsPerMonth,
-        0,
-      )
+      // Rollover only carries over from a monthly plan — packs use sessions_remaining,
+      // not sessions_used_this_month, so calculating rollover on a pack would award
+      // a free session.
+      const prevPlan = currentMembership.membership_plans as unknown as { sessions_per_month: number; plan_type: string } | null
+      if (prevPlan && prevPlan.plan_type !== 'pack') {
+        rollover_sessions = calculateRollover(
+          currentMembership.sessions_used_this_month,
+          prevPlan.sessions_per_month,
+          0,
+        )
+      }
     } else {
       started_at = today.toISOString().split('T')[0]
       const newExpiry = new Date(today)
@@ -101,20 +105,10 @@ export async function POST(req: Request) {
     }
   }
 
-  // Mark previous active membership as expired
-  if (currentMembership?.status === 'active') {
-    const { error: expireError } = await supabase
-      .from('memberships')
-      .update({ status: 'expired' })
-      .eq('id', currentMembership.id)
-    if (expireError) {
-      console.error('[memberships/renew] failed to expire previous membership:', expireError)
-      return NextResponse.json({ error: 'failed_to_expire_previous_membership' }, { status: 500 })
-    }
-  }
-
   const usingSplitPayment = isPack && !!split_payment && !!plan?.allows_split_payment
 
+  // Insert the new membership FIRST. If anything below fails we roll it back so
+  // the client never ends up with the old one expired and no new one active.
   const { data: newMembership, error: membershipError } = await supabase
     .from('memberships')
     .insert({
@@ -150,7 +144,29 @@ export async function POST(req: Request) {
 
   if (paymentError) {
     console.error('[POST /api/memberships/renew] payment insert:', paymentError)
+    // Roll back the new membership so we don't leave a paid-for membership without a payment.
+    const { error: rollbackError } = await supabase
+      .from('memberships')
+      .delete()
+      .eq('id', newMembership.id)
+    if (rollbackError) {
+      console.error('[POST /api/memberships/renew] rollback failed:', rollbackError)
+    }
     return NextResponse.json({ error: 'failed_to_record_payment' }, { status: 500 })
+  }
+
+  // Now that the new membership + payment are in place, expire the old one.
+  // If this fails the client still has a working active membership (the new one);
+  // we just have a stale `active` flag on the previous record. getCurrentMembership()
+  // resolves this deterministically by picking the most recently created one.
+  if (currentMembership?.status === 'active') {
+    const { error: expireError } = await supabase
+      .from('memberships')
+      .update({ status: 'expired' })
+      .eq('id', currentMembership.id)
+    if (expireError) {
+      console.error('[memberships/renew] failed to expire previous membership (non-fatal):', expireError)
+    }
   }
 
   return NextResponse.json({
