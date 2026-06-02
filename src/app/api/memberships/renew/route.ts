@@ -20,9 +20,10 @@ export async function POST(req: Request) {
     payment_method: PaymentMethod
     amount_usd: number
     split_payment?: boolean  // true = paying $400 now, $400 before 5th session
+    confirm_lose_unused_sessions?: boolean  // admin acknowledged that unused pack sessions will be lost
   } = await req.json()
 
-  const { client_id, plan_id, payment_method, amount_usd, split_payment } = body
+  const { client_id, plan_id, payment_method, amount_usd, split_payment, confirm_lose_unused_sessions } = body
 
   if (!client_id || !plan_id || !payment_method) {
     return NextResponse.json({ error: 'missing_required_fields' }, { status: 400 })
@@ -50,12 +51,29 @@ export async function POST(req: Request) {
   // Get the most recent non-cancelled membership for rollover calculation
   const { data: currentMembership } = await supabase
     .from('memberships')
-    .select('id, status, expires_at, sessions_used_this_month, rollover_sessions, months_completed, membership_plans(sessions_per_month, plan_type)')
+    .select('id, status, expires_at, sessions_used_this_month, rollover_sessions, months_completed, sessions_remaining, membership_plans(sessions_per_month, plan_type)')
     .eq('client_id', client_id)
     .neq('status', 'cancelled')
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle()
+
+  // If the client is on an active pack with unused sessions, renewing/assigning
+  // a new plan will expire it and the remaining sessions are forfeited. Require
+  // the admin to acknowledge this so it can't happen by accident.
+  if (
+    currentMembership?.status === 'active' &&
+    !confirm_lose_unused_sessions
+  ) {
+    const prev = currentMembership.membership_plans as unknown as { plan_type: string } | null
+    const remaining = currentMembership.sessions_remaining ?? 0
+    if (prev?.plan_type === 'pack' && remaining > 0) {
+      return NextResponse.json(
+        { error: 'unused_sessions_warning', sessions_remaining: remaining },
+        { status: 409 }
+      )
+    }
+  }
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)

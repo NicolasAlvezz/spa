@@ -412,7 +412,9 @@
     "per_month_short": "/mes",
     "split_now_suffix": "ahora",
     "registering_visit": "Registrando...",
-    "confirm_visit": "Confirmar visita"
+    "confirm_visit": "Confirmar visita",
+    "lose_sessions_title": "Se perderán sesiones del pack",
+    "lose_sessions_body": "Este cliente tiene {count} sesión(es) del pack sin usar. Al asignar un nuevo plan se pierden. ¿Continuar?"
   },
   "onboarding": {
     "title": "Bienvenida a VM Integral Massage",

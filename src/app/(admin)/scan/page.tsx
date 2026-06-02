@@ -172,8 +172,9 @@ export default function ScanPage() {
     splitPayment?: boolean,
   ) => {
     if (!result) return
-    try {
-      const res = await fetch('/api/memberships/renew', {
+
+    const post = (confirmLose: boolean) =>
+      fetch('/api/memberships/renew', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -182,8 +183,25 @@ export default function ScanPage() {
           payment_method: method,
           amount_usd: amountUsd,
           split_payment: splitPayment ?? false,
+          confirm_lose_unused_sessions: confirmLose,
         }),
       })
+
+    try {
+      let res = await post(false)
+
+      if (res.status === 409) {
+        const body: { error?: string; sessions_remaining?: number } = await res.json().catch(() => ({}))
+        if (body.error === 'unused_sessions_warning') {
+          const ok = window.confirm(t('lose_sessions_body', { count: body.sessions_remaining ?? 0 }))
+          if (!ok) {
+            setPhase('result')
+            return
+          }
+          res = await post(true)
+        }
+      }
+
       if (!res.ok) {
         setErrorKey('network_error')
         setPhase('error')
@@ -201,7 +219,7 @@ export default function ScanPage() {
       setErrorKey('network_error')
       setPhase('error')
     }
-  }, [result, tCheck, locale])
+  }, [result, t, tCheck, locale])
 
   const handleRenewConfirm = useCallback(async (method: PaymentMethod) => {
     if (!result?.membership) return

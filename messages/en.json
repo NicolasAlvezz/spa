@@ -412,7 +412,9 @@
     "per_month_short": "/mo",
     "split_now_suffix": "now",
     "registering_visit": "Registering...",
-    "confirm_visit": "Confirm visit"
+    "confirm_visit": "Confirm visit",
+    "lose_sessions_title": "Unused sessions will be lost",
+    "lose_sessions_body": "This client has {count} pack session(s) remaining. Assigning a new plan will forfeit them. Continue?"
   },
   "onboarding": {
     "title": "Welcome to VM Integral Massage",
