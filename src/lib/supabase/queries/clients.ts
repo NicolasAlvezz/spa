@@ -172,6 +172,16 @@ export async function getAllServiceTypes(): Promise<ServiceTypeAdminItem[]> {
   return (data ?? []) as unknown as ServiceTypeAdminItem[]
 }
 
+export async function getAllMembershipPlans(): Promise<DbMembershipPlan[]> {
+  const supabase = createServiceClient()
+  const { data, error } = await supabase
+    .from('membership_plans')
+    .select('*')
+    .order('price_usd')
+  if (error) throw error
+  return data ?? []
+}
+
 // ── Client-facing query — uses service client ────────────────────────────────
 // Auth is always verified by the caller (getUser()) before this is called,
 // so service client is safe and avoids RLS policy issues on the clients table.
