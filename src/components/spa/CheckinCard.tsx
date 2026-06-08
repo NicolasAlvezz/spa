@@ -11,6 +11,7 @@ interface Props {
   onScanAgain: () => void
   onRegisterVisit: () => void
   onAssignMembership: () => void
+  onChangePlan?: () => void
   onRegisterServiceVisit?: () => void
   onConfirmSplitPayment?: () => void
   splitPaymentBlocked?: boolean
@@ -21,6 +22,7 @@ export function CheckinCard({
   onScanAgain,
   onRegisterVisit,
   onAssignMembership,
+  onChangePlan,
   onRegisterServiceVisit,
   onConfirmSplitPayment,
   splitPaymentBlocked = false,
@@ -143,6 +145,14 @@ export function CheckinCard({
               className="w-full h-16 rounded-xl bg-green-500 hover:bg-green-400 active:bg-green-600 text-white text-xl font-bold transition-colors shadow-lg shadow-green-900/30"
             >
               {tCheck('register_visit')}
+            </button>
+          )}
+          {onChangePlan && (
+            <button
+              onClick={onChangePlan}
+              className="w-full h-12 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 text-white text-sm font-semibold transition-colors shadow-lg shadow-brand-900/30"
+            >
+              {locale === 'es' ? 'Cambiar plan' : 'Change Plan'}
             </button>
           )}
           <button

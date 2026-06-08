@@ -352,6 +352,7 @@ export default function ScanPage() {
               onScanAgain={reset}
               onRegisterVisit={handleRegisterVisit}
               onAssignMembership={() => setPhase('assigning')}
+              onChangePlan={() => setPhase('assigning')}
               onRegisterServiceVisit={() => setPhase('service_visit')}
               onConfirmSplitPayment={() => setPhase('confirming_split')}
               splitPaymentBlocked={splitPaymentBlocked}
