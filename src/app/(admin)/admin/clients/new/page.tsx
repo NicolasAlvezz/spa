@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useRef } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, CheckCircle2, AlertCircle } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, MessageSquare, Smartphone, AlertCircle } from 'lucide-react'
 import { inviteNewClientAction } from './actions'
 import { PhoneInput } from '@/components/spa/PhoneInput'
 
@@ -22,7 +22,7 @@ export default function NewClientPage() {
   const [isPending, startTransition] = useTransition()
   const [success, setSuccess] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const channel: 'sms' | 'whatsapp' = 'sms'
+  const [channel, setChannel] = useState<'sms' | 'whatsapp'>('whatsapp')
   const [alreadyInvited, setAlreadyInvited] = useState<string | null>(null)
   const formRef = useRef<HTMLFormElement>(null)
 
@@ -109,6 +109,40 @@ export default function NewClientPage() {
             <PhoneInput variant="light" disabled={isPending} />
           </div>
 
+          {/* Channel selector */}
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium text-gray-700">
+              {label('Send via', 'Enviar por')}
+            </label>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setChannel('whatsapp')}
+                disabled={isPending}
+                className={`flex-1 flex items-center justify-center gap-2 h-11 rounded-xl border text-sm font-medium transition-colors ${
+                  channel === 'whatsapp'
+                    ? 'border-green-500 bg-green-50 text-green-700'
+                    : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <MessageSquare size={16} />
+                WhatsApp
+              </button>
+              <button
+                type="button"
+                onClick={() => setChannel('sms')}
+                disabled={isPending}
+                className={`flex-1 flex items-center justify-center gap-2 h-11 rounded-xl border text-sm font-medium transition-colors ${
+                  channel === 'sms'
+                    ? 'border-blue-500 bg-blue-50 text-blue-700'
+                    : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <Smartphone size={16} />
+                SMS
+              </button>
+            </div>
+          </div>
 
           {/* Already invited confirmation */}
           {alreadyInvited && (

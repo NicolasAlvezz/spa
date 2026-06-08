@@ -2,6 +2,7 @@
 
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { buildE164, phoneToAuthEmail } from '@/lib/phone'
+import { sendWhatsAppMessage } from '@/lib/twilio'
 import twilio from 'twilio'
 
 export type InviteNewClientState =
@@ -12,11 +13,42 @@ export type InviteNewClientState =
 
 async function sendInviteMessage(e164: string, channel: 'sms' | 'whatsapp') {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://vmintegralmassage.vercel.app'
-  const body = `Hola! 💆‍♀️ VM Integral Massage te invita a completar tu registro y acceder a tu perfil personal: ${appUrl}/setup?phone=${encodeURIComponent(e164)}`
+  const registrationLink = `${appUrl}/setup?phone=${encodeURIComponent(e164)}`
+  const freeformBody = `Hola! 💆‍♀️ VM Integral Massage te invita a completar tu registro y acceder a tu perfil personal: ${registrationLink}`
+
+  if (channel === 'whatsapp') {
+    const contentSid = process.env.TWILIO_WHATSAPP_INVITE_CONTENT_SID
+
+    if (contentSid) {
+      // Production path — uses a Meta-approved template, so the message can be
+      // sent to any user (no opt-in / no 24h window required).
+      const from = process.env.TWILIO_WHATSAPP_FROM
+      if (!from) throw new Error('[invite] TWILIO_WHATSAPP_FROM is not configured')
+
+      const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
+      await client.messages.create({
+        from,
+        to: `whatsapp:${e164}`,
+        contentSid,
+        contentVariables: JSON.stringify({ '1': registrationLink }),
+      })
+      return
+    }
+
+    // Sandbox / dev path — freeform body. Only delivers to numbers that have
+    // already joined the Twilio sandbox (or replied to the sender within 24h).
+    await sendWhatsAppMessage(e164, freeformBody)
+    return
+  }
+
+  // SMS path — requires TWILIO_SMS_FROM and an A2P 10DLC-approved number for US
+  // destinations. Without registration, US carriers reject with error 30034.
+  const smsFrom = process.env.TWILIO_SMS_FROM
+  if (!smsFrom) {
+    throw new Error('[invite] TWILIO_SMS_FROM is not configured')
+  }
   const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
-  const from = channel === 'whatsapp' ? process.env.TWILIO_WHATSAPP_FROM : process.env.TWILIO_SMS_FROM
-  const to = channel === 'whatsapp' ? `whatsapp:${e164}` : e164
-  await client.messages.create({ from, to, body })
+  await client.messages.create({ from: smsFrom, to: e164, body: freeformBody })
 }
 
 export async function inviteNewClientAction(
