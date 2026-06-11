@@ -5,6 +5,10 @@ import type { ConsentLanguage } from '@/lib/constants/consent'
 import enMessages from '../../../../../../messages/en.json'
 import esMessages from '../../../../../../messages/es.json'
 
+// @react-pdf/renderer requires Node APIs (Buffer, streams) — not Edge-compatible.
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
 export async function GET(
   _req: Request,
   { params }: { params: { id: string } }

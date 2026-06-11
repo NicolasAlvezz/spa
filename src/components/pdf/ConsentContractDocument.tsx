@@ -1,9 +1,11 @@
-import ReactPDF, {
+import React from 'react'
+import {
   Document,
   Page,
   View,
   Text,
   StyleSheet,
+  renderToBuffer,
 } from '@react-pdf/renderer'
 import { BUSINESS } from '@/lib/constants/business'
 import type { ConsentLanguage } from '@/lib/constants/consent'
@@ -271,5 +273,5 @@ function ConsentContractDocument(props: ConsentContractProps) {
 }
 
 export async function renderConsentContract(props: ConsentContractProps): Promise<Buffer> {
-  return ReactPDF.renderToBuffer(<ConsentContractDocument {...props} />)
+  return renderToBuffer(<ConsentContractDocument {...props} />)
 }
