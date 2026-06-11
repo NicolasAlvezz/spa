@@ -52,6 +52,20 @@ export type VisitWithService = DbVisit & {
   payment_method: string | null
 }
 
+// Consent snapshot attached to a visit (returned as array by PostgREST reverse-FK join)
+export type ConsentAcceptanceSnapshot = {
+  id: string
+  accepted_at: string
+  language: 'en' | 'es'
+  version: string
+}
+
+// Visit row joined with service type + consent acceptance (used in admin visit history)
+export type VisitWithServiceAndConsent = VisitWithService & {
+  // PostgREST returns a one-to-many array; in practice 0 or 1 elements
+  consent_acceptance: ConsentAcceptanceSnapshot[] | null
+}
+
 // ─── API response shapes ──────────────────────────────────────────────────────
 
 // Response from GET /api/clients/[uuid]/checkin

@@ -353,6 +353,8 @@
     "visit_col_service": "Servicio",
     "visit_col_type": "Tipo",
     "visit_col_notes": "Notas",
+    "visit_col_contract": "Contrato",
+    "contract_download": "Firmado {date}",
     "danger_zone": "Zona de peligro",
     "deactivate": "Desactivar cliente",
     "deactivate_desc": "Oculta al cliente de la lista activa. Sus datos se conservan y la acción es reversible.",
@@ -464,7 +466,27 @@
     "medical_body": "Certifico que estoy libre de cualquier dolencia que pueda verse afectada por el servicio, la prueba o el procedimiento a realizarme. Certifico que a mi leal saber y entender no tengo ninguna enfermedad contagiosa. Entiendo que si estoy enfermo o me enfermo debo ver a mis propios médicos y confiar en sus consejos y consultas.",
     "agreement_title": "Acuerdo para participar",
     "agreement_body": "Estoy de acuerdo en participar en los servicios de terapia de masajes que me realizarán hoy en VM Integral Massage Inc.",
-    "accept_button": "Acepto"
+    "accept_button": "Acepto",
+    "error_generic": "Ocurrió un error. Intentá de nuevo.",
+    "pdf": {
+      "doc_title": "Consentimiento y descargo — Registro firmado",
+      "section_client": "Cliente",
+      "label_name": "Nombre",
+      "label_phone": "Teléfono",
+      "label_address": "Dirección",
+      "section_visit": "Visita",
+      "label_visit_datetime": "Fecha y hora",
+      "section_signature": "Detalles de firma",
+      "label_signed_at": "Firmado el",
+      "label_language": "Idioma",
+      "label_version": "Versión",
+      "language_value": "Español",
+      "section_consent_text": "Texto del consentimiento (tal como se mostró al firmar)",
+      "footer_signed": "Firmado digitalmente el {date}",
+      "footer_ip": "IP",
+      "footer_user_agent": "User-Agent",
+      "footer_disclaimer": "Este documento fue generado por VM Integral Massage Inc. para fines de cumplimiento y responsabilidad. No alterar ni distribuir sin autorización."
+    }
   },
   "errors": {
     "client_not_found": "No se encontró ningún cliente con ese código QR.",

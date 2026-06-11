@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useTranslations, useLocale } from 'next-intl'
 import enMessages from '../../../messages/en.json'
 import esMessages from '../../../messages/es.json'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { CalendarDays, Activity, RotateCcw, Clock, ChevronRight, ExternalLink } from 'lucide-react'
 import { MembershipBadge } from './MembershipBadge'
 import { formatDate, formatDateTime } from '@/lib/utils/dates'
@@ -20,6 +20,7 @@ interface Props {
   client: ClientDetail
   nextAppointment: ClientNextAppointment | null
   recentVisits: ClientVisitRow[]
+  hasActiveConsent: boolean
 }
 
 const SESSION_LABELS: Record<string, { en: string; es: string }> = {
@@ -29,11 +30,13 @@ const SESSION_LABELS: Record<string, { en: string; es: string }> = {
   welcome_offer: { en: 'Welcome offer',        es: 'Bienvenida' },
 }
 
-export function QrDisplay({ client, nextAppointment, recentVisits }: Props) {
+export function QrDisplay({ client, nextAppointment, recentVisits, hasActiveConsent }: Props) {
   const t = useTranslations('myqr')
   const tCheck = useTranslations('checkin')
   const locale = useLocale() as 'en' | 'es'
-  const [consented, setConsented] = useState(false)
+  const [consented, setConsented] = useState(hasActiveConsent)
+  const [isAccepting, setIsAccepting] = useState(false)
+  const [acceptError, setAcceptError] = useState(false)
   const [qrSize, setQrSize] = useState(200)
 
   useEffect(() => {
@@ -44,6 +47,29 @@ export function QrDisplay({ client, nextAppointment, recentVisits }: Props) {
     window.addEventListener('resize', update)
     return () => window.removeEventListener('resize', update)
   }, [])
+
+  const handleAccept = useCallback(async () => {
+    setIsAccepting(true)
+    setAcceptError(false)
+    try {
+      // Only send what we're signing (client_id + language). The consent text
+      // snapshot is taken server-side so it cannot be tampered with from here.
+      const res = await fetch('/api/consent-acceptances', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          client_id: client.id,
+          language: locale,
+        }),
+      })
+      if (!res.ok) throw new Error('failed')
+      setConsented(true)
+    } catch {
+      setAcceptError(true)
+    } finally {
+      setIsAccepting(false)
+    }
+  }, [client.id, locale])
 
   const membership = getCurrentMembership(client.memberships)
   const plan = membership?.membership_plans
@@ -97,12 +123,22 @@ export function QrDisplay({ client, nextAppointment, recentVisits }: Props) {
 
         </div>
 
+        {/* Error message — shown bilingual by design, same as the consent text */}
+        {acceptError && (
+          <p className="text-center text-sm text-red-500 -mb-1">
+            {enMessages.consent.error_generic} / {esMessages.consent.error_generic}
+          </p>
+        )}
+
         {/* Accept button */}
         <button
-          onClick={() => setConsented(true)}
-          className="w-full h-14 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 text-white font-bold text-base transition-colors shadow-lg shadow-brand-900/20"
+          onClick={handleAccept}
+          disabled={isAccepting}
+          className="w-full h-14 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold text-base transition-colors shadow-lg shadow-brand-900/20"
         >
-          {enMessages.consent.accept_button} &nbsp;/&nbsp; {esMessages.consent.accept_button}
+          {isAccepting
+            ? '…'
+            : `${enMessages.consent.accept_button} / ${esMessages.consent.accept_button}`}
         </button>
 
       </div>

@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Printer, Calendar, CreditCard, Activity, TrendingUp, BadgeCheck } from 'lucide-react'
+import { ArrowLeft, Printer, Calendar, CreditCard, Activity, TrendingUp, BadgeCheck, FileText } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
 import {
   getClientById,
@@ -310,6 +310,7 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
                 <th className="px-6 py-3 font-medium">{locale === 'es' ? 'Precio' : 'Price'}</th>
                 <th className="px-6 py-3 font-medium">{locale === 'es' ? 'Método' : 'Method'}</th>
                 <th className="px-6 py-3 font-medium">{t('visit_col_notes')}</th>
+                <th className="px-6 py-3 font-medium">{t('visit_col_contract')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -333,6 +334,23 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
                     {v.payment_method ? tPay(`method_${v.payment_method}` as Parameters<typeof tPay>[0]) : <span className="text-gray-300">—</span>}
                   </td>
                   <td className="px-6 py-3.5 text-gray-400 text-xs">{v.notes ?? '—'}</td>
+                  <td className="px-6 py-3.5">
+                    {v.consent_acceptance?.[0] ? (
+                      <a
+                        href={`/api/visits/${v.id}/contract.pdf`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-800 transition-colors"
+                      >
+                        <FileText size={12} />
+                        {t('contract_download', {
+                          date: formatDate(v.consent_acceptance[0].accepted_at, locale),
+                        })}
+                      </a>
+                    ) : (
+                      <span className="text-gray-300 text-xs">—</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

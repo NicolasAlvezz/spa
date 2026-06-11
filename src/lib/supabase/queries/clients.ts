@@ -1,13 +1,14 @@
 import { createServiceClient } from '@/lib/supabase/server'
+import { CONSENT_WINDOW_MS } from '@/lib/constants/consent'
 import type {
   ClientListRow,
   ClientDetail,
-  VisitWithService,
+  VisitWithServiceAndConsent,
   DbMembershipPlan,
   DbPayment,
 } from '@/types'
 
-export type { ClientListRow, ClientDetail, MembershipWithPlan, VisitWithService } from '@/types'
+export type { ClientListRow, ClientDetail, MembershipWithPlan, VisitWithServiceAndConsent } from '@/types'
 
 // ── Admin queries — use service client to bypass RLS ─────────────────────────
 // These are called exclusively from admin server components that are already
@@ -61,11 +62,15 @@ export async function getClientById(id: string): Promise<ClientDetail | null> {
   return data as unknown as ClientDetail
 }
 
-export async function getClientVisits(clientId: string, since?: string): Promise<VisitWithService[]> {
+export async function getClientVisits(clientId: string, since?: string): Promise<VisitWithServiceAndConsent[]> {
   const supabase = createServiceClient()
   const query = supabase
     .from('visits')
-    .select(`*, payment_method, service_types(slug, name_en, name_es, price_usd)`)
+    .select(`
+      *,
+      service_types(slug, name_en, name_es, price_usd),
+      consent_acceptance:consent_acceptances!consumed_by_visit(id, accepted_at, language, version)
+    `)
     .eq('client_id', clientId)
     .order('visited_at', { ascending: false })
 
@@ -74,7 +79,26 @@ export async function getClientVisits(clientId: string, since?: string): Promise
     : await query.limit(200)
 
   if (error) throw error
-  return (data ?? []) as unknown as VisitWithService[]
+  return (data ?? []) as unknown as VisitWithServiceAndConsent[]
+}
+
+/**
+ * Returns true if the client has a recent unconsumed consent acceptance
+ * within CONSENT_WINDOW_MS (the same window used when associating consent→visit).
+ */
+export async function getActiveConsentForClient(clientId: string): Promise<boolean> {
+  const supabase = createServiceClient()
+  const windowStart = new Date(Date.now() - CONSENT_WINDOW_MS).toISOString()
+  const { data } = await supabase
+    .from('consent_acceptances')
+    .select('id')
+    .eq('client_id', clientId)
+    .is('consumed_at', null)
+    .gte('accepted_at', windowStart)
+    .order('accepted_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  return data !== null
 }
 
 export async function getServiceVisitsTotalPaid(clientId: string): Promise<number> {

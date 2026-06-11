@@ -214,6 +214,43 @@ export interface Database {
         }
         Relationships: Relationship[]
       }
+      consent_acceptances: {
+        Row: {
+          id: string
+          client_id: string
+          accepted_at: string
+          language: 'en' | 'es'
+          version: string
+          medical_title: string
+          medical_body: string
+          agreement_title: string
+          agreement_body: string
+          ip_address: string | null
+          user_agent: string | null
+          consumed_at: string | null
+          consumed_by_visit: string | null
+        }
+        Insert: {
+          id?: string
+          client_id: string
+          accepted_at?: string
+          language: 'en' | 'es'
+          version: string
+          medical_title: string
+          medical_body: string
+          agreement_title: string
+          agreement_body: string
+          ip_address?: string | null
+          user_agent?: string | null
+          consumed_at?: string | null
+          consumed_by_visit?: string | null
+        }
+        Update: {
+          consumed_at?: string | null
+          consumed_by_visit?: string | null
+        }
+        Relationships: Relationship[]
+      }
       visits: {
         Row: {
           id: string
