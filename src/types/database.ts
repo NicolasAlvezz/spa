@@ -262,6 +262,7 @@ export interface Database {
           registered_by: string | null
           notes: string | null
           payment_method: string | null
+          therapist_name: string | null
           created_at: string
         }
         Insert: {
@@ -274,12 +275,14 @@ export interface Database {
           registered_by?: string | null
           notes?: string | null
           payment_method?: string | null
+          therapist_name?: string | null
           created_at?: string
         }
         Update: {
           service_type_id?: string | null
           notes?: string | null
           payment_method?: string | null
+          therapist_name?: string | null
         }
         Relationships: Relationship[]
       }

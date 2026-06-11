@@ -5,8 +5,12 @@ import { useTranslations, useLocale } from 'next-intl'
 import { ScanLine, WifiOff, UserX, Loader2, CheckCircle2, Camera, RotateCcw, Star, CreditCard } from 'lucide-react'
 import { QrScanner } from '@/components/spa/QrScanner'
 import { CheckinCard } from '@/components/spa/CheckinCard'
+import { TherapistSelector } from '@/components/spa/TherapistSelector'
 import { formatDate } from '@/lib/utils/dates'
+import { getDefaultTherapistName, THERAPIST_NAMES } from '@/lib/constants/therapists'
 import type { CheckinResult, PaymentMethod } from '@/types'
+
+const THERAPIST_STORAGE_KEY = 'scan_selected_therapist'
 
 type Phase =
   | 'scanning'
@@ -38,6 +42,18 @@ export default function ScanPage() {
   const [errorKey, setErrorKey] = useState<'client_not_found' | 'network_error'>('network_error')
   const [successInfo, setSuccessInfo] = useState<SuccessInfo | null>(null)
   const [splitPaymentBlocked, setSplitPaymentBlocked] = useState(false)
+  const [therapistName, setTherapistName] = useState(getDefaultTherapistName)
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem(THERAPIST_STORAGE_KEY)
+    if (stored && THERAPIST_NAMES.includes(stored as (typeof THERAPIST_NAMES)[number])) {
+      setTherapistName(stored)
+    }
+  }, [])
+
+  useEffect(() => {
+    sessionStorage.setItem(THERAPIST_STORAGE_KEY, therapistName)
+  }, [therapistName])
 
   const reset = useCallback(() => {
     setResult(null)
@@ -90,6 +106,7 @@ export default function ScanPage() {
         body: JSON.stringify({
           client_id: result.client.id,
           membership_id: result.membership?.id ?? null,
+          therapist_name: therapistName,
         }),
       })
 
@@ -135,7 +152,7 @@ export default function ScanPage() {
       setErrorKey('network_error')
       setPhase('error')
     }
-  }, [result, tCheck])
+  }, [result, tCheck, therapistName])
 
   const handleConfirmSplitPayment = useCallback(async (method: PaymentMethod) => {
     if (!result?.membership) return
@@ -269,6 +286,7 @@ export default function ScanPage() {
           membership_id: null,
           service_type_id: serviceTypeId,
           payment_method: paymentMethod,
+          therapist_name: therapistName,
         }),
       })
       if (!res.ok) {
@@ -285,7 +303,7 @@ export default function ScanPage() {
       setErrorKey('network_error')
       setPhase('error')
     }
-  }, [result, tCheck])
+  }, [result, tCheck, therapistName])
 
   const cameraPaused =
     phase === 'result' ||
@@ -349,6 +367,8 @@ export default function ScanPage() {
           <div className="w-full max-w-md">
             <CheckinCard
               data={result}
+              therapistName={therapistName}
+              onTherapistChange={setTherapistName}
               onScanAgain={reset}
               onRegisterVisit={handleRegisterVisit}
               onAssignMembership={() => setPhase('assigning')}
@@ -364,6 +384,8 @@ export default function ScanPage() {
           <div className="w-full max-w-md">
             <ServiceVisitPanel
               result={result}
+              therapistName={therapistName}
+              onTherapistChange={setTherapistName}
               onConfirm={handleServiceVisit}
               onCancel={() => setPhase('result')}
             />
@@ -776,11 +798,13 @@ interface ServiceType {
 
 interface ServiceVisitPanelProps {
   result: CheckinResult
+  therapistName: string
+  onTherapistChange: (name: string) => void
   onConfirm: (serviceTypeId: string, serviceName: string, priceUsd: number | null, paymentMethod: PaymentMethod) => Promise<void>
   onCancel: () => void
 }
 
-function ServiceVisitPanel({ result, onConfirm, onCancel }: ServiceVisitPanelProps) {
+function ServiceVisitPanel({ result, therapistName, onTherapistChange, onConfirm, onCancel }: ServiceVisitPanelProps) {
   const t = useTranslations('checkin')
   const tScan = useTranslations('scan')
   const tPayment = useTranslations('payment')
@@ -820,6 +844,12 @@ function ServiceVisitPanel({ result, onConfirm, onCancel }: ServiceVisitPanelPro
       <h2 className="text-2xl md:text-4xl font-bold text-white leading-tight">
         {result.client.first_name} {result.client.last_name}
       </h2>
+
+      <TherapistSelector
+        value={therapistName}
+        onChange={onTherapistChange}
+        disabled={submitting}
+      />
 
       <div>
         <p className="text-slate-400 text-xs uppercase tracking-wide mb-3">

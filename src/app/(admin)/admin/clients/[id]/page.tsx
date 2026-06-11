@@ -306,6 +306,7 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
               <tr className="bg-gray-50/80 text-left text-xs text-gray-500 uppercase tracking-wide border-b border-gray-100">
                 <th className="px-6 py-3 font-medium">{t('visit_col_date')}</th>
                 <th className="px-6 py-3 font-medium">{t('visit_col_service')}</th>
+                <th className="px-6 py-3 font-medium">{t('visit_col_therapist')}</th>
                 <th className="px-6 py-3 font-medium">{t('visit_col_type')}</th>
                 <th className="px-6 py-3 font-medium">{locale === 'es' ? 'Precio' : 'Price'}</th>
                 <th className="px-6 py-3 font-medium">{locale === 'es' ? 'Método' : 'Method'}</th>
@@ -323,6 +324,9 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
                     {v.service_types
                       ? (locale === 'es' ? v.service_types.name_es : v.service_types.name_en)
                       : <span className="text-gray-300">—</span>}
+                  </td>
+                  <td className="px-6 py-3.5 text-gray-600">
+                    {v.therapist_name ?? <span className="text-gray-300">—</span>}
                   </td>
                   <td className="px-6 py-3.5">
                     <SessionTypeBadge label={sessionTypeLabel[v.session_type] ?? v.session_type} type={v.session_type} />

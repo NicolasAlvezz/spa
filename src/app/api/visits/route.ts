@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { CONSENT_WINDOW_MS } from '@/lib/constants/consent'
+import { isValidTherapistName } from '@/lib/constants/therapists'
 import type { SessionType, PaymentMethod } from '@/types'
 
 const VALID_PAYMENT_METHODS: PaymentMethod[] = ['cash', 'debit', 'credit']
@@ -51,9 +52,10 @@ export async function POST(req: Request) {
     service_type_id?: string
     payment_method?: PaymentMethod
     notes?: string
+    therapist_name?: string
   } = await req.json()
 
-  const { client_id, membership_id, service_type_id, payment_method, notes } = body
+  const { client_id, membership_id, service_type_id, payment_method, notes, therapist_name } = body
 
   if (!client_id) {
     return NextResponse.json({ error: 'client_id is required' }, { status: 400 })
@@ -61,6 +63,10 @@ export async function POST(req: Request) {
 
   if (payment_method !== undefined && !VALID_PAYMENT_METHODS.includes(payment_method)) {
     return NextResponse.json({ error: 'invalid_payment_method' }, { status: 400 })
+  }
+
+  if (therapist_name !== undefined && !isValidTherapistName(therapist_name)) {
+    return NextResponse.json({ error: 'invalid_therapist_name' }, { status: 400 })
   }
 
   const supabase = createServiceClient()
@@ -77,6 +83,7 @@ export async function POST(req: Request) {
         payment_method: payment_method ?? null,
         registered_by: user.email ?? user.id,
         notes: notes ?? null,
+        therapist_name: therapist_name?.trim() ?? null,
       })
       .select('id, visited_at, session_type')
       .single()
@@ -183,6 +190,7 @@ export async function POST(req: Request) {
       payment_method: payment_method ?? null,
       registered_by: user.email ?? user.id,
       notes: notes ?? null,
+      therapist_name: therapist_name?.trim() ?? null,
     })
     .select('id, visited_at, session_type')
     .single()

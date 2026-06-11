@@ -351,6 +351,7 @@
     "id_verified_badge": "ID Verificado",
     "visit_col_date": "Fecha",
     "visit_col_service": "Servicio",
+    "visit_col_therapist": "Terapeuta",
     "visit_col_type": "Tipo",
     "visit_col_notes": "Notas",
     "visit_col_contract": "Contrato",
@@ -415,6 +416,7 @@
     "split_now_suffix": "ahora",
     "registering_visit": "Registrando...",
     "confirm_visit": "Confirmar visita",
+    "therapist_label": "Terapeuta",
     "lose_sessions_title": "Se perderán sesiones del pack",
     "lose_sessions_body": "Este cliente tiene {count} sesión(es) del pack sin usar. Al asignar un nuevo plan se pierden. ¿Continuar?"
   },

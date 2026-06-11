@@ -351,6 +351,7 @@
     "id_verified_badge": "ID Verified",
     "visit_col_date": "Date",
     "visit_col_service": "Service",
+    "visit_col_therapist": "Therapist",
     "visit_col_type": "Type",
     "visit_col_notes": "Notes",
     "visit_col_contract": "Contract",
@@ -415,6 +416,7 @@
     "split_now_suffix": "now",
     "registering_visit": "Registering...",
     "confirm_visit": "Confirm visit",
+    "therapist_label": "Therapist",
     "lose_sessions_title": "Unused sessions will be lost",
     "lose_sessions_body": "This client has {count} pack session(s) remaining. Assigning a new plan will forfeit them. Continue?"
   },

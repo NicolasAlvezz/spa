@@ -4,10 +4,13 @@ import { useTranslations, useLocale } from 'next-intl'
 import { CheckCircle2, MinusCircle, Calendar, Activity, RotateCcw, Star, AlertTriangle, CreditCard, Scissors, Phone, Clock, FileText } from 'lucide-react'
 import { formatDate, formatDateTime } from '@/lib/utils/dates'
 import { getAvailableSessions } from '@/lib/utils/membership'
+import { TherapistSelector } from '@/components/spa/TherapistSelector'
 import type { CheckinResult } from '@/types'
 
 interface Props {
   data: CheckinResult
+  therapistName: string
+  onTherapistChange: (name: string) => void
   onScanAgain: () => void
   onRegisterVisit: () => void
   onAssignMembership: () => void
@@ -19,6 +22,8 @@ interface Props {
 
 export function CheckinCard({
   data,
+  therapistName,
+  onTherapistChange,
   onScanAgain,
   onRegisterVisit,
   onAssignMembership,
@@ -123,6 +128,8 @@ export function CheckinCard({
           </p>
         )}
 
+        <TherapistSelector value={therapistName} onChange={onTherapistChange} />
+
         {/* Actions */}
         <div className="flex flex-col gap-3 pt-1">
           {splitPaymentBlocked ? (
@@ -185,6 +192,8 @@ export function CheckinCard({
       {today_appointment && (
         <TodayAppointmentBox appointment={today_appointment} locale={locale} tCheck={tCheck} />
       )}
+
+      <TherapistSelector value={therapistName} onChange={onTherapistChange} />
 
       <div className="flex flex-col gap-3 pt-1">
         <button
