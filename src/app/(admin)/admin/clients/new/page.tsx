@@ -62,13 +62,17 @@ export default function NewClientPage() {
     const formData = new FormData(e.currentTarget)
     formData.set('channel', channel)
     startTransition(async () => {
-      const result = await inviteNewClientAction(undefined, formData)
-      if (result?.status === 'error') {
-        setError(ERROR_LABELS[result.message]?.[locale] ?? ERROR_LABELS.generic_error[locale])
-      } else if (result?.status === 'already_invited') {
-        setAlreadyInvited(result.phone)
-      } else if (result?.status === 'success') {
-        setSuccess(result.phone)
+      try {
+        const result = await inviteNewClientAction(undefined, formData)
+        if (result?.status === 'error') {
+          setError(ERROR_LABELS[result.message]?.[locale] ?? ERROR_LABELS.generic_error[locale])
+        } else if (result?.status === 'already_invited') {
+          setAlreadyInvited(result.phone)
+        } else if (result?.status === 'success') {
+          setSuccess(result.phone)
+        }
+      } catch {
+        setError(ERROR_LABELS.generic_error[locale])
       }
     })
   }
@@ -84,11 +88,15 @@ export default function NewClientPage() {
     formData.set('channel', channel)
     formData.set('confirm_resend', 'true')
     startTransition(async () => {
-      const result = await inviteNewClientAction(undefined, formData)
-      if (result?.status === 'error') {
-        setError(ERROR_LABELS[result.message]?.[locale] ?? ERROR_LABELS.generic_error[locale])
-      } else if (result?.status === 'success') {
-        setSuccess(result.phone)
+      try {
+        const result = await inviteNewClientAction(undefined, formData)
+        if (result?.status === 'error') {
+          setError(ERROR_LABELS[result.message]?.[locale] ?? ERROR_LABELS.generic_error[locale])
+        } else if (result?.status === 'success') {
+          setSuccess(result.phone)
+        }
+      } catch {
+        setError(ERROR_LABELS.generic_error[locale])
       }
     })
   }

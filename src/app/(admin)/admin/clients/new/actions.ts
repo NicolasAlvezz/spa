@@ -11,21 +11,23 @@ export type InviteNewClientState =
   | { status: 'error'; message: string }
   | undefined
 
-async function sendInviteMessage(e164: string, channel: 'sms' | 'whatsapp') {
-  const freeformBody = buildInviteMessage(e164)
-
+async function sendInviteMessage(e164: string, channel: 'sms' | 'whatsapp'): Promise<void> {
   if (channel === 'whatsapp') {
     // WhatsApp invites are sent manually via wa.me from the admin UI.
     return
   }
 
-  // SMS path — requires TWILIO_SMS_FROM and an A2P 10DLC-approved number for US
-  // destinations. Without registration, US carriers reject with error 30034.
+  const freeformBody = buildInviteMessage(e164)
   const smsFrom = process.env.TWILIO_SMS_FROM
-  if (!smsFrom) {
-    throw new Error('[invite] TWILIO_SMS_FROM is not configured')
+  const accountSid = process.env.TWILIO_ACCOUNT_SID
+  const authToken = process.env.TWILIO_AUTH_TOKEN
+
+  if (!smsFrom || !accountSid || !authToken) {
+    console.error('[invite] Twilio SMS is not configured')
+    throw new Error('twilio_not_configured')
   }
-  const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
+
+  const client = twilio(accountSid, authToken)
   await client.messages.create({ from: smsFrom, to: e164, body: freeformBody })
 }
 
@@ -33,15 +35,17 @@ export async function inviteNewClientAction(
   _prev: InviteNewClientState,
   formData: FormData
 ): Promise<InviteNewClientState> {
+  try {
   const authClient = await createClient()
-  const { data: { user } } = await authClient.auth.getUser()
-  if (!user || user.app_metadata?.role !== 'admin') {
+  const { data: authData, error: authError } = await authClient.auth.getUser()
+  const user = authData?.user
+  if (authError || !user || user.app_metadata?.role !== 'admin') {
     return { status: 'error', message: 'unauthorized' }
   }
 
-  const prefix = (formData.get('phone_prefix') as string).trim()
-  const localPhone = (formData.get('phone_local') as string).trim()
-  const channel = formData.get('channel') as 'sms' | 'whatsapp'
+  const prefix = (formData.get('phone_prefix') as string | null)?.trim() ?? ''
+  const localPhone = (formData.get('phone_local') as string | null)?.trim() ?? ''
+  const channel = formData.get('channel') as 'sms' | 'whatsapp' | null
   const confirmResend = formData.get('confirm_resend') === 'true'
 
   if (!prefix || !localPhone || !channel) {
@@ -52,8 +56,12 @@ export async function inviteNewClientAction(
   const supabase = createServiceClient()
 
   // Check if this phone already has an auth user
-  const { data: { users } } = await supabase.auth.admin.listUsers({ perPage: 1000 })
-  const existingAuthUser = users.find(u => u.email === phoneToAuthEmail(e164))
+  const { data: usersData, error: listUsersError } = await supabase.auth.admin.listUsers({ perPage: 1000 })
+  if (listUsersError || !usersData?.users) {
+    console.error('[invite] listUsers error:', listUsersError)
+    return { status: 'error', message: 'generic_error' }
+  }
+  const existingAuthUser = usersData.users.find(u => u.email === phoneToAuthEmail(e164))
 
   if (existingAuthUser) {
     if (!confirmResend) {
@@ -71,14 +79,14 @@ export async function inviteNewClientAction(
   }
 
   // New auth user — create it.
-  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+  const { data: createdAuth, error: createUserError } = await supabase.auth.admin.createUser({
     email: phoneToAuthEmail(e164),
     password: e164,
     email_confirm: true,
     app_metadata: { role: 'client' },
   })
 
-  if (authError || !authData.user) {
+  if (createUserError || !createdAuth.user) {
     return { status: 'error', message: 'generic_error' }
   }
 
@@ -95,12 +103,12 @@ export async function inviteNewClientAction(
   if (existingClient) {
     const { error: linkError } = await supabase
       .from('clients')
-      .update({ user_id: authData.user.id })
+      .update({ user_id: createdAuth.user.id })
       .eq('id', existingClient.id)
     if (linkError) {
       console.error('[invite] failed to link existing client to auth user:', linkError)
       // Roll back the auth user so the admin can retry cleanly.
-      await supabase.auth.admin.deleteUser(authData.user.id)
+      await supabase.auth.admin.deleteUser(createdAuth.user.id)
       return { status: 'error', message: 'generic_error' }
     }
   }
@@ -113,4 +121,8 @@ export async function inviteNewClientAction(
   }
 
   return { status: 'success', phone: e164 }
+  } catch (err) {
+    console.error('[invite] unexpected error:', err)
+    return { status: 'error', message: 'generic_error' }
+  }
 }
