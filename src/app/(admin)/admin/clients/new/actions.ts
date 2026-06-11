@@ -2,7 +2,7 @@
 
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { buildE164, phoneToAuthEmail } from '@/lib/phone'
-import { sendWhatsAppMessage } from '@/lib/twilio'
+import { buildInviteMessage } from '@/lib/invite-message'
 import twilio from 'twilio'
 
 export type InviteNewClientState =
@@ -12,32 +12,10 @@ export type InviteNewClientState =
   | undefined
 
 async function sendInviteMessage(e164: string, channel: 'sms' | 'whatsapp') {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://vmintegralmassage.vercel.app'
-  const registrationLink = `${appUrl}/setup?phone=${encodeURIComponent(e164)}`
-  const freeformBody = `Hola! 💆‍♀️ VM Integral Massage te invita a completar tu registro y acceder a tu perfil personal: ${registrationLink}`
+  const freeformBody = buildInviteMessage(e164)
 
   if (channel === 'whatsapp') {
-    const contentSid = process.env.TWILIO_WHATSAPP_INVITE_CONTENT_SID
-
-    if (contentSid) {
-      // Production path — uses a Meta-approved template, so the message can be
-      // sent to any user (no opt-in / no 24h window required).
-      const from = process.env.TWILIO_WHATSAPP_FROM
-      if (!from) throw new Error('[invite] TWILIO_WHATSAPP_FROM is not configured')
-
-      const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
-      await client.messages.create({
-        from,
-        to: `whatsapp:${e164}`,
-        contentSid,
-        contentVariables: JSON.stringify({ '1': registrationLink }),
-      })
-      return
-    }
-
-    // Sandbox / dev path — freeform body. Only delivers to numbers that have
-    // already joined the Twilio sandbox (or replied to the sender within 24h).
-    await sendWhatsAppMessage(e164, freeformBody)
+    // WhatsApp invites are sent manually via wa.me from the admin UI.
     return
   }
 

@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { ArrowLeft, CheckCircle2, MessageSquare, Smartphone, AlertCircle } from 'lucide-react'
 import { inviteNewClientAction } from './actions'
 import { PhoneInput } from '@/components/spa/PhoneInput'
+import { buildE164 } from '@/lib/phone'
+import { buildWhatsAppUrl } from '@/lib/invite-message'
 
 const ERROR_LABELS: Record<string, { en: string; es: string }> = {
   fill_all_fields: { en: 'Please enter a phone number.', es: 'Ingresá un número de celular.' },
@@ -26,10 +28,37 @@ export default function NewClientPage() {
   const [alreadyInvited, setAlreadyInvited] = useState<string | null>(null)
   const formRef = useRef<HTMLFormElement>(null)
 
+  function getE164FromForm(form: HTMLFormElement): string | null {
+    const prefix = (form.elements.namedItem('phone_prefix') as HTMLSelectElement | null)?.value?.trim()
+    const local = (form.elements.namedItem('phone_local') as HTMLInputElement | null)?.value?.trim()
+    if (!prefix || !local) return null
+    return buildE164(local, prefix)
+  }
+
+  function openWhatsAppInvite(form: HTMLFormElement): boolean {
+    const e164 = getE164FromForm(form)
+    if (!e164 || e164.replace(/\D/g, '').length < 8) {
+      setError(ERROR_LABELS.fill_all_fields[locale])
+      return false
+    }
+    setError(null)
+    window.open(buildWhatsAppUrl(e164), '_blank', 'noopener,noreferrer')
+    return true
+  }
+
+  function handleWhatsAppClick() {
+    if (!formRef.current || isPending) return
+    setChannel('whatsapp')
+    openWhatsAppInvite(formRef.current)
+  }
+
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setError(null)
     setAlreadyInvited(null)
+    if (channel === 'whatsapp' && formRef.current && !openWhatsAppInvite(formRef.current)) {
+      return
+    }
     const formData = new FormData(e.currentTarget)
     formData.set('channel', channel)
     startTransition(async () => {
@@ -48,6 +77,9 @@ export default function NewClientPage() {
     if (!formRef.current) return
     setAlreadyInvited(null)
     setError(null)
+    if (channel === 'whatsapp' && !openWhatsAppInvite(formRef.current)) {
+      return
+    }
     const formData = new FormData(formRef.current)
     formData.set('channel', channel)
     formData.set('confirm_resend', 'true')
@@ -117,7 +149,7 @@ export default function NewClientPage() {
             <div className="flex gap-3">
               <button
                 type="button"
-                onClick={() => setChannel('whatsapp')}
+                onClick={handleWhatsAppClick}
                 disabled={isPending}
                 className={`flex-1 flex items-center justify-center gap-2 h-11 rounded-xl border text-sm font-medium transition-colors ${
                   channel === 'whatsapp'
