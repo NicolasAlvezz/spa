@@ -1195,7 +1195,6 @@ function WaitingSignaturePanel({
   onExpired,
 }: WaitingSignaturePanelProps) {
   const tContract = useTranslations('membership_contract')
-  const t = useTranslations('checkin')
   const [secondsLeft, setSecondsLeft] = useState(0)
   const [cancelling, setCancelling] = useState(false)
 
