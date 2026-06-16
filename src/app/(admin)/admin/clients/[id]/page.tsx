@@ -223,11 +223,13 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
                     </span>
                   </p>
                 </div>
-                <CancelMembershipButton
-                  membershipId={membership.id}
-                  planName={locale === 'es' ? plan.name_es : plan.name_en}
-                  clientName={`${client.first_name} ${client.last_name}`}
-                />
+                {membership.status === 'active' && (
+                  <CancelMembershipButton
+                    membershipId={membership.id}
+                    planName={locale === 'es' ? plan.name_es : plan.name_en}
+                    clientName={`${client.first_name} ${client.last_name}`}
+                  />
+                )}
               </div>
 
               <div className="space-y-2.5 text-sm border-t border-gray-100 pt-3">
