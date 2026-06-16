@@ -117,6 +117,12 @@ export default function ScanPage() {
         return
       }
 
+      if (res.status === 403) {
+        // Consent missing — UI should have blocked this, but handle gracefully
+        setPhase('result')
+        return
+      }
+
       if (!res.ok) {
         setErrorKey('network_error')
         setPhase('error')

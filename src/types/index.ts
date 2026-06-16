@@ -85,6 +85,7 @@ export interface CheckinResult {
     service_name_es: string | null
     notes: string | null
   } | null
+  has_active_consent: boolean
 }
 
 // ─── Form input types ─────────────────────────────────────────────────────────

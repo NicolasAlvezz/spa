@@ -1,7 +1,7 @@
 'use client'
 
 import { useTranslations, useLocale } from 'next-intl'
-import { CheckCircle2, MinusCircle, Calendar, Activity, RotateCcw, Star, AlertTriangle, CreditCard, Scissors, Phone, Clock, FileText } from 'lucide-react'
+import { CheckCircle2, MinusCircle, Calendar, Activity, RotateCcw, Star, AlertTriangle, CreditCard, Scissors, Phone, Clock, FileText, ShieldAlert } from 'lucide-react'
 import { formatDate, formatDateTime } from '@/lib/utils/dates'
 import { getAvailableSessions } from '@/lib/utils/membership'
 import { TherapistSelector } from '@/components/spa/TherapistSelector'
@@ -132,7 +132,21 @@ export function CheckinCard({
 
         {/* Actions */}
         <div className="flex flex-col gap-3 pt-1">
-          {splitPaymentBlocked ? (
+          {!data.has_active_consent ? (
+            <div className="bg-amber-950/40 border border-amber-700/60 rounded-xl p-4 flex items-start gap-3">
+              <ShieldAlert size={18} className="text-amber-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-amber-300 text-sm font-semibold mb-1">
+                  {locale === 'es' ? 'Consentimiento requerido' : 'Consent required'}
+                </p>
+                <p className="text-amber-400/80 text-xs leading-relaxed">
+                  {locale === 'es'
+                    ? 'El cliente debe abrir su app y aceptar el formulario antes de registrar la visita. Pedile que lo haga y luego escanéa el QR de nuevo.'
+                    : 'The client must open their app and accept the consent form before the visit can be registered. Ask them to do so, then scan again.'}
+                </p>
+              </div>
+            </div>
+          ) : splitPaymentBlocked ? (
             <>
               <div className="bg-red-950/40 border border-red-800/60 rounded-xl p-4 flex items-start gap-3">
                 <AlertTriangle size={18} className="text-red-400 flex-shrink-0 mt-0.5" />
@@ -196,12 +210,28 @@ export function CheckinCard({
       <TherapistSelector value={therapistName} onChange={onTherapistChange} />
 
       <div className="flex flex-col gap-3 pt-1">
-        <button
-          onClick={onRegisterServiceVisit}
-          className="w-full h-16 rounded-xl bg-green-500 hover:bg-green-400 active:bg-green-600 text-white text-xl font-bold transition-colors shadow-lg shadow-green-900/30"
-        >
-          {locale === 'es' ? 'Registrar visita' : 'Register visit'}
-        </button>
+        {!data.has_active_consent ? (
+          <div className="bg-amber-950/40 border border-amber-700/60 rounded-xl p-4 flex items-start gap-3">
+            <ShieldAlert size={18} className="text-amber-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-amber-300 text-sm font-semibold mb-1">
+                {locale === 'es' ? 'Consentimiento requerido' : 'Consent required'}
+              </p>
+              <p className="text-amber-400/80 text-xs leading-relaxed">
+                {locale === 'es'
+                  ? 'El cliente debe abrir su app y aceptar el formulario antes de registrar la visita. Pedile que lo haga y luego escanéa el QR de nuevo.'
+                  : 'The client must open their app and accept the consent form before the visit can be registered. Ask them to do so, then scan again.'}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={onRegisterServiceVisit}
+            className="w-full h-16 rounded-xl bg-green-500 hover:bg-green-400 active:bg-green-600 text-white text-xl font-bold transition-colors shadow-lg shadow-green-900/30"
+          >
+            {locale === 'es' ? 'Registrar visita' : 'Register visit'}
+          </button>
+        )}
         <button
           onClick={onAssignMembership}
           className="w-full h-12 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 text-white text-sm font-semibold transition-colors shadow-lg shadow-brand-900/30"

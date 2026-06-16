@@ -6,13 +6,12 @@ import type { SessionType, PaymentMethod } from '@/types'
 
 const VALID_PAYMENT_METHODS: PaymentMethod[] = ['cash', 'debit', 'credit']
 
-async function associateConsent(
+async function getActiveConsent(
   supabase: ReturnType<typeof createServiceClient>,
   clientId: string,
-  visitId: string
-) {
+): Promise<string | null> {
   const windowStart = new Date(Date.now() - CONSENT_WINDOW_MS).toISOString()
-  const { data: consent } = await supabase
+  const { data } = await supabase
     .from('consent_acceptances')
     .select('id')
     .eq('client_id', clientId)
@@ -21,20 +20,19 @@ async function associateConsent(
     .order('accepted_at', { ascending: false })
     .limit(1)
     .maybeSingle()
+  return data?.id ?? null
+}
 
-  if (!consent) {
-    console.warn(`[visits] no consent found for client ${clientId} within 4h window`)
-    return
-  }
-
+async function consumeConsent(
+  supabase: ReturnType<typeof createServiceClient>,
+  consentId: string,
+  visitId: string,
+) {
   const { error } = await supabase
     .from('consent_acceptances')
     .update({ consumed_at: new Date().toISOString(), consumed_by_visit: visitId })
-    .eq('id', consent.id)
-
-  if (error) {
-    console.warn('[visits] failed to associate consent:', error.message)
-  }
+    .eq('id', consentId)
+  if (error) console.warn('[visits] failed to consume consent:', error.message)
 }
 
 export async function POST(req: Request) {
@@ -71,6 +69,12 @@ export async function POST(req: Request) {
 
   const supabase = createServiceClient()
 
+  // Require active consent before registering any visit
+  const consentId = await getActiveConsent(supabase, client_id)
+  if (!consentId) {
+    return NextResponse.json({ error: 'consent_required' }, { status: 403 })
+  }
+
   // Post-op visit: no membership needed, just record the visit and payment
   if (body.session_type === 'post_op') {
     const { data: visit, error } = await supabase
@@ -93,7 +97,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'failed_to_register_visit' }, { status: 500 })
     }
 
-    await associateConsent(supabase, client_id, visit.id)
+    await consumeConsent(supabase, consentId, visit.id)
 
     return NextResponse.json({
       visit_id: visit.id,
@@ -200,7 +204,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'failed_to_register_visit' }, { status: 500 })
   }
 
-  await associateConsent(supabase, client_id, visit.id)
+  await consumeConsent(supabase, consentId, visit.id)
 
   return NextResponse.json({
     visit_id: visit.id,

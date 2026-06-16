@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getMembershipStatus, getCurrentMembership } from '@/lib/utils/membership'
+import { CONSENT_WINDOW_MS } from '@/lib/constants/consent'
 import type { CheckinResult, MembershipWithPlan } from '@/types'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -54,7 +55,9 @@ export async function GET(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabaseAny = supabase as any
 
-  const [visitsRes, paymentsRes, apptRes, lastVisitRes] = await Promise.all([
+  const consentWindowStart = new Date(Date.now() - CONSENT_WINDOW_MS).toISOString()
+
+  const [visitsRes, paymentsRes, apptRes, lastVisitRes, consentRes] = await Promise.all([
     supabase
       .from('visits')
       .select('*')
@@ -84,15 +87,25 @@ export async function GET(
       .order('visited_at', { ascending: false })
       .limit(1)
       .maybeSingle(),
+    supabase
+      .from('consent_acceptances')
+      .select('id')
+      .eq('client_id', uuid)
+      .is('consumed_at', null)
+      .gte('accepted_at', consentWindowStart)
+      .limit(1)
+      .maybeSingle(),
   ])
 
   if (visitsRes.error) console.error('[checkin] visits query error:', visitsRes.error)
   if (paymentsRes.error) console.error('[checkin] payments query error:', paymentsRes.error)
   if (apptRes.error) console.error('[checkin] appointments query error:', apptRes.error)
+  if (consentRes.error) console.error('[checkin] consent query error:', consentRes.error)
 
   const visits = visitsRes.data
   const lastPaymentArr = paymentsRes.data
   const todayAppt = apptRes.data
+  const hasActiveConsent = consentRes.data !== null
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const lastVisitData = lastVisitRes.data as any
 
@@ -124,6 +137,7 @@ export async function GET(
           service_name_es: lastVisitData.service_types?.name_es ?? null,
         }
       : null,
+    has_active_consent: hasActiveConsent,
     today_appointment: todayAppt
       ? {
           id: todayAppt.id,
