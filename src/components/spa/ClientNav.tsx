@@ -3,12 +3,13 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { QrCode, Clock, User } from 'lucide-react'
+import { QrCode, Clock, User, FileText } from 'lucide-react'
 
 const links = [
-  { href: '/my-qr',   icon: QrCode, key: 'my_qr'   },
-  { href: '/visits',  icon: Clock,  key: 'visits'  },
-  { href: '/profile', icon: User,   key: 'profile' },
+  { href: '/my-qr',        icon: QrCode,    key: 'my_qr'        },
+  { href: '/visits',       icon: Clock,     key: 'visits'       },
+  { href: '/memberships',  icon: FileText,  key: 'memberships'  },
+  { href: '/profile',      icon: User,      key: 'profile'      },
 ] as const
 
 export function ClientNav() {

@@ -2,7 +2,8 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
-import { ScanLine, WifiOff, UserX, Loader2, CheckCircle2, Camera, RotateCcw, Star, CreditCard } from 'lucide-react'
+import { ScanLine, WifiOff, UserX, Loader2, CheckCircle2, Camera, RotateCcw, Star, CreditCard, FileText } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 import { QrScanner } from '@/components/spa/QrScanner'
 import { CheckinCard } from '@/components/spa/CheckinCard'
 import { TherapistSelector } from '@/components/spa/TherapistSelector'
@@ -20,7 +21,8 @@ type Phase =
   | 'renewing'
   | 'assigning'
   | 'confirming_split'
-
+  | 'requesting_contract'
+  | 'waiting_signature'
   | 'service_visit'
   | 'registering_service'
   | 'success'
@@ -35,6 +37,7 @@ interface SuccessInfo {
 export default function ScanPage() {
   const t = useTranslations('scan')
   const tCheck = useTranslations('checkin')
+  const tContract = useTranslations('membership_contract')
   const locale = useLocale() as 'en' | 'es'
 
   const [phase, setPhase] = useState<Phase>('scanning')
@@ -43,6 +46,10 @@ export default function ScanPage() {
   const [successInfo, setSuccessInfo] = useState<SuccessInfo | null>(null)
   const [splitPaymentBlocked, setSplitPaymentBlocked] = useState(false)
   const [therapistName, setTherapistName] = useState(getDefaultTherapistName)
+  const [pendingRequestId, setPendingRequestId] = useState<string | null>(null)
+  const [contractPlanId, setContractPlanId] = useState<string | null>(null)
+  const [contractExpiresAt, setContractExpiresAt] = useState<string | null>(null)
+  const [contractPlanName, setContractPlanName] = useState<string>('')
 
   useEffect(() => {
     const stored = sessionStorage.getItem(THERAPIST_STORAGE_KEY)
@@ -59,6 +66,10 @@ export default function ScanPage() {
     setResult(null)
     setSuccessInfo(null)
     setSplitPaymentBlocked(false)
+    setPendingRequestId(null)
+    setContractPlanId(null)
+    setContractExpiresAt(null)
+    setContractPlanName('')
     setPhase('scanning')
   }, [])
 
@@ -311,6 +322,47 @@ export default function ScanPage() {
     }
   }, [result, tCheck, therapistName])
 
+  const handleSendContractClick = useCallback(() => {
+    setPhase('requesting_contract')
+  }, [])
+
+  const handleContractSent = useCallback((
+    requestId: string,
+    planId: string,
+    expiresAt: string,
+    planName: string,
+  ) => {
+    setPendingRequestId(requestId)
+    setContractPlanId(planId)
+    setContractExpiresAt(expiresAt)
+    setContractPlanName(planName)
+    setPhase('waiting_signature')
+  }, [])
+
+  const handleContractSigned = useCallback(() => {
+    setPhase('assigning')
+  }, [])
+
+  const handleContractDeclined = useCallback(() => {
+    setPendingRequestId(null)
+    setContractPlanId(null)
+    setContractExpiresAt(null)
+    setContractPlanName('')
+    setPhase('result')
+  }, [])
+
+  const handleContractExpired = useCallback(() => {
+    setPendingRequestId(null)
+    setContractPlanId(null)
+    setContractExpiresAt(null)
+    setContractPlanName('')
+    setSuccessInfo({
+      title: tContract('expired_notify_title'),
+      detail: tContract('expired_notify_body', { name: result?.client.first_name ?? '' }),
+    })
+    setPhase('success')
+  }, [tContract, result])
+
   const cameraPaused =
     phase === 'result' ||
     phase === 'registering' ||
@@ -319,6 +371,8 @@ export default function ScanPage() {
     phase === 'assigning' ||
     phase === 'service_visit' ||
     phase === 'confirming_split' ||
+    phase === 'requesting_contract' ||
+    phase === 'waiting_signature' ||
     phase === 'success' ||
     phase === 'error'
 
@@ -381,6 +435,7 @@ export default function ScanPage() {
               onChangePlan={() => setPhase('assigning')}
               onRegisterServiceVisit={() => setPhase('service_visit')}
               onConfirmSplitPayment={() => setPhase('confirming_split')}
+              onSendContract={handleSendContractClick}
               splitPaymentBlocked={splitPaymentBlocked}
             />
           </div>
@@ -421,6 +476,32 @@ export default function ScanPage() {
               result={result}
               onConfirm={handleAssignConfirm}
               onCancel={() => setPhase('result')}
+              defaultPlanId={contractPlanId ?? undefined}
+            />
+          </div>
+        )}
+
+        {phase === 'requesting_contract' && result && (
+          <div className="w-full max-w-md">
+            <RequestContractPanel
+              result={result}
+              locale={locale}
+              onSent={handleContractSent}
+              onCancel={() => setPhase('result')}
+            />
+          </div>
+        )}
+
+        {phase === 'waiting_signature' && result && pendingRequestId && contractExpiresAt && (
+          <div className="w-full max-w-md">
+            <WaitingSignaturePanel
+              requestId={pendingRequestId}
+              expiresAt={contractExpiresAt}
+              clientName={`${result.client.first_name} ${result.client.last_name}`}
+              planName={contractPlanName}
+              onSigned={handleContractSigned}
+              onDeclined={handleContractDeclined}
+              onExpired={handleContractExpired}
             />
           </div>
         )}
@@ -573,9 +654,10 @@ interface AssignMembershipPanelProps {
   result: CheckinResult
   onConfirm: (planId: string, method: PaymentMethod, amountUsd: number, splitPayment?: boolean) => Promise<void>
   onCancel: () => void
+  defaultPlanId?: string
 }
 
-function AssignMembershipPanel({ result, onConfirm, onCancel }: AssignMembershipPanelProps) {
+function AssignMembershipPanel({ result, onConfirm, onCancel, defaultPlanId }: AssignMembershipPanelProps) {
   const t = useTranslations('checkin')
   const tScan = useTranslations('scan')
   const tPayment = useTranslations('payment')
@@ -583,7 +665,7 @@ function AssignMembershipPanel({ result, onConfirm, onCancel }: AssignMembership
 
   const [plans, setPlans] = useState<PlanOption[]>([])
   const [loadingPlans, setLoadingPlans] = useState(true)
-  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null)
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(defaultPlanId ?? null)
   const [method, setMethod] = useState<PaymentMethod | null>(null)
   const [useSplitPayment, setUseSplitPayment] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -932,6 +1014,285 @@ function ServiceVisitPanel({ result, therapistName, onTherapistChange, onConfirm
     </div>
   )
 }
+
+// ─── Request Contract Panel ───────────────────────────────────────────────────
+
+interface RequestContractPanelProps {
+  result: CheckinResult
+  locale: 'en' | 'es'
+  onSent: (requestId: string, planId: string, expiresAt: string, planName: string) => void
+  onCancel: () => void
+}
+
+function RequestContractPanel({ result, locale, onSent, onCancel }: RequestContractPanelProps) {
+  const t = useTranslations('checkin')
+  const tScan = useTranslations('scan')
+  const tContract = useTranslations('membership_contract')
+  const loc = useLocale() as 'en' | 'es'
+
+  const [plans, setPlans] = useState<PlanOption[]>([])
+  const [loadingPlans, setLoadingPlans] = useState(true)
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null)
+  const [language, setLanguage] = useState<'en' | 'es'>(locale)
+  const [showTerms, setShowTerms] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetch('/api/membership-plans')
+      .then(r => r.json())
+      .then((data: PlanOption[]) => { setPlans(data); setLoadingPlans(false) })
+      .catch(() => setLoadingPlans(false))
+  }, [])
+
+  const selectedPlan = plans.find(p => p.id === selectedPlanId) ?? null
+
+  async function handleSend() {
+    if (!selectedPlanId || !selectedPlan || sending) return
+    setError(null)
+    setSending(true)
+    try {
+      const res = await fetch('/api/membership-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client_id: result.client.id, plan_id: selectedPlanId, language }),
+      })
+      if (res.status === 409) {
+        setError(tContract('conflict_pending'))
+        setSending(false)
+        return
+      }
+      if (!res.ok) {
+        setError(tContract('error_send'))
+        setSending(false)
+        return
+      }
+      const data: { id: string; expires_at: string } = await res.json()
+      const planName = loc === 'es' ? selectedPlan.name_es : selectedPlan.name_en
+      onSent(data.id, selectedPlanId, data.expires_at, planName)
+    } catch {
+      setError(tContract('error_send'))
+      setSending(false)
+    }
+  }
+
+  return (
+    <div className="w-full flex flex-col gap-6">
+      <div className="flex items-center gap-3">
+        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-brand-500/20">
+          <FileText size={18} className="text-brand-400" />
+        </div>
+        <span className="text-brand-400 text-lg font-semibold uppercase tracking-wide">
+          {tContract('send_contract')}
+        </span>
+      </div>
+
+      <h2 className="text-2xl md:text-4xl font-bold text-white leading-tight">
+        {result.client.first_name} {result.client.last_name}
+      </h2>
+
+      {/* Plan selector */}
+      <div>
+        <p className="text-slate-400 text-xs uppercase tracking-wide mb-3">{t('assign_plan')}</p>
+        {loadingPlans ? (
+          <p className="text-slate-400 text-sm">{t('loading_plans')}</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {plans.map(plan => {
+              const isPack = plan.plan_type === 'pack'
+              const isSelected = selectedPlanId === plan.id
+              return (
+                <button key={plan.id} onClick={() => setSelectedPlanId(plan.id)} disabled={sending}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-left transition-colors disabled:opacity-50 ${isSelected ? 'bg-brand-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
+                  <div>
+                    <span className="font-semibold block">
+                      {loc === 'es' ? plan.name_es : plan.name_en}
+                    </span>
+                    {isPack && (
+                      <span className={`text-xs ${isSelected ? 'text-brand-100' : 'text-slate-400'}`}>
+                        {plan.total_sessions} {t('pack_sessions_total')} · {t('pack_no_expiry')}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-lg font-bold ml-4 flex-shrink-0">
+                    ${plan.price_usd}
+                    {!isPack && (
+                      <span className="text-xs font-normal opacity-75 ml-1">{tScan('per_month_short')}</span>
+                    )}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Language selector */}
+      <div>
+        <p className="text-slate-400 text-xs uppercase tracking-wide mb-3">Contract language</p>
+        <div className="grid grid-cols-2 gap-2">
+          {(['en', 'es'] as const).map(lang => (
+            <button key={lang} onClick={() => setLanguage(lang)} disabled={sending}
+              className={`h-11 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 ${language === lang ? 'bg-brand-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
+              {lang === 'en' ? 'English' : 'Español'}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Terms preview */}
+      <div>
+        <button onClick={() => setShowTerms(v => !v)} className="text-brand-400 text-xs underline underline-offset-2">
+          {showTerms ? (loc === 'es' ? 'Ocultar términos' : 'Hide terms') : (loc === 'es' ? 'Ver términos del contrato' : 'Preview contract terms')}
+        </button>
+        {showTerms && (
+          <div className="mt-2 bg-slate-800 rounded-xl p-4 max-h-40 overflow-y-auto">
+            <p className="text-white text-xs font-semibold mb-2">{tContract('terms_title')}</p>
+            <p className="text-slate-400 text-xs leading-relaxed whitespace-pre-wrap">{tContract('terms_body')}</p>
+          </div>
+        )}
+      </div>
+
+      {error && (
+        <p className="text-red-400 text-sm bg-red-950/40 border border-red-800/60 rounded-xl px-4 py-3">{error}</p>
+      )}
+
+      <div className="flex flex-col gap-3 pt-2">
+        <button onClick={handleSend} disabled={!selectedPlanId || sending}
+          className="w-full h-16 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xl font-bold transition-colors flex items-center justify-center gap-2">
+          {sending ? (
+            <><Loader2 size={20} className="animate-spin" />{tContract('sending_contract')}</>
+          ) : tContract('send_contract')}
+        </button>
+        <button onClick={onCancel} disabled={sending}
+          className="w-full h-12 rounded-xl bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-slate-300 text-base font-medium transition-colors">
+          {t('cancel')}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─── Waiting Signature Panel ──────────────────────────────────────────────────
+
+interface WaitingSignaturePanelProps {
+  requestId: string
+  expiresAt: string
+  clientName: string
+  planName: string
+  onSigned: () => void
+  onDeclined: () => void
+  onExpired: () => void
+}
+
+function WaitingSignaturePanel({
+  requestId,
+  expiresAt,
+  clientName,
+  planName,
+  onSigned,
+  onDeclined,
+  onExpired,
+}: WaitingSignaturePanelProps) {
+  const tContract = useTranslations('membership_contract')
+  const t = useTranslations('checkin')
+  const [secondsLeft, setSecondsLeft] = useState(0)
+  const [cancelling, setCancelling] = useState(false)
+
+  useEffect(() => {
+    function tick() {
+      const remaining = Math.max(
+        0,
+        Math.floor((new Date(expiresAt).getTime() - Date.now()) / 1000)
+      )
+      setSecondsLeft(remaining)
+      if (remaining === 0) onExpired()
+    }
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [expiresAt, onExpired])
+
+  useEffect(() => {
+    const supabase = createClient()
+    const channel = supabase
+      .channel(`membership_request:${requestId}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'membership_requests', filter: `id=eq.${requestId}` },
+        (payload: { new: Record<string, unknown> }) => {
+          const status = payload.new['status'] as string
+          if (status === 'signed') onSigned()
+          if (status === 'declined') onDeclined()
+          if (status === 'expired') onExpired()
+        }
+      )
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [requestId, onSigned, onDeclined, onExpired])
+
+  function formatCountdown(s: number): string {
+    const m = Math.floor(s / 60)
+    const sec = s % 60
+    return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
+  }
+
+  async function handleCancel() {
+    setCancelling(true)
+    try {
+      await fetch(`/api/membership-requests/${requestId}`, { method: 'DELETE' })
+    } catch {
+      // ignore — proceed anyway
+    }
+    onDeclined()
+  }
+
+  return (
+    <div className="w-full flex flex-col items-center gap-6 text-center">
+      {/* Animated waiting icon */}
+      <div className="relative flex items-center justify-center w-20 h-20">
+        <div className="absolute inset-0 rounded-full bg-brand-500/20 animate-ping" />
+        <div className="relative flex items-center justify-center w-20 h-20 rounded-full bg-brand-500/10 border border-brand-500/30">
+          <FileText size={32} className="text-brand-400" />
+        </div>
+      </div>
+
+      <div>
+        <p className="text-brand-400 text-sm font-semibold uppercase tracking-widest mb-1">
+          {tContract('waiting_title')}
+        </p>
+        <h2 className="text-2xl md:text-4xl font-bold text-white leading-tight">{clientName}</h2>
+        <p className="text-slate-400 text-base mt-1">{planName}</p>
+      </div>
+
+      <p className="text-slate-300 text-base leading-relaxed max-w-xs">
+        {tContract('waiting_body', { name: clientName })}
+      </p>
+
+      {/* Countdown */}
+      <div className="bg-slate-800 rounded-xl px-6 py-4">
+        <p className="text-slate-400 text-xs uppercase tracking-wide mb-1">
+          {tContract('waiting_expires_in')}
+        </p>
+        <p className={`text-3xl font-mono font-bold ${secondsLeft < 300 ? 'text-red-400' : 'text-brand-400'}`}>
+          {formatCountdown(secondsLeft)}
+        </p>
+      </div>
+
+      <button
+        onClick={handleCancel}
+        disabled={cancelling}
+        className="w-full max-w-xs h-12 rounded-xl bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-slate-300 text-sm font-medium transition-colors flex items-center justify-center gap-2"
+      >
+        {cancelling ? (
+          <><Loader2 size={14} className="animate-spin" />{tContract('cancelling_request')}</>
+        ) : tContract('cancel_request')}
+      </button>
+    </div>
+  )
+}
+
+// ─── Success Panel ────────────────────────────────────────────────────────────
 
 interface SuccessPanelProps {
   info: SuccessInfo

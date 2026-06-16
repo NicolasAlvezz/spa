@@ -1,0 +1,74 @@
+import { NextResponse } from 'next/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
+import {
+  MEMBERSHIP_CONTRACT_VERSION,
+  MEMBERSHIP_REQUEST_TTL_MS,
+  getContractSnapshot,
+  type ContractLanguage,
+} from '@/lib/constants/membership-contract'
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const VALID_LANGUAGES: ContractLanguage[] = ['en', 'es']
+
+export async function POST(req: Request) {
+  const authClient = await createClient()
+  const { data: { user } } = await authClient.auth.getUser()
+  if (!user || user.app_metadata?.role !== 'admin') {
+    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  }
+
+  const body: { client_id?: string; plan_id?: string; language?: string } = await req.json()
+  const { client_id, plan_id, language } = body
+
+  if (
+    !client_id || !UUID_RE.test(client_id) ||
+    !plan_id   || !UUID_RE.test(plan_id) ||
+    !language  || !VALID_LANGUAGES.includes(language as ContractLanguage)
+  ) {
+    return NextResponse.json({ error: 'invalid_request' }, { status: 400 })
+  }
+
+  const supabase = createServiceClient()
+
+  // Conflict check: no active pending request for this client
+  const { data: existing } = await supabase
+    .from('membership_requests')
+    .select('id')
+    .eq('client_id', client_id)
+    .eq('status', 'pending')
+    .gt('expires_at', new Date().toISOString())
+    .limit(1)
+    .maybeSingle()
+
+  if (existing) {
+    return NextResponse.json(
+      { error: 'conflict_pending', existing_request_id: existing.id },
+      { status: 409 }
+    )
+  }
+
+  const snapshot = getContractSnapshot(language as ContractLanguage)
+  const expiresAt = new Date(Date.now() + MEMBERSHIP_REQUEST_TTL_MS).toISOString()
+
+  const { data, error } = await supabase
+    .from('membership_requests')
+    .insert({
+      client_id,
+      plan_id,
+      requested_by: user.email ?? user.id,
+      language: language as ContractLanguage,
+      version: MEMBERSHIP_CONTRACT_VERSION,
+      terms_title: snapshot.terms_title,
+      terms_body:  snapshot.terms_body,
+      expires_at:  expiresAt,
+    })
+    .select('id, client_id, plan_id, status, expires_at, created_at')
+    .single()
+
+  if (error || !data) {
+    console.error('[POST /api/membership-requests]', error)
+    return NextResponse.json({ error: 'failed_to_create' }, { status: 500 })
+  }
+
+  return NextResponse.json(data, { status: 201 })
+}

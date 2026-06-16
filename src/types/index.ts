@@ -8,6 +8,7 @@ export type DbMembershipPlan = Database['public']['Tables']['membership_plans'][
 export type DbPayment = Database['public']['Tables']['payments']['Row']
 export type DbVisit = Database['public']['Tables']['visits']['Row']
 export type DbServiceType = Database['public']['Tables']['service_types']['Row']
+export type DbMembershipRequest = Database['public']['Tables']['membership_requests']['Row']
 
 // ─── Domain enums ─────────────────────────────────────────────────────────────
 
@@ -17,6 +18,7 @@ export type PaymentMethod = 'cash' | 'debit' | 'credit'
 export type PaymentConcept = 'monthly_membership' | 'additional_visit' | 'welcome_offer' | 'pack_purchase' | 'pack_split_second' | 'post_op_visit'
 export type SessionType = 'included' | 'rollover' | 'additional' | 'welcome_offer' | 'post_op'
 export type PlanType = 'monthly' | 'pack'
+export type MembershipRequestStatus = 'pending' | 'signed' | 'declined' | 'cancelled' | 'expired'
 export type HowDidYouHear =
   | 'instagram'
   | 'referral'

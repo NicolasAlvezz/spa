@@ -355,6 +355,50 @@ export interface Database {
         }
         Relationships: Relationship[]
       }
+      membership_requests: {
+        Row: {
+          id: string
+          client_id: string
+          plan_id: string
+          requested_by: string
+          status: 'pending' | 'signed' | 'declined' | 'cancelled' | 'expired'
+          language: 'en' | 'es'
+          version: string
+          terms_title: string
+          terms_body: string
+          signed_at: string | null
+          signed_ip: string | null
+          signed_user_agent: string | null
+          expires_at: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          client_id: string
+          plan_id: string
+          requested_by: string
+          status?: 'pending' | 'signed' | 'declined' | 'cancelled' | 'expired'
+          language: 'en' | 'es'
+          version: string
+          terms_title: string
+          terms_body: string
+          signed_at?: string | null
+          signed_ip?: string | null
+          signed_user_agent?: string | null
+          expires_at: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          status?: 'pending' | 'signed' | 'declined' | 'cancelled' | 'expired'
+          signed_at?: string | null
+          signed_ip?: string | null
+          signed_user_agent?: string | null
+          updated_at?: string
+        }
+        Relationships: Relationship[]
+      }
       service_types: {
         Row: {
           id: string

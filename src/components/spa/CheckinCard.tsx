@@ -17,6 +17,7 @@ interface Props {
   onChangePlan?: () => void
   onRegisterServiceVisit?: () => void
   onConfirmSplitPayment?: () => void
+  onSendContract?: () => void
   splitPaymentBlocked?: boolean
 }
 
@@ -30,10 +31,12 @@ export function CheckinCard({
   onChangePlan,
   onRegisterServiceVisit,
   onConfirmSplitPayment,
+  onSendContract,
   splitPaymentBlocked = false,
 }: Props) {
   const t = useTranslations('scan')
   const tCheck = useTranslations('checkin')
+  const tContract = useTranslations('membership_contract')
   const locale = useLocale() as 'en' | 'es'
 
   const { client, membership, membership_status, today_appointment } = data
@@ -232,9 +235,17 @@ export function CheckinCard({
             {locale === 'es' ? 'Registrar visita' : 'Register visit'}
           </button>
         )}
+        {onSendContract && (
+          <button
+            onClick={onSendContract}
+            className="w-full h-12 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 text-white text-sm font-semibold transition-colors shadow-lg shadow-brand-900/30"
+          >
+            {tContract('send_contract')}
+          </button>
+        )}
         <button
           onClick={onAssignMembership}
-          className="w-full h-12 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 text-white text-sm font-semibold transition-colors shadow-lg shadow-brand-900/30"
+          className="w-full h-12 rounded-xl bg-slate-700 hover:bg-slate-600 active:bg-slate-800 text-white text-sm font-semibold transition-colors"
         >
           {tCheck('assign_button')}
         </button>
