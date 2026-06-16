@@ -14,20 +14,38 @@ async function requireAdmin() {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const supabaseAny = () => createServiceClient() as any
 
+function toSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+    .replace(/[^a-z0-9_]/g, '')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '')
+}
+
 function parseFormData(formData: FormData) {
   const extrasEnRaw = (formData.get('extras_en') as string | null)?.trim() ?? ''
   const extrasEsRaw = (formData.get('extras_es') as string | null)?.trim() ?? ''
+  const nameEn     = (formData.get('name_en') as string).trim()
+  const planType   = ((formData.get('plan_type') as string | null) ?? 'monthly').trim() as 'monthly' | 'pack'
+  const isPack     = planType === 'pack'
+
   return {
-    slug:               (formData.get('slug') as string).trim(),
-    name_en:            (formData.get('name_en') as string).trim(),
+    slug:               toSlug(nameEn),
+    name_en:            nameEn,
     name_es:            (formData.get('name_es') as string).trim(),
     price_usd:          parseFloat(formData.get('price_usd') as string),
-    sessions_per_month: parseInt(formData.get('sessions_per_month') as string, 10),
-    rollover_max:       parseInt(formData.get('rollover_max') as string, 10),
-    min_months:         parseInt(formData.get('min_months') as string, 10),
+    plan_type:          planType,
+    // Monthly-only (zero-filled for packs so NOT NULL columns are satisfied)
+    sessions_per_month: isPack ? 0 : parseInt(formData.get('sessions_per_month') as string, 10),
+    rollover_max:       isPack ? 0 : parseInt(formData.get('rollover_max') as string, 10),
+    min_months:         isPack ? 0 : parseInt(formData.get('min_months') as string, 10),
+    // Pack-only
+    total_sessions:     isPack ? parseInt(formData.get('total_sessions') as string, 10) : null,
+    allows_split_payment: isPack ? formData.get('allows_split_payment') === 'true' : false,
+    // Shared
     extras_en:          extrasEnRaw ? extrasEnRaw.split(',').map((s) => s.trim()).filter(Boolean) : [],
     extras_es:          extrasEsRaw ? extrasEsRaw.split(',').map((s) => s.trim()).filter(Boolean) : [],
-    requires_healthcare: formData.get('requires_healthcare') === 'true',
     is_active:          formData.get('is_active') === 'true',
   }
 }
@@ -38,7 +56,7 @@ export async function createPlanAction(
   try { await requireAdmin() } catch { return { error: 'unauthorized' } }
 
   const fields = parseFormData(formData)
-  if (!fields.slug || !fields.name_en || !fields.name_es || isNaN(fields.price_usd)) {
+  if (!fields.name_en || !fields.name_es || isNaN(fields.price_usd)) {
     return { error: 'missing_required_fields' }
   }
 
@@ -60,7 +78,7 @@ export async function updatePlanAction(
   try { await requireAdmin() } catch { return { error: 'unauthorized' } }
 
   const fields = parseFormData(formData)
-  if (!fields.slug || !fields.name_en || !fields.name_es || isNaN(fields.price_usd)) {
+  if (!fields.name_en || !fields.name_es || isNaN(fields.price_usd)) {
     return { error: 'missing_required_fields' }
   }
 
