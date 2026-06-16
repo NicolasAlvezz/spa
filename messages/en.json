@@ -290,6 +290,7 @@
     "concept_membership": "Monthly membership",
     "concept_additional": "Additional visit",
     "concept_welcome": "Welcome offer",
+    "concept_cancellation_fee": "Cancellation fee",
     "amount": "Amount (USD)",
     "method": "Payment method",
     "date": "Date",
@@ -497,6 +498,22 @@
     "network_error": "Connection error. Check your internet and try again.",
     "membership_expired": "This client's membership has expired.",
     "payment_failed": "Payment could not be registered. Please try again."
+  },
+  "cancel_membership": {
+    "btn": "Cancel Plan",
+    "modal_title": "Cancel membership?",
+    "modal_body": "This will mark {planName} as cancelled for {clientName}. The client will lose access immediately. This cannot be undone.",
+    "notes_label": "Notes / Reason (optional)",
+    "notes_placeholder": "e.g. Client requested cancellation before 6-month term",
+    "fee_toggle": "Apply cancellation fee",
+    "fee_amount_label": "Fee amount (USD)",
+    "fee_amount_placeholder": "e.g. 80",
+    "method_label": "Payment method",
+    "confirm_btn": "Yes, cancel plan",
+    "cancel_btn": "Keep plan",
+    "cancelling": "Cancelling...",
+    "error": "Could not cancel the plan. Please try again.",
+    "error_payment": "Plan was cancelled but the fee payment could not be recorded. Please add it manually."
   },
   "membership_contract": {
     "terms_title": "Membership Commitment Agreement",

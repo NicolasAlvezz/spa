@@ -10,6 +10,7 @@ import {
   getServiceVisitsTotalPaid,
 } from '@/lib/supabase/queries/clients'
 import { DangerZone } from '@/components/spa/DangerZone'
+import { CancelMembershipButton } from '@/components/spa/CancelMembershipButton'
 import { getCurrentMembership } from '@/lib/utils/membership'
 import { formatDate, formatDateTime } from '@/lib/utils/dates'
 import { MembershipBadge } from '@/components/spa/MembershipBadge'
@@ -72,6 +73,7 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
     monthly_membership: 'concept_membership',
     additional_visit:   'concept_additional',
     welcome_offer:      'concept_welcome',
+    cancellation_fee:   'concept_cancellation_fee',
   }
 
   const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount_usd), 0) + serviceVisitsTotal
@@ -209,16 +211,23 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
 
           {membership && plan ? (
             <div className="space-y-4">
-              <div>
-                <p className="font-semibold text-gray-900 text-base">
-                  {locale === 'es' ? plan.name_es : plan.name_en}
-                </p>
-                <p className="text-2xl font-bold text-brand-600 mt-1">
-                  USD {plan.price_usd}
-                  <span className="text-sm font-normal text-gray-400">
-                    /{locale === 'es' ? 'mes' : 'mo'}
-                  </span>
-                </p>
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="font-semibold text-gray-900 text-base">
+                    {locale === 'es' ? plan.name_es : plan.name_en}
+                  </p>
+                  <p className="text-2xl font-bold text-brand-600 mt-1">
+                    USD {plan.price_usd}
+                    <span className="text-sm font-normal text-gray-400">
+                      /{locale === 'es' ? 'mes' : 'mo'}
+                    </span>
+                  </p>
+                </div>
+                <CancelMembershipButton
+                  membershipId={membership.id}
+                  planName={locale === 'es' ? plan.name_es : plan.name_en}
+                  clientName={`${client.first_name} ${client.last_name}`}
+                />
               </div>
 
               <div className="space-y-2.5 text-sm border-t border-gray-100 pt-3">

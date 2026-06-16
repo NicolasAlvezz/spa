@@ -290,6 +290,7 @@
     "concept_membership": "Membresía mensual",
     "concept_additional": "Visita adicional",
     "concept_welcome": "Oferta de bienvenida",
+    "concept_cancellation_fee": "Cargo por cancelación",
     "amount": "Monto (USD)",
     "method": "Método de pago",
     "date": "Fecha",
@@ -497,6 +498,22 @@
     "network_error": "Error de conexión. Verificá el internet e intentá de nuevo.",
     "membership_expired": "La membresía de este cliente está vencida.",
     "payment_failed": "No se pudo registrar el pago. Intentá de nuevo."
+  },
+  "cancel_membership": {
+    "btn": "Cancelar plan",
+    "modal_title": "¿Cancelar membresía?",
+    "modal_body": "Esto marcará {planName} como cancelado para {clientName}. El cliente perderá acceso inmediatamente. Esta acción no se puede deshacer.",
+    "notes_label": "Notas / Motivo (opcional)",
+    "notes_placeholder": "Ej: El cliente solicitó cancelación antes del plazo mínimo de 6 meses",
+    "fee_toggle": "Aplicar cargo por cancelación",
+    "fee_amount_label": "Monto del cargo (USD)",
+    "fee_amount_placeholder": "Ej: 80",
+    "method_label": "Método de pago",
+    "confirm_btn": "Sí, cancelar plan",
+    "cancel_btn": "Mantener plan",
+    "cancelling": "Cancelando...",
+    "error": "No se pudo cancelar el plan. Intentá de nuevo.",
+    "error_payment": "El plan fue cancelado pero no se pudo registrar el cargo. Agregalo manualmente."
   },
   "membership_contract": {
     "terms_title": "Acuerdo de Compromiso de Membresía",

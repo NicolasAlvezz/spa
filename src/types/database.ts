@@ -193,7 +193,7 @@ export interface Database {
           membership_id: string | null
           amount_usd: number
           method: 'cash' | 'debit' | 'credit'
-          concept: 'monthly_membership' | 'additional_visit' | 'welcome_offer' | 'pack_purchase' | 'pack_split_second' | 'post_op_visit'
+          concept: 'monthly_membership' | 'additional_visit' | 'welcome_offer' | 'pack_purchase' | 'pack_split_second' | 'post_op_visit' | 'cancellation_fee'
           paid_at: string
           notes: string | null
           created_at: string
@@ -204,7 +204,7 @@ export interface Database {
           membership_id?: string | null
           amount_usd: number
           method: 'cash' | 'debit' | 'credit'
-          concept: 'monthly_membership' | 'additional_visit' | 'welcome_offer' | 'pack_purchase' | 'pack_split_second' | 'post_op_visit'
+          concept: 'monthly_membership' | 'additional_visit' | 'welcome_offer' | 'pack_purchase' | 'pack_split_second' | 'post_op_visit' | 'cancellation_fee'
           paid_at?: string
           notes?: string | null
           created_at?: string
