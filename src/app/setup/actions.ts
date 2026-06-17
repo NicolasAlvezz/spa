@@ -2,6 +2,7 @@
 
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { buildE164, phoneToAuthEmail } from '@/lib/phone'
+import { normalizeName } from '@/lib/client-identity'
 import { redirect } from 'next/navigation'
 
 export async function setupAccount(
@@ -31,14 +32,37 @@ export async function setupAccount(
   const service = createServiceClient()
   const { data: existing } = await service
     .from('clients')
-    .select('id')
+    .select('id, user_id, first_name, last_name')
     .eq('phone', e164)
     .maybeSingle()
 
-  if (existing) {
-    redirect('/my-qr')
+  // Already fully registered — /setup is for first-time only.
+  if (existing?.user_id) {
+    await supabase.auth.signOut()
+    return { error: 'already_registered' }
   }
 
+  // Orphan row (admin pre-registered client data, no auth link yet).
+  // Validate submitted names match what the admin entered.
+  if (existing && !existing.user_id) {
+    const dbFirst = normalizeName(existing.first_name ?? '')
+    const dbLast = normalizeName(existing.last_name ?? '')
+    if (normalizeName(firstName) !== dbFirst || normalizeName(lastName) !== dbLast) {
+      await supabase.auth.signOut()
+      return { error: 'identity_mismatch' }
+    }
+    const { error: linkError } = await service
+      .from('clients')
+      .update({ user_id: data.user.id })
+      .eq('id', existing.id)
+    if (linkError) {
+      await supabase.auth.signOut()
+      return { error: 'generic_error' }
+    }
+    redirect('/onboarding')
+  }
+
+  // No client row at all — fresh registration.
   const { error: insertError } = await service.from('clients').insert({
     user_id: data.user.id,
     first_name: firstName,

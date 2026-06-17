@@ -2,6 +2,7 @@
 
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { buildE164, phoneToAuthEmail } from '@/lib/phone'
+import { normalizeName } from '@/lib/client-identity'
 import { redirect } from 'next/navigation'
 
 export async function loginWithNameAndPhone(
@@ -26,11 +27,8 @@ export async function loginWithNameAndPhone(
     .select('id, first_name')
     .eq('phone', e164)
 
-  const normalize = (s: string) =>
-    s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()
-
-  const target = normalize(firstName)
-  const client = candidates?.find((c) => normalize(c.first_name) === target) ?? null
+  const target = normalizeName(firstName)
+  const client = candidates?.find((c) => normalizeName(c.first_name) === target) ?? null
 
   if (!client) {
     return { error: 'error_not_found' }
