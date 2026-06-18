@@ -2,13 +2,14 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
-import { ScanLine, WifiOff, UserX, Loader2, CheckCircle2, Camera, RotateCcw, Star, CreditCard, FileText } from 'lucide-react'
+import { ScanLine, WifiOff, UserX, Loader2, CheckCircle2, Camera, RotateCcw, Star, CreditCard, FileText, AlertTriangle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { QrScanner } from '@/components/spa/QrScanner'
 import { CheckinCard } from '@/components/spa/CheckinCard'
 import { TherapistSelector } from '@/components/spa/TherapistSelector'
 import { formatDate } from '@/lib/utils/dates'
 import { getDefaultTherapistName, THERAPIST_NAMES } from '@/lib/constants/therapists'
+import { parseVisitApiError, type ScanErrorKey } from '@/lib/visit-api-errors'
 import type { CheckinResult, PaymentMethod } from '@/types'
 
 const THERAPIST_STORAGE_KEY = 'scan_selected_therapist'
@@ -42,7 +43,8 @@ export default function ScanPage() {
 
   const [phase, setPhase] = useState<Phase>('scanning')
   const [result, setResult] = useState<CheckinResult | null>(null)
-  const [errorKey, setErrorKey] = useState<'client_not_found' | 'network_error'>('network_error')
+  const [errorKey, setErrorKey] = useState<ScanErrorKey>('network_error')
+  const [resultError, setResultError] = useState<ScanErrorKey | null>(null)
   const [successInfo, setSuccessInfo] = useState<SuccessInfo | null>(null)
   const [splitPaymentBlocked, setSplitPaymentBlocked] = useState(false)
   const [therapistName, setTherapistName] = useState(getDefaultTherapistName)
@@ -76,6 +78,7 @@ export default function ScanPage() {
     setContractPlanPrice(null)
     setContractAllowsSplit(false)
     setContractSplitFirstAmount(null)
+    setResultError(null)
     setPhase('scanning')
   }, [])
 
@@ -102,6 +105,7 @@ export default function ScanPage() {
       const data: CheckinResult = await res.json()
       setResult(data)
       setSplitPaymentBlocked(false)
+      setResultError(null)
       setPhase('result')
     } catch {
       setErrorKey('network_error')
@@ -113,8 +117,20 @@ export default function ScanPage() {
     setPhase('camera_error')
   }, [])
 
+  function scanErrorMessage(key: ScanErrorKey): string {
+    const map: Record<ScanErrorKey, string> = {
+      client_not_found: t('client_not_found'),
+      network_error: t('error_network'),
+      consent_required: t('error_consent_required'),
+      visit_register_failed: t('error_visit_register_failed'),
+      membership_update_failed: t('error_membership_update_failed'),
+    }
+    return map[key]
+  }
+
   const handleRegisterVisit = useCallback(async () => {
     if (!result) return
+    setResultError(null)
     setPhase('registering')
     try {
       const res = await fetch('/api/visits', {
@@ -128,20 +144,19 @@ export default function ScanPage() {
       })
 
       if (res.status === 402) {
-        // Split payment required before 5th session
         setSplitPaymentBlocked(true)
         setPhase('result')
         return
       }
 
-      if (res.status === 403) {
-        // Consent missing — UI should have blocked this, but handle gracefully
-        setPhase('result')
-        return
-      }
-
       if (!res.ok) {
-        setErrorKey('network_error')
+        const key = await parseVisitApiError(res)
+        if (key === 'consent_required') {
+          setResultError(key)
+          setPhase('result')
+          return
+        }
+        setErrorKey(key)
         setPhase('error')
         return
       }
@@ -299,6 +314,7 @@ export default function ScanPage() {
 
   const handleServiceVisit = useCallback(async (serviceTypeId: string, serviceName: string, priceUsd: number | null, paymentMethod: PaymentMethod) => {
     if (!result) return
+    setResultError(null)
     setPhase('registering_service')
     try {
       const res = await fetch('/api/visits', {
@@ -312,8 +328,21 @@ export default function ScanPage() {
           therapist_name: therapistName,
         }),
       })
+
+      if (res.status === 402) {
+        setSplitPaymentBlocked(true)
+        setPhase('result')
+        return
+      }
+
       if (!res.ok) {
-        setErrorKey('network_error')
+        const key = await parseVisitApiError(res)
+        if (key === 'consent_required') {
+          setResultError(key)
+          setPhase('result')
+          return
+        }
+        setErrorKey(key)
         setPhase('error')
         return
       }
@@ -439,6 +468,12 @@ export default function ScanPage() {
 
         {phase === 'result' && result && (
           <div className="w-full max-w-md">
+            {resultError && (
+              <div className="mb-4 bg-amber-950/40 border border-amber-700/60 rounded-xl p-4 flex items-start gap-3">
+                <AlertTriangle size={18} className="text-amber-400 flex-shrink-0 mt-0.5" />
+                <p className="text-amber-300 text-sm leading-relaxed">{scanErrorMessage(resultError)}</p>
+              </div>
+            )}
             <CheckinCard
               data={result}
               therapistName={therapistName}
@@ -541,12 +576,15 @@ export default function ScanPage() {
         {phase === 'error' && (
           <div className="w-full max-w-md flex flex-col gap-6 text-center">
             <div>
-              {errorKey === 'client_not_found'
-                ? <UserX size={44} className="text-red-400 mx-auto mb-4" />
-                : <WifiOff size={44} className="text-red-400 mx-auto mb-4" />
-              }
+              {errorKey === 'client_not_found' ? (
+                <UserX size={44} className="text-red-400 mx-auto mb-4" />
+              ) : errorKey === 'network_error' ? (
+                <WifiOff size={44} className="text-red-400 mx-auto mb-4" />
+              ) : (
+                <AlertTriangle size={44} className="text-red-400 mx-auto mb-4" />
+              )}
               <h2 className="text-2xl font-bold text-white mb-2">
-                {errorKey === 'client_not_found' ? t('client_not_found') : t('error_network')}
+                {scanErrorMessage(errorKey)}
               </h2>
             </div>
             <button

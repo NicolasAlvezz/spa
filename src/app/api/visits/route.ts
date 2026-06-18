@@ -6,6 +6,50 @@ import type { SessionType, PaymentMethod } from '@/types'
 
 const VALID_PAYMENT_METHODS: PaymentMethod[] = ['cash', 'debit', 'credit']
 
+type VisitInsertRow = {
+  client_id: string
+  membership_id: string | null
+  session_type: SessionType
+  service_type_id: string | null
+  payment_method: PaymentMethod | null
+  registered_by: string
+  notes: string | null
+  therapist_name?: string | null
+}
+
+function isMissingTherapistColumn(error: { message?: string; code?: string } | null): boolean {
+  if (!error) return false
+  const msg = (error.message ?? '').toLowerCase()
+  return msg.includes('therapist_name') || error.code === 'PGRST204'
+}
+
+async function insertVisit(
+  supabase: ReturnType<typeof createServiceClient>,
+  row: VisitInsertRow,
+) {
+  const { therapist_name, ...base } = row
+  const withTherapist = { ...base, therapist_name: therapist_name?.trim() ?? null }
+
+  let result = await supabase
+    .from('visits')
+    .insert(withTherapist)
+    .select('id, visited_at, session_type')
+    .single()
+
+  if (result.error && isMissingTherapistColumn(result.error)) {
+    console.warn(
+      '[visits] therapist_name column missing — retrying without it. Apply migration 20260611120000_visits_therapist_name.sql',
+    )
+    result = await supabase
+      .from('visits')
+      .insert(base)
+      .select('id, visited_at, session_type')
+      .single()
+  }
+
+  return result
+}
+
 async function getActiveConsent(
   supabase: ReturnType<typeof createServiceClient>,
   clientId: string,
@@ -77,23 +121,19 @@ export async function POST(req: Request) {
 
   // Post-op visit: no membership needed, just record the visit and payment
   if (body.session_type === 'post_op') {
-    const { data: visit, error } = await supabase
-      .from('visits')
-      .insert({
-        client_id,
-        membership_id: null,
-        session_type: 'post_op',
-        service_type_id: service_type_id ?? null,
-        payment_method: payment_method ?? null,
-        registered_by: user.email ?? user.id,
-        notes: notes ?? null,
-        therapist_name: therapist_name?.trim() ?? null,
-      })
-      .select('id, visited_at, session_type')
-      .single()
+    const { data: visit, error } = await insertVisit(supabase, {
+      client_id,
+      membership_id: null,
+      session_type: 'post_op',
+      service_type_id: service_type_id ?? null,
+      payment_method: payment_method ?? null,
+      registered_by: user.email ?? user.id,
+      notes: notes ?? null,
+      therapist_name: therapist_name ?? null,
+    })
 
     if (error || !visit) {
-      console.error('[POST /api/visits] post_op insert error:', error)
+      console.error('[POST /api/visits] post_op insert error:', error?.message, error?.code, error?.details)
       return NextResponse.json({ error: 'failed_to_register_visit' }, { status: 500 })
     }
 
@@ -184,23 +224,19 @@ export async function POST(req: Request) {
     }
   }
 
-  const { data: visit, error } = await supabase
-    .from('visits')
-    .insert({
-      client_id,
-      membership_id: membership_id ?? null,
-      session_type,
-      service_type_id: service_type_id ?? null,
-      payment_method: payment_method ?? null,
-      registered_by: user.email ?? user.id,
-      notes: notes ?? null,
-      therapist_name: therapist_name?.trim() ?? null,
-    })
-    .select('id, visited_at, session_type')
-    .single()
+  const { data: visit, error } = await insertVisit(supabase, {
+    client_id,
+    membership_id: membership_id ?? null,
+    session_type,
+    service_type_id: service_type_id ?? null,
+    payment_method: payment_method ?? null,
+    registered_by: user.email ?? user.id,
+    notes: notes ?? null,
+    therapist_name: therapist_name ?? null,
+  })
 
   if (error || !visit) {
-    console.error('[POST /api/visits]', error)
+    console.error('[POST /api/visits] insert error:', error?.message, error?.code, error?.details)
     return NextResponse.json({ error: 'failed_to_register_visit' }, { status: 500 })
   }
 
