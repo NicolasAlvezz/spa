@@ -487,7 +487,6 @@ export default function ScanPage() {
           <div className="w-full max-w-md">
             <RequestContractPanel
               result={result}
-              locale={locale}
               onSent={handleContractSent}
               onCancel={() => setPhase('result')}
             />
@@ -990,12 +989,11 @@ function ServiceVisitPanel({ result, therapistName, onTherapistChange, onConfirm
 
 interface RequestContractPanelProps {
   result: CheckinResult
-  locale: 'en' | 'es'
   onSent: (requestId: string, planId: string, expiresAt: string, planName: string, planPrice: number, allowsSplit: boolean, splitFirstAmount: number | null) => void
   onCancel: () => void
 }
 
-function RequestContractPanel({ result, locale, onSent, onCancel }: RequestContractPanelProps) {
+function RequestContractPanel({ result, onSent, onCancel }: RequestContractPanelProps) {
   const t = useTranslations('checkin')
   const tScan = useTranslations('scan')
   const tContract = useTranslations('membership_contract')
