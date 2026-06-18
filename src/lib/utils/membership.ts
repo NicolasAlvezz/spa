@@ -17,6 +17,7 @@ export function getMembershipStatus(
 ): MembershipStatus {
   if (!membership) return 'no_membership'
   if (membership.status === 'cancelled') return 'cancelled'
+  if (membership.status === 'expired') return 'expired'
 
   if (membership.membership_plans?.plan_type === 'pack') {
     return (membership.sessions_remaining ?? 0) > 0 ? 'active' : 'expired'
@@ -79,6 +80,7 @@ export function getCurrentMembership(
 
   const active = sorted.find((m) => {
     if (m.status === 'cancelled') return false
+    if (m.status === 'expired') return false
     if (m.membership_plans?.plan_type === 'pack') {
       return (m.sessions_remaining ?? 0) > 0
     }
