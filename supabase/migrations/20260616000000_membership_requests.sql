@@ -76,3 +76,7 @@ create policy "membership_requests: client reads own"
 -- Run this after the table exists. If the publication already exists in the
 -- Supabase dashboard, you can also enable it from there instead.
 alter publication supabase_realtime add table public.membership_requests;
+
+-- REPLICA IDENTITY FULL is required for Supabase Realtime filtered UPDATE subscriptions.
+-- Without it, payload.new only contains the primary key and filters don't fire correctly.
+alter table public.membership_requests replica identity full;

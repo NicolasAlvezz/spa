@@ -1004,7 +1004,9 @@ function RequestContractPanel({ result, locale, onSent, onCancel }: RequestContr
   const [plans, setPlans] = useState<PlanOption[]>([])
   const [loadingPlans, setLoadingPlans] = useState(true)
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null)
-  const [language, setLanguage] = useState<'en' | 'es'>(locale)
+  const [language, setLanguage] = useState<'en' | 'es'>(
+    result.client.preferred_language === 'es' ? 'es' : 'en'
+  )
   const [showTerms, setShowTerms] = useState(false)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
