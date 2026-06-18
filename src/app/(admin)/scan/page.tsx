@@ -1187,6 +1187,8 @@ function WaitingSignaturePanel({
 
   useEffect(() => {
     const supabase = createClient()
+
+    // Realtime subscription
     const channel = supabase
       .channel(`membership_request:${requestId}`)
       .on(
@@ -1200,7 +1202,27 @@ function WaitingSignaturePanel({
         }
       )
       .subscribe()
-    return () => { supabase.removeChannel(channel) }
+
+    // Polling fallback every 2s in case Realtime misses the event
+    let active = true
+    const pollId = setInterval(async () => {
+      if (!active) return
+      const { data } = await supabase
+        .from('membership_requests')
+        .select('status')
+        .eq('id', requestId)
+        .single()
+      if (!active) return
+      if (data?.status === 'signed')   { onSigned();  active = false }
+      if (data?.status === 'declined') { onDeclined(); active = false }
+      if (data?.status === 'expired')  { onExpired();  active = false }
+    }, 2000)
+
+    return () => {
+      active = false
+      clearInterval(pollId)
+      supabase.removeChannel(channel)
+    }
   }, [requestId, onSigned, onDeclined, onExpired])
 
   function formatCountdown(s: number): string {
