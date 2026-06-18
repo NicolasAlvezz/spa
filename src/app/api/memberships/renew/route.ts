@@ -21,9 +21,10 @@ export async function POST(req: Request) {
     amount_usd: number
     split_payment?: boolean  // true = paying $400 now, $400 before 5th session
     confirm_lose_unused_sessions?: boolean  // admin acknowledged that unused pack sessions will be lost
+    membership_request_id?: string | null
   } = await req.json()
 
-  const { client_id, plan_id, payment_method, amount_usd, split_payment, confirm_lose_unused_sessions } = body
+  const { client_id, plan_id, payment_method, amount_usd, split_payment, confirm_lose_unused_sessions, membership_request_id } = body
 
   if (!client_id || !plan_id || !payment_method) {
     return NextResponse.json({ error: 'missing_required_fields' }, { status: 400 })
@@ -141,6 +142,7 @@ export async function POST(req: Request) {
       months_completed: isPack ? 0 : (currentMembership?.months_completed ?? 0) + 1,
       sessions_remaining: isPack ? (plan?.total_sessions ?? null) : null,
       split_payment_pending: usingSplitPayment,
+      ...(membership_request_id ? { membership_request_id } : {}),
     })
     .select('id, started_at, expires_at, rollover_sessions, sessions_remaining, split_payment_pending')
     .single()

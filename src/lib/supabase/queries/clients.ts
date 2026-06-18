@@ -115,17 +115,24 @@ export async function getServiceVisitsTotalPaid(clientId: string): Promise<numbe
   return (data as any[]).reduce((sum, v) => sum + Number(v.service_types?.price_usd ?? 0), 0)
 }
 
-export async function getClientPayments(clientId: string): Promise<DbPayment[]> {
+export type PaymentWithContract = DbPayment & {
+  membership_request_id: string | null
+}
+
+export async function getClientPayments(clientId: string): Promise<PaymentWithContract[]> {
   const supabase = createServiceClient()
   const { data, error } = await supabase
     .from('payments')
-    .select('*')
+    .select('*, memberships(membership_request_id)')
     .eq('client_id', clientId)
     .order('paid_at', { ascending: false })
     .limit(50)
 
   if (error) throw error
-  return data ?? []
+  return ((data ?? []) as unknown as Array<DbPayment & { memberships: { membership_request_id: string | null } | null }>).map(p => ({
+    ...p,
+    membership_request_id: p.memberships?.membership_request_id ?? null,
+  }))
 }
 
 export async function getActivePlans(): Promise<DbMembershipPlan[]> {

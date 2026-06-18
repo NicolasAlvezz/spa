@@ -8,6 +8,7 @@ import {
   getClientPayments,
   getClientHistorySummary,
   getServiceVisitsTotalPaid,
+  type PaymentWithContract,
 } from '@/lib/supabase/queries/clients'
 import { DangerZone } from '@/components/spa/DangerZone'
 import { CancelMembershipButton } from '@/components/spa/CancelMembershipButton'
@@ -397,10 +398,11 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
                 <th className="px-6 py-3 font-medium">{tPay('col_method')}</th>
                 <th className="px-6 py-3 font-medium text-right">{tPay('col_amount')}</th>
                 <th className="px-6 py-3 font-medium">{tPay('col_notes')}</th>
+                <th className="px-6 py-3 font-medium">{t('visit_col_contract')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {payments.map((p) => (
+              {payments.map((p: PaymentWithContract) => (
                 <tr key={p.id} className="hover:bg-gray-50/60 transition-colors">
                   <td className="px-6 py-3.5 text-gray-700 tabular-nums">
                     {formatDate(p.paid_at, locale)}
@@ -415,6 +417,21 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
                     USD {p.amount_usd}
                   </td>
                   <td className="px-6 py-3.5 text-gray-400 text-xs">{p.notes ?? '—'}</td>
+                  <td className="px-6 py-3.5">
+                    {p.membership_request_id ? (
+                      <a
+                        href={`/api/membership-requests/${p.membership_request_id}/contract.pdf`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-800 transition-colors"
+                      >
+                        <FileText size={12} />
+                        {locale === 'es' ? 'Contrato' : 'Contract'}
+                      </a>
+                    ) : (
+                      <span className="text-gray-300 text-xs">—</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

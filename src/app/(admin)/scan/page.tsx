@@ -239,6 +239,7 @@ export default function ScanPage() {
           amount_usd: amountUsd,
           split_payment: splitPayment ?? false,
           confirm_lose_unused_sessions: confirmLose,
+          membership_request_id: pendingRequestId ?? null,
         }),
       })
 
@@ -274,7 +275,7 @@ export default function ScanPage() {
       setErrorKey('network_error')
       setPhase('error')
     }
-  }, [result, t, tCheck, locale])
+  }, [result, t, tCheck, locale, pendingRequestId])
 
   const handleRenewConfirm = useCallback(async (method: PaymentMethod) => {
     if (!result?.membership) return

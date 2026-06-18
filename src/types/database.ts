@@ -152,6 +152,7 @@ export interface Database {
           updated_at: string
           sessions_remaining: number | null
           split_payment_pending: boolean
+          membership_request_id: string | null
         }
         Insert: {
           id?: string
@@ -169,6 +170,7 @@ export interface Database {
           updated_at?: string
           sessions_remaining?: number | null
           split_payment_pending?: boolean
+          membership_request_id?: string | null
         }
         Update: {
           plan_id?: string
@@ -183,6 +185,7 @@ export interface Database {
           updated_at?: string
           sessions_remaining?: number | null
           split_payment_pending?: boolean
+          membership_request_id?: string | null
         }
         Relationships: Relationship[]
       }
