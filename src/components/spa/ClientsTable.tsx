@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Search, ChevronRight, X, CreditCard, Loader2 } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
@@ -420,7 +419,11 @@ export function ClientsTable({ clients, plans }: Props) {
               const planName = plan ? (locale === 'es' ? plan.name_es : plan.name_en) : null
 
               return (
-                <div key={client.id} className="bg-white rounded-xl border border-gray-200 px-4 py-3.5 shadow-sm">
+                <div
+                  key={client.id}
+                  onClick={() => router.push(`/admin/clients/${client.id}`)}
+                  className="bg-white rounded-xl border border-gray-200 px-4 py-3.5 shadow-sm cursor-pointer hover:border-brand-300 hover:bg-brand-50/30 transition-colors"
+                >
                   <div className="flex items-center gap-3">
                     {/* Initials avatar */}
                     <div className="flex items-center justify-center w-11 h-11 rounded-full bg-brand-50 border border-brand-100 flex-shrink-0">
@@ -451,15 +454,13 @@ export function ClientsTable({ clients, plans }: Props) {
                         ? <span className="text-[10px] bg-gray-100 text-gray-400 px-2 py-0.5 rounded-full font-semibold">{locale === 'es' ? 'Inactivo' : 'Inactive'}</span>
                         : <MembershipBadge membership={membership} locale={locale} />
                       }
-                      <Link href={`/admin/clients/${client.id}`} className="text-gray-300 hover:text-brand-600">
-                        <ChevronRight size={15} />
-                      </Link>
+                      <ChevronRight size={15} className="text-gray-300" />
                     </div>
                   </div>
 
                   {/* Ver plan button */}
                   <button
-                    onClick={() => setPlanClient(client)}
+                    onClick={(e) => { e.stopPropagation(); setPlanClient(client) }}
                     className="mt-3 w-full h-8 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 hover:border-brand-300 hover:text-brand-700 transition-colors"
                   >
                     {locale === 'es' ? 'Ver plan' : 'View plan'}
@@ -491,7 +492,11 @@ export function ClientsTable({ clients, plans }: Props) {
                   const membership = getCurrentMembership(client.memberships)
                   const plan = membership?.membership_plans
                   return (
-                    <tr key={client.id} className="hover:bg-brand-50/40 transition-colors group">
+                    <tr
+                      key={client.id}
+                      onClick={() => router.push(`/admin/clients/${client.id}`)}
+                      className="hover:bg-brand-50/40 transition-colors group cursor-pointer"
+                    >
                       {/* Name */}
                       <td className="px-5 py-3.5 font-medium text-gray-900">
                         <span className="group-hover:text-brand-700 transition-colors">
@@ -529,7 +534,7 @@ export function ClientsTable({ clients, plans }: Props) {
                         }
                       </td>
                       {/* Ver plan */}
-                      <td className="px-5 py-3.5">
+                      <td className="px-5 py-3.5" onClick={(e) => e.stopPropagation()}>
                         <button
                           onClick={() => setPlanClient(client)}
                           className="h-8 px-3 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-brand-50 hover:border-brand-300 hover:text-brand-700 transition-colors whitespace-nowrap"
@@ -537,14 +542,9 @@ export function ClientsTable({ clients, plans }: Props) {
                           {locale === 'es' ? 'Ver plan' : 'View plan'}
                         </button>
                       </td>
-                      {/* Detail link */}
+                      {/* Chevron */}
                       <td className="px-5 py-3.5">
-                        <Link
-                          href={`/admin/clients/${client.id}`}
-                          className="flex items-center justify-center w-7 h-7 rounded-md text-gray-300 hover:text-brand-600 hover:bg-brand-50 transition-colors"
-                        >
-                          <ChevronRight size={16} />
-                        </Link>
+                        <ChevronRight size={16} className="text-gray-300 group-hover:text-brand-500 transition-colors" />
                       </td>
                     </tr>
                   )
