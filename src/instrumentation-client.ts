@@ -8,6 +8,7 @@ Sentry.init({
   dsn: "https://a79c485e658283b2b94d7b594f66ddac@o4511637938044928.ingest.us.sentry.io/4511637942370304",
 
   integrations: [
+    Sentry.browserTracingIntegration(),
     Sentry.replayIntegration({
       // Mask all text and inputs — required for a medical/health spa (HIPAA-adjacent)
       maskAllText: true,
