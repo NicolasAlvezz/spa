@@ -17,6 +17,6 @@ export const config = {
      * request and ensures unauthenticated API hits receive a JSON 401
      * rather than an HTML redirect to /login.
      */
-    '/((?!_next/static|_next/image|favicon.ico|api/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|api/|monitoring|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

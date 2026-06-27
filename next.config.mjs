@@ -10,18 +10,23 @@ const nextConfig = {
   },
 }
 
-export default withSentryConfig(
-  withNextIntl(nextConfig),
-  {
-    org: 'bookni',
-    project: 'javascript-nextjs',
-    // Suppress Sentry CLI output unless in CI
-    silent: !process.env.CI,
-    // Upload larger source map files for better stack traces
-    widenClientFileUpload: true,
-    // Remove Sentry logger statements from the client bundle
-    disableLogger: true,
-    // Don't set up Vercel Cron Monitors (not used in this project)
-    automaticVercelMonitors: false,
-  }
-)
+export default withSentryConfig(withNextIntl(nextConfig), {
+  org: "bookni",
+  project: "javascript-nextjs",
+
+  // Only print logs for uploading source maps in CI
+  silent: !process.env.CI,
+
+  // Upload a larger set of source maps for prettier stack traces
+  widenClientFileUpload: true,
+
+  // Route browser requests to Sentry through Next.js to bypass ad-blockers.
+  // Keep this path excluded from auth middleware (see src/middleware.ts).
+  tunnelRoute: "/monitoring",
+
+  // Automatically instrument Vercel Cron Monitors
+  automaticVercelMonitors: true,
+
+  // Tree-shake Sentry logger statements to reduce bundle size
+  disableLogger: true,
+});

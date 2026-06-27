@@ -3,6 +3,7 @@ import { Analytics } from '@vercel/analytics/next'
 import { Outfit } from 'next/font/google'
 import { NextIntlClientProvider } from 'next-intl'
 import { getMessages } from 'next-intl/server'
+import * as Sentry from '@sentry/nextjs'
 import './globals.css'
 
 const outfit = Outfit({ subsets: ['latin'], variable: '--font-sans' })
@@ -13,12 +14,17 @@ export const viewport: Viewport = {
   interactiveWidget: 'resizes-content',
 }
 
-export const metadata: Metadata = {
-  title: 'VM Integral Massage',
-  description: 'Membership management system',
-  icons: {
-    icon: '/images/logo.png',
-  },
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: 'VM Integral Massage',
+    description: 'Membership management system',
+    icons: {
+      icon: '/images/logo.png',
+    },
+    other: {
+      ...Sentry.getTraceData(),
+    },
+  }
 }
 
 export default async function RootLayout({
