@@ -9,6 +9,7 @@ Sentry.init({
 
   integrations: [
     Sentry.browserTracingIntegration(),
+    Sentry.consoleLoggingIntegration({ levels: ["log", "warn", "error"] }),
     Sentry.replayIntegration({
       // Mask all text and inputs — required for a medical/health spa (HIPAA-adjacent)
       maskAllText: true,
