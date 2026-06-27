@@ -260,6 +260,8 @@ function AssignForm({
       <div>
         <label className={fieldLabel}>{locale === 'es' ? 'Plan' : 'Plan'}</label>
         <select
+          id="assign-plan-id"
+          name="plan_id"
           value={selectedPlanId}
           onChange={e => onPlanChange(e.target.value)}
           disabled={submitting}
@@ -285,6 +287,8 @@ function AssignForm({
       <div>
         <label className={fieldLabel}>{locale === 'es' ? 'Monto (USD)' : 'Amount (USD)'}</label>
         <input
+          id="assign-amount"
+          name="amount_usd"
           type="number"
           min={0}
           step={0.01}
@@ -362,6 +366,8 @@ export function ClientsTable({ clients, plans }: Props) {
         <div className="relative flex-1">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           <input
+            id="client-search"
+            name="client-search"
             type="text"
             placeholder={t('search_placeholder')}
             value={search}
@@ -370,6 +376,8 @@ export function ClientsTable({ clients, plans }: Props) {
           />
         </div>
         <select
+          id="status-filter"
+          name="status-filter"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
           className="w-full md:w-auto h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm outline-none focus:border-brand-400 transition-colors"
@@ -380,6 +388,8 @@ export function ClientsTable({ clients, plans }: Props) {
           <option value="no_membership">{locale === 'es' ? 'Sin plan' : 'No plan'}</option>
         </select>
         <select
+          id="sort-order"
+          name="sort-order"
           value={sortOrder}
           onChange={(e) => setSortOrder(e.target.value as SortOrder)}
           className="w-full md:w-auto h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm outline-none focus:border-brand-400 transition-colors"

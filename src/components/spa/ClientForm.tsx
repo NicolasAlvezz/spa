@@ -143,6 +143,7 @@ export function ClientForm({ plans }: Props) {
         <div className="space-y-3">
           <label className="flex items-center gap-3 cursor-pointer group">
             <input
+              id="is_healthcare_worker"
               type="checkbox"
               name="is_healthcare_worker"
               checked={isHealthcare}
@@ -158,6 +159,7 @@ export function ClientForm({ plans }: Props) {
           {isHealthcare && (
             <label className="flex items-center gap-3 cursor-pointer group pl-7">
               <input
+                id="work_id_verified"
                 type="checkbox"
                 name="work_id_verified"
                 disabled={isPending}
@@ -229,6 +231,7 @@ export function ClientForm({ plans }: Props) {
       <section className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
         <SectionHeader icon={FileText} title={t('notes')} />
         <textarea
+          id="notes"
           name="notes"
           rows={3}
           disabled={isPending}
