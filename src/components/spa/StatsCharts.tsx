@@ -17,7 +17,7 @@ interface RevenueChartProps { data: MonthPoint[] }
 
 export function RevenueBarChart({ data }: RevenueChartProps) {
   return (
-    <div className="h-[200px] sm:h-[280px]">
+    <div className="w-full min-w-0 h-[200px] sm:h-[280px]">
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -49,7 +49,7 @@ interface ClientsChartProps { data: MonthPoint[] }
 
 export function NewClientsBarChart({ data }: ClientsChartProps) {
   return (
-    <div className="h-[180px] sm:h-[260px]">
+    <div className="w-full min-w-0 h-[180px] sm:h-[260px]">
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />

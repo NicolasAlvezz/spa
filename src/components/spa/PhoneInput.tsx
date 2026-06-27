@@ -72,6 +72,7 @@ export function PhoneInput({ variant, disabled, defaultPrefix = '1', defaultLoca
   return (
     <div className="flex w-full overflow-hidden">
       <select
+        id="phone_prefix"
         name="phone_prefix"
         value={prefix}
         onChange={e => setPrefix(e.target.value)}
@@ -86,6 +87,7 @@ export function PhoneInput({ variant, disabled, defaultPrefix = '1', defaultLoca
         ))}
       </select>
       <input
+        id="phone_local"
         name="phone_local"
         type="tel"
         required
