@@ -72,6 +72,7 @@ export default function Page() {
           type="button"
           onClick={async () => {
             Sentry.logger.info("User clicked the button, throwing a sample error");
+            Sentry.metrics.count("test_metric", 1);
             await Sentry.startSpan(
               {
                 name: "Example Frontend/Backend Span",
