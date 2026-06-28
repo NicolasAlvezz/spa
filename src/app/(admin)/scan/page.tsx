@@ -263,19 +263,20 @@ export default function ScanPage() {
         setPhase('error')
         return
       }
-      const data: { expires_at: string; sessions_remaining?: number; is_pack?: boolean } = await res.json()
-      setSuccessInfo({
-        title: tCheck('assign_success'),
-        detail: data.is_pack
-          ? `${data.sessions_remaining} ${tCheck('pack_sessions_total')}`
-          : `${tCheck('renew_expires')}: ${formatDate(data.expires_at, locale)}`,
-      })
-      setPhase('success')
+      // Re-fetch client data so result has the new active membership
+      const fresh = await fetch(`/api/clients/${encodeURIComponent(result.client.id)}/checkin`)
+      if (fresh.ok) {
+        const freshData: CheckinResult = await fresh.json()
+        setResult(freshData)
+      }
+      setPendingRequestId(null)
+      setContractPlanId(null)
+      setPhase('result')
     } catch {
       setErrorKey('network_error')
       setPhase('error')
     }
-  }, [result, t, tCheck, locale, pendingRequestId])
+  }, [result, t, pendingRequestId])
 
   const handleRenewConfirm = useCallback(async (method: PaymentMethod) => {
     if (!result?.membership) return
