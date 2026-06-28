@@ -1,4 +1,4 @@
-import { getTranslations } from 'next-intl/server'
+import { getTranslations, getLocale } from 'next-intl/server'
 import { Users, Activity, DollarSign, AlertTriangle } from 'lucide-react'
 import {
   getDashboardStats,
@@ -24,15 +24,24 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
   const from = searchParams.from ?? defaultFrom
   const to   = searchParams.to   ?? defaultTo
 
-  const [t, tNav, stats, visits, appointments, clients, serviceTypes] = await Promise.all([
+  const [t, tNav, locale, stats, visits, appointments, clients, serviceTypes] = await Promise.all([
     getTranslations('dashboard'),
     getTranslations('nav'),
+    getLocale(),
     getDashboardStats({ from, to }),
     getTodayVisits(),
     getCalendarAppointments(todayStr),
     getClientSelectList(),
     getServiceTypes(),
   ])
+
+  const sessionLabels: Record<string, string> = {
+    included:      t('session_included'),
+    rollover:      t('session_rollover'),
+    additional:    t('session_additional'),
+    welcome_offer: t('session_welcome'),
+    post_op:       t('session_post_op'),
+  }
 
   const isCustomRange = from !== defaultFrom || to !== defaultTo
 
@@ -44,7 +53,7 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{tNav('dashboard')}</h1>
           <p className="text-sm text-gray-400 mt-0.5">
-            {new Date().toLocaleDateString('en-US', {
+            {new Date().toLocaleDateString(locale === 'es' ? 'es-US' : 'en-US', {
               weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
               timeZone: 'America/New_York',
             })}
@@ -68,13 +77,13 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
         />
         <StatCard
           icon={Activity}
-          label={isCustomRange ? 'Visits in range' : t('visits_this_month')}
+          label={isCustomRange ? t('visits_in_range') : t('visits_this_month')}
           value={String(stats.visitsThisMonth)}
           color="blue"
         />
         <StatCard
           icon={DollarSign}
-          label={isCustomRange ? 'Revenue in range' : t('revenue_this_month')}
+          label={isCustomRange ? t('revenue_in_range') : t('revenue_this_month')}
           value={`$${stats.revenueThisMonth.toFixed(0)}`}
           color="brand"
         />
@@ -117,7 +126,7 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
                       {v.client.first_name} {v.client.last_name}
                     </p>
                     <p className="text-xs text-gray-400">
-                      {v.service?.name_en ?? 'Session'} · {sessionLabel(v.session_type)}
+                      {(locale === 'es' ? v.service?.name_es : v.service?.name_en) ?? t('service_session')} · {sessionLabels[v.session_type] ?? v.session_type}
                     </p>
                   </div>
                   <time className="text-xs text-gray-400 tabular-nums flex-shrink-0">
@@ -148,14 +157,6 @@ function formatTime(iso: string) {
     hour: 'numeric', minute: '2-digit', hour12: true,
     timeZone: 'America/New_York',
   })
-}
-
-function sessionLabel(type: string) {
-  const map: Record<string, string> = {
-    included: 'Included', rollover: 'Rollover',
-    additional: 'Additional', welcome_offer: 'Welcome',
-  }
-  return map[type] ?? type
 }
 
 // ─── StatCard ─────────────────────────────────────────────────────────────────

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { ChevronLeft, ChevronRight, Plus, X, Phone, Clock, Loader2 } from 'lucide-react'
 import type { CalendarAppointment } from '@/lib/supabase/queries/dashboard'
 import type { ClientSelectItem, ServiceTypeItem } from '@/lib/supabase/queries/clients'
@@ -35,18 +35,19 @@ function getHours(dayOfWeek: number): number[] {
   return dayOfWeek === 6 ? SATURDAY_HOURS : WEEKDAY_HOURS
 }
 
-function formatHourLabel(h: number): string {
-  if (h === 12) return '12 PM'
-  if (h === 0 || h === 24) return '12 AM'
-  return h < 12 ? `${h} AM` : `${h - 12} PM`
+function formatHourLabel(h: number, locale: string): string {
+  const d = new Date()
+  d.setHours(h, 0, 0, 0)
+  return d.toLocaleTimeString(locale === 'es' ? 'es-US' : 'en-US', { hour: 'numeric', minute: '2-digit' })
 }
 
-function formatDateHeading(dateStr: string, todayStr: string): string {
+function formatDateHeading(dateStr: string, todayStr: string, locale: string, todayLabel: string): string {
   const [y, m, d] = dateStr.split('-').map(Number)
   const dt = new Date(y, m - 1, d)
-  const dayName = dt.toLocaleDateString('en-US', { weekday: 'long' })
-  const rest    = dt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-  return dateStr === todayStr ? `Today — ${rest}` : `${dayName}, ${rest}`
+  const tag = locale === 'es' ? 'es-US' : 'en-US'
+  const dayName = dt.toLocaleDateString(tag, { weekday: 'long' })
+  const rest    = dt.toLocaleDateString(tag, { month: 'long', day: 'numeric', year: 'numeric' })
+  return dateStr === todayStr ? `${todayLabel} — ${rest}` : `${dayName}, ${rest}`
 }
 
 function addDays(dateStr: string, delta: number): string {
@@ -101,6 +102,7 @@ export function DayCalendar({
   serviceTypes,
 }: Props) {
   const t = useTranslations('dashboard')
+  const locale = useLocale()
   const todayStr = todayET()
 
   // ── State ──────────────────────────────────────────────────────────────────
@@ -200,7 +202,7 @@ export function DayCalendar({
       {/* ── Header ────────────────────────────────────── */}
       <div className="bg-white border-b border-gray-100 px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-2">
         <p className="flex-1 min-w-0 text-sm font-semibold text-gray-900 truncate">
-          {formatDateHeading(dateStr, todayStr)}
+          {formatDateHeading(dateStr, todayStr, locale, t('cal_today_btn'))}
         </p>
 
         <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -281,7 +283,7 @@ export function DayCalendar({
                 {/* Label */}
                 <div className="w-14 flex-shrink-0 flex items-start justify-end pr-3 pt-1.5 pointer-events-none">
                   <span className="text-[11px] text-gray-400 tabular-nums select-none">
-                    {formatHourLabel(h)}
+                    {formatHourLabel(h, locale)}
                   </span>
                 </div>
                 {/* Slot area — hover hint */}
@@ -301,7 +303,7 @@ export function DayCalendar({
             >
               <div className="w-14 flex-shrink-0 flex justify-end pr-3 -mt-2">
                 <span className="text-[11px] text-gray-400 tabular-nums">
-                  {formatHourLabel(hours[hours.length - 1] + 1)}
+                  {formatHourLabel(hours[hours.length - 1] + 1, locale)}
                 </span>
               </div>
             </div>
@@ -352,7 +354,7 @@ export function DayCalendar({
                       </p>
                       {height > 44 && (
                         <p className="text-[10px] text-amber-100 truncate mt-0.5">
-                          {appt.service?.name_en ?? 'Appointment'}
+                          {(locale === 'es' ? appt.service?.name_es : appt.service?.name_en) ?? t('appointment_fallback')}
                         </p>
                       )}
                       {height > 58 && (
@@ -414,7 +416,7 @@ export function DayCalendar({
             {selectedAppt.service && (
               <>
                 <span className="font-medium text-gray-700">
-                  {selectedAppt.service.name_en}
+                  {locale === 'es' ? selectedAppt.service.name_es : selectedAppt.service.name_en}
                   {selectedAppt.service.price_usd != null && ` · $${selectedAppt.service.price_usd}`}
                 </span>
                 <span className="flex items-center gap-1.5">

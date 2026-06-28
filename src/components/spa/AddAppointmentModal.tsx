@@ -175,8 +175,8 @@ export function AddAppointmentModal({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!clientId) { setError('Please select a client'); return }
-    if (!serviceId) { setError('Please select a service type'); return }
+    if (!clientId) { setError(t('select_client_error')); return }
+    if (!serviceId) { setError(t('select_service_error')); return }
     if (!timeStr) { setError(t('no_slots_available')); return }
     setError(null)
 
@@ -374,7 +374,7 @@ export function AddAppointmentModal({
                     disabled={isPending}
                     className="flex-1 h-10 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
                   >
-                    Cancel
+                    {t('cancel')}
                   </button>
                   <button
                     type="submit"

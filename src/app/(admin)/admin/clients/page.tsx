@@ -13,7 +13,7 @@ export default async function ClientsPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
           <p className="text-sm text-gray-400 mt-0.5">
-            {clients.length} {clients.length === 1 ? 'client' : 'clients'} registered
+            {t('clients_count', { count: clients.length })}
           </p>
         </div>
 

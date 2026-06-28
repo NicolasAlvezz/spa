@@ -53,7 +53,19 @@
     "cal_closed": "Closed — no appointments on Sundays",
     "cal_mark_completed": "Mark as completed",
     "cal_mark_no_show": "Mark as no-show",
-    "cal_cancel": "Cancel appointment"
+    "cal_cancel": "Cancel appointment",
+    "visits_in_range": "Visits in range",
+    "revenue_in_range": "Revenue in range",
+    "session_included": "Included",
+    "session_rollover": "Rollover",
+    "session_additional": "Additional",
+    "session_welcome": "Welcome",
+    "session_post_op": "Post-op",
+    "service_session": "Session",
+    "appointment_fallback": "Appointment",
+    "select_client_error": "Please select a client",
+    "select_service_error": "Please select a service type",
+    "cancel": "Cancel"
   },
   "stats": {
     "title": "Statistics",
@@ -323,6 +335,7 @@
     "visit_history": "Visit history",
     "payment_history": "Payment history",
     "no_visits": "No visits registered.",
+    "clients_count": "{count, plural, one {# client registered} other {# clients registered}}",
     "no_payments": "No payments registered.",
     "print_qr": "Print QR",
     "no_membership": "No active membership",
