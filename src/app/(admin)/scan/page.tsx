@@ -26,6 +26,7 @@ type Phase =
   | 'paying'
   | 'service_visit'
   | 'registering_service'
+  | 'additional_visit'
   | 'success'
   | 'error'
   | 'camera_error'
@@ -184,6 +185,41 @@ export default function ScanPage() {
       setSuccessInfo({
         title: tCheck('visit_registered'),
         detail,
+      })
+      setPhase('success')
+    } catch {
+      setErrorKey('network_error')
+      setPhase('error')
+    }
+  }, [result, tCheck, therapistName])
+
+  const handleAdditionalVisitConfirm = useCallback(async (method: PaymentMethod) => {
+    if (!result?.membership) return
+    const planPrice = result.membership.membership_plans?.price_usd
+    if (!planPrice) return
+    setPhase('registering')
+    try {
+      const res = await fetch('/api/visits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          client_id: result.client.id,
+          membership_id: result.membership.id,
+          payment_method: method,
+          amount_usd: planPrice,
+          therapist_name: therapistName,
+        }),
+      })
+      if (!res.ok) {
+        const key = await parseVisitApiError(res)
+        if (key === 'consent_required') { setResultError(key); setPhase('result'); return }
+        setErrorKey(key)
+        setPhase('error')
+        return
+      }
+      setSuccessInfo({
+        title: tCheck('visit_registered'),
+        detail: tCheck('session_additional'),
       })
       setPhase('success')
     } catch {
@@ -418,6 +454,7 @@ export default function ScanPage() {
     phase === 'confirming_split' ||
     phase === 'waiting_signature' ||
     phase === 'paying' ||
+    phase === 'additional_visit' ||
     phase === 'success' ||
     phase === 'error'
 
@@ -486,6 +523,7 @@ export default function ScanPage() {
               onChangePlan={() => setPhase('assigning')}
               onRegisterServiceVisit={() => setPhase('service_visit')}
               onConfirmSplitPayment={() => setPhase('confirming_split')}
+              onRegisterAdditionalVisit={() => setPhase('additional_visit')}
               splitPaymentBlocked={splitPaymentBlocked}
             />
           </div>
@@ -564,6 +602,16 @@ export default function ScanPage() {
             <ConfirmSplitPanel
               result={result}
               onConfirm={handleConfirmSplitPayment}
+              onCancel={() => setPhase('result')}
+            />
+          </div>
+        )}
+
+        {phase === 'additional_visit' && result && (
+          <div className="w-full max-w-md">
+            <AdditionalVisitPanel
+              result={result}
+              onConfirm={handleAdditionalVisitConfirm}
               onCancel={() => setPhase('result')}
             />
           </div>
@@ -801,6 +849,78 @@ function ConfirmPaymentPanel({ result, planId, planName, planPrice, allowsSplit,
         <button onClick={handleConfirm} disabled={!method || submitting}
           className="w-full h-16 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xl font-bold transition-colors">
           {submitting ? t('assigning') : `${t('assign_confirm')} — $${paymentAmount}`}
+        </button>
+        <button onClick={onCancel} disabled={submitting}
+          className="w-full h-12 rounded-xl bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-slate-300 text-base font-medium transition-colors">
+          {t('cancel')}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─── Additional Visit Panel ───────────────────────────────────────────────────
+
+interface AdditionalVisitPanelProps {
+  result: CheckinResult
+  onConfirm: (method: PaymentMethod) => Promise<void>
+  onCancel: () => void
+}
+
+function AdditionalVisitPanel({ result, onConfirm, onCancel }: AdditionalVisitPanelProps) {
+  const t = useTranslations('checkin')
+  const tPayment = useTranslations('payment')
+  const locale = useLocale() as 'en' | 'es'
+
+  const [method, setMethod] = useState<PaymentMethod | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+
+  const plan = result.membership?.membership_plans
+  const planName = plan ? (locale === 'es' ? plan.name_es : plan.name_en) : ''
+  const price = plan?.price_usd ?? 0
+
+  const handleConfirm = async () => {
+    if (!method || submitting) return
+    setSubmitting(true)
+    await onConfirm(method)
+  }
+
+  return (
+    <div className="w-full flex flex-col gap-6">
+      <div className="flex items-center gap-3">
+        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-amber-500/20">
+          <CreditCard size={18} className="text-amber-400" />
+        </div>
+        <span className="text-amber-400 text-lg font-semibold uppercase tracking-wide">
+          {locale === 'es' ? 'Visita extra' : 'Additional visit'}
+        </span>
+      </div>
+
+      <h2 className="text-2xl md:text-4xl font-bold text-white leading-tight">
+        {result.client.first_name} {result.client.last_name}
+      </h2>
+
+      <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3 flex items-center justify-between">
+        <span className="font-semibold text-white">{planName}</span>
+        <span className="text-lg font-bold text-amber-300 ml-4 flex-shrink-0">${price}</span>
+      </div>
+
+      <div>
+        <p className="text-slate-400 text-xs uppercase tracking-wide mb-3">{tPayment('method')}</p>
+        <div className="grid grid-cols-3 gap-3">
+          {METHODS.map((m) => (
+            <button key={m} onClick={() => setMethod(m)} disabled={submitting}
+              className={`h-14 rounded-xl text-base font-semibold transition-colors disabled:opacity-50 ${method === m ? 'bg-amber-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
+              {tPayment(methodKeys[m])}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-3 pt-2">
+        <button onClick={handleConfirm} disabled={!method || submitting}
+          className="w-full h-16 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xl font-bold transition-colors">
+          {submitting ? t('assigning') : `${locale === 'es' ? 'Confirmar — $' : 'Confirm — $'}${price}`}
         </button>
         <button onClick={onCancel} disabled={submitting}
           className="w-full h-12 rounded-xl bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-slate-300 text-base font-medium transition-colors">

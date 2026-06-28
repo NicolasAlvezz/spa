@@ -93,11 +93,12 @@ export async function POST(req: Request) {
     session_type?: SessionType
     service_type_id?: string
     payment_method?: PaymentMethod
+    amount_usd?: number
     notes?: string
     therapist_name?: string
   } = await req.json()
 
-  const { client_id, membership_id, service_type_id, payment_method, notes, therapist_name } = body
+  const { client_id, membership_id, service_type_id, payment_method, amount_usd, notes, therapist_name } = body
 
   if (!client_id) {
     return NextResponse.json({ error: 'client_id is required' }, { status: 400 })
@@ -241,6 +242,22 @@ export async function POST(req: Request) {
   }
 
   await consumeConsent(supabase, consentId, visit.id)
+
+  // Create a payment record for additional visits that come with a price
+  if (session_type === 'additional' && payment_method && amount_usd && amount_usd > 0) {
+    const { error: paymentError } = await supabase
+      .from('payments')
+      .insert({
+        client_id,
+        membership_id: membership_id ?? null,
+        amount_usd,
+        method: payment_method,
+        concept: 'additional_visit',
+      })
+    if (paymentError) {
+      console.error('[visits] failed to create additional visit payment:', paymentError)
+    }
+  }
 
   return NextResponse.json({
     visit_id: visit.id,

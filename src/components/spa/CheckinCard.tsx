@@ -18,6 +18,7 @@ interface Props {
   onRegisterServiceVisit?: () => void
   onConfirmSplitPayment?: () => void
   onSendContract?: () => void
+  onRegisterAdditionalVisit?: () => void
   splitPaymentBlocked?: boolean
 }
 
@@ -32,6 +33,7 @@ export function CheckinCard({
   onRegisterServiceVisit,
   onConfirmSplitPayment,
   onSendContract,
+  onRegisterAdditionalVisit,
   splitPaymentBlocked = false,
 }: Props) {
   const t = useTranslations('scan')
@@ -161,6 +163,25 @@ export function CheckinCard({
               >
                 <CreditCard size={20} />
                 {t('confirm_split')}{splitSecondAmount > 0 && ` ($${splitSecondAmount})`}
+              </button>
+            </>
+          ) : !isPack && availableSessions === 0 && onRegisterAdditionalVisit ? (
+            <>
+              <div className="bg-amber-950/40 border border-amber-700/60 rounded-xl p-4 flex items-start gap-3">
+                <AlertTriangle size={18} className="text-amber-400 flex-shrink-0 mt-0.5" />
+                <p className="text-amber-300 text-sm font-medium">
+                  {locale === 'es'
+                    ? 'Sesiones del mes agotadas — la próxima visita se cobra aparte'
+                    : 'Monthly sessions used — next visit will be charged separately'}
+                </p>
+              </div>
+              <button
+                onClick={onRegisterAdditionalVisit}
+                className="w-full h-16 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-white text-xl font-bold transition-colors shadow-lg shadow-amber-900/30 flex items-center justify-center gap-2"
+              >
+                <CreditCard size={20} />
+                {locale === 'es' ? 'Registrar visita extra' : 'Register additional visit'}
+                {plan?.price_usd ? ` — $${plan.price_usd}` : ''}
               </button>
             </>
           ) : (
