@@ -63,17 +63,30 @@ export interface DashboardStats {
   expiringThisWeek: number
 }
 
-export async function getDashboardStats(): Promise<DashboardStats> {
+export async function getDashboardStats(opts?: { from?: string; to?: string }): Promise<DashboardStats> {
   const supabase = createServiceClient()
 
   const now   = new Date()
   const today = now.toISOString().split('T')[0]
   const nextWeek = new Date(now.getTime() + 7 * 86_400_000).toISOString().split('T')[0]
-  const monthStart = startOfMonthET()
+
+  // Date range for visits/revenue — default to current month
+  const rangeFrom = opts?.from ?? (today.slice(0, 7) + '-01')
+  const rangeTo   = opts?.to   ?? today
+
+  // Convert range dates to UTC bounds (ET timezone)
+  const visitFrom = (() => {
+    const { start } = dateBoundsET(rangeFrom)
+    return start
+  })()
+  const visitTo = (() => {
+    const { end } = dateBoundsET(rangeTo)
+    return end
+  })()
 
   const [
     { count: activeClients },
-    { count: visitsThisMonth },
+    { count: visitsInRange },
     { data: payments },
     { count: expiringThisWeek },
   ] = await Promise.all([
@@ -86,12 +99,14 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     supabase
       .from('visits')
       .select('*', { count: 'exact', head: true })
-      .gte('visited_at', monthStart),
+      .gte('visited_at', visitFrom)
+      .lt('visited_at', visitTo),
 
     supabase
       .from('payments')
       .select('amount_usd')
-      .gte('paid_at', today.slice(0, 7) + '-01'), // first day of month (DATE)
+      .gte('paid_at', rangeFrom)
+      .lte('paid_at', rangeTo),
 
     supabase
       .from('memberships')
@@ -101,14 +116,14 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       .lte('expires_at', nextWeek),
   ])
 
-  const revenueThisMonth = (payments ?? []).reduce(
+  const revenueInRange = (payments ?? []).reduce(
     (sum, p) => sum + Number(p.amount_usd), 0
   )
 
   return {
     activeClients:    activeClients ?? 0,
-    visitsThisMonth:  visitsThisMonth ?? 0,
-    revenueThisMonth,
+    visitsThisMonth:  visitsInRange ?? 0,
+    revenueThisMonth: revenueInRange,
     expiringThisWeek: expiringThisWeek ?? 0,
   }
 }

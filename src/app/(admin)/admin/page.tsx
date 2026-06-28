@@ -10,32 +10,52 @@ import {
   getServiceTypes,
 } from '@/lib/supabase/queries/clients'
 import { DayCalendar } from '@/components/spa/DayCalendar'
+import { DashboardDateFilter } from '@/components/spa/DashboardDateFilter'
 
-export default async function AdminDashboardPage() {
+interface Props {
+  searchParams: { from?: string; to?: string }
+}
+
+export default async function AdminDashboardPage({ searchParams }: Props) {
   const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date())
+  const defaultFrom = todayStr.slice(0, 7) + '-01'
+  const defaultTo   = todayStr
+
+  const from = searchParams.from ?? defaultFrom
+  const to   = searchParams.to   ?? defaultTo
 
   const [t, tNav, stats, visits, appointments, clients, serviceTypes] = await Promise.all([
     getTranslations('dashboard'),
     getTranslations('nav'),
-    getDashboardStats(),
+    getDashboardStats({ from, to }),
     getTodayVisits(),
     getCalendarAppointments(todayStr),
     getClientSelectList(),
     getServiceTypes(),
   ])
 
+  const isCustomRange = from !== defaultFrom || to !== defaultTo
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8 max-w-5xl">
 
       {/* Page title */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">{tNav('dashboard')}</h1>
-        <p className="text-sm text-gray-400 mt-0.5">
-          {new Date().toLocaleDateString('en-US', {
-            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-            timeZone: 'America/New_York',
-          })}
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">{tNav('dashboard')}</h1>
+          <p className="text-sm text-gray-400 mt-0.5">
+            {new Date().toLocaleDateString('en-US', {
+              weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+              timeZone: 'America/New_York',
+            })}
+          </p>
+        </div>
+        <DashboardDateFilter
+          from={from}
+          to={to}
+          defaultFrom={defaultFrom}
+          defaultTo={defaultTo}
+        />
       </div>
 
       {/* ── Stats cards ─────────────────────────────────────────────────── */}
@@ -48,13 +68,13 @@ export default async function AdminDashboardPage() {
         />
         <StatCard
           icon={Activity}
-          label={t('visits_this_month')}
+          label={isCustomRange ? 'Visits in range' : t('visits_this_month')}
           value={String(stats.visitsThisMonth)}
           color="blue"
         />
         <StatCard
           icon={DollarSign}
-          label={t('revenue_this_month')}
+          label={isCustomRange ? 'Revenue in range' : t('revenue_this_month')}
           value={`$${stats.revenueThisMonth.toFixed(0)}`}
           color="brand"
         />
