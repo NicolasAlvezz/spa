@@ -26,7 +26,7 @@
     "dashboard_subtitle": "Select an option from the menu to get started."
   },
   "dashboard": {
-    "active_clients": "Active clients",
+    "active_clients": "Clients with membership",
     "visits_this_month": "Visits this month",
     "revenue_this_month": "Revenue this month",
     "expiring_soon": "Expiring this week",

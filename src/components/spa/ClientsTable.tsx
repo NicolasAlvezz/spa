@@ -566,7 +566,7 @@ export function ClientsTable({ clients, plans }: Props) {
       )}
 
       <p className="text-xs text-gray-400">
-        {filtered.length} / {activeCount} {locale === 'es' ? 'clientes activos' : 'active clients'}
+        {filtered.length} / {activeCount} {locale === 'es' ? 'clientes con membresía' : 'clients with membership'}
         {inactiveCount > 0 && (
           <span className="ml-2 text-gray-300">· {inactiveCount} {locale === 'es' ? 'inactivos' : 'inactive'}</span>
         )}
