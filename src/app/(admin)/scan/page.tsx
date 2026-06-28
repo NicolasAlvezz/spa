@@ -218,7 +218,7 @@ export default function ScanPage() {
       }
       setSuccessInfo({
         title: tCheck('visit_registered'),
-        detail: tCheck('session_additional'),
+        detail: tCheck('session_additional', { price: planPrice }),
       })
       setPhase('success')
     } catch {

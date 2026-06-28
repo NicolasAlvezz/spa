@@ -264,7 +264,7 @@
     "session_type_label": "Session",
     "session_included": "Included",
     "session_rollover": "Rollover",
-    "session_additional": "Additional (USD 80)",
+    "session_additional": "Additional (USD {price})",
     "session_welcome_offer": "Welcome offer",
     "reset_countdown": "Returning to scan in",
     "renewing_title": "Renew Membership",
