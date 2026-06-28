@@ -117,11 +117,10 @@ export default async function StatsPage({ searchParams }: Props) {
       <Section icon={Users} title={t('clients_section')} color="blue">
 
         {/* Totals row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <MiniStat label={t('clients_total')}    value={data.totalClients}        />
-          <MiniStat label={t('status_active')}    value={data.clientsActive}   color="green" />
-          <MiniStat label={t('status_expired')}   value={data.clientsExpired}  color="red"   />
-          <MiniStat label={t('status_no_plan')}   value={data.clientsNoPlan}   color="gray"  />
+        <div className="grid grid-cols-3 gap-4">
+          <MiniStat label={t('clients_total')}  value={data.totalClients}              />
+          <MiniStat label={t('status_active')}  value={data.clientsActive}  color="green" />
+          <MiniStat label={t('status_no_plan')} value={data.clientsNoPlan}  color="gray"  />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
