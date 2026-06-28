@@ -1,9 +1,5 @@
 import { NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
-import type { PaymentMethod } from '@/types'
-
-const VALID_PAYMENT_METHODS: PaymentMethod[] = ['cash', 'debit', 'credit']
-
 export async function POST(req: Request) {
   const authClient = await createClient()
   const { data: { user } } = await authClient.auth.getUser()
@@ -11,15 +7,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 
-  const body: { membership_id: string; payment_method: PaymentMethod } = await req.json()
-  const { membership_id, payment_method } = body
+  const body: { membership_id: string } = await req.json()
+  const { membership_id } = body
 
-  if (!membership_id || !payment_method) {
-    return NextResponse.json({ error: 'membership_id and payment_method are required' }, { status: 400 })
-  }
-
-  if (!VALID_PAYMENT_METHODS.includes(payment_method)) {
-    return NextResponse.json({ error: 'invalid_payment_method' }, { status: 400 })
+  if (!membership_id) {
+    return NextResponse.json({ error: 'membership_id is required' }, { status: 400 })
   }
 
   const supabase = createServiceClient()
@@ -31,7 +23,7 @@ export async function POST(req: Request) {
   // so the customer can never be double-charged.
   const { data: rpcRows, error: rpcError } = await supabase.rpc(
     'confirm_split_payment_atomic',
-    { p_membership_id: membership_id, p_payment_method: payment_method },
+    { p_membership_id: membership_id, p_payment_method: null },
   )
 
   if (rpcError) {

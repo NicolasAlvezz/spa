@@ -2,16 +2,14 @@ import { NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { CONSENT_WINDOW_MS } from '@/lib/constants/consent'
 import { isValidTherapistName } from '@/lib/constants/therapists'
-import type { SessionType, PaymentMethod } from '@/types'
-
-const VALID_PAYMENT_METHODS: PaymentMethod[] = ['cash', 'debit', 'credit']
+import type { SessionType } from '@/types'
 
 type VisitInsertRow = {
   client_id: string
   membership_id: string | null
   session_type: SessionType
   service_type_id: string | null
-  payment_method: PaymentMethod | null
+  payment_method: string | null
   registered_by: string
   notes: string | null
   therapist_name?: string | null
@@ -92,20 +90,15 @@ export async function POST(req: Request) {
     membership_id: string | null
     session_type?: SessionType
     service_type_id?: string
-    payment_method?: PaymentMethod
     amount_usd?: number
     notes?: string
     therapist_name?: string
   } = await req.json()
 
-  const { client_id, membership_id, service_type_id, payment_method, amount_usd, notes, therapist_name } = body
+  const { client_id, membership_id, service_type_id, amount_usd, notes, therapist_name } = body
 
   if (!client_id) {
     return NextResponse.json({ error: 'client_id is required' }, { status: 400 })
-  }
-
-  if (payment_method !== undefined && !VALID_PAYMENT_METHODS.includes(payment_method)) {
-    return NextResponse.json({ error: 'invalid_payment_method' }, { status: 400 })
   }
 
   if (therapist_name !== undefined && !isValidTherapistName(therapist_name)) {
@@ -127,7 +120,7 @@ export async function POST(req: Request) {
       membership_id: null,
       session_type: 'post_op',
       service_type_id: service_type_id ?? null,
-      payment_method: payment_method ?? null,
+      payment_method: null,
       registered_by: user.email ?? user.id,
       notes: notes ?? null,
       therapist_name: therapist_name ?? null,
@@ -230,7 +223,7 @@ export async function POST(req: Request) {
     membership_id: membership_id ?? null,
     session_type,
     service_type_id: service_type_id ?? null,
-    payment_method: payment_method ?? null,
+    payment_method: null,
     registered_by: user.email ?? user.id,
     notes: notes ?? null,
     therapist_name: therapist_name ?? null,
@@ -244,14 +237,14 @@ export async function POST(req: Request) {
   await consumeConsent(supabase, consentId, visit.id)
 
   // Create a payment record for additional visits that come with a price
-  if (session_type === 'additional' && payment_method && amount_usd && amount_usd > 0) {
+  if (session_type === 'additional' && amount_usd && amount_usd > 0) {
     const { error: paymentError } = await supabase
       .from('payments')
       .insert({
         client_id,
         membership_id: membership_id ?? null,
         amount_usd,
-        method: payment_method,
+        method: null,
         concept: 'additional_visit',
       })
     if (paymentError) {

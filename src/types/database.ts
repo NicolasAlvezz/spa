@@ -195,7 +195,7 @@ export interface Database {
           client_id: string
           membership_id: string | null
           amount_usd: number
-          method: 'cash' | 'debit' | 'credit'
+          method: string | null
           concept: 'monthly_membership' | 'additional_visit' | 'welcome_offer' | 'pack_purchase' | 'pack_split_second' | 'post_op_visit' | 'cancellation_fee'
           paid_at: string
           notes: string | null
@@ -206,7 +206,7 @@ export interface Database {
           client_id: string
           membership_id?: string | null
           amount_usd: number
-          method: 'cash' | 'debit' | 'credit'
+          method?: string | null
           concept: 'monthly_membership' | 'additional_visit' | 'welcome_offer' | 'pack_purchase' | 'pack_split_second' | 'post_op_visit' | 'cancellation_fee'
           paid_at?: string
           notes?: string | null
@@ -454,7 +454,7 @@ export interface Database {
         }[]
       }
       confirm_split_payment_atomic: {
-        Args: { p_membership_id: string; p_payment_method: string }
+        Args: { p_membership_id: string; p_payment_method: string | null }
         Returns: {
           payment_id: string
           amount_paid: number

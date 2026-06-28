@@ -4,26 +4,20 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { XCircle, Loader2, AlertTriangle } from 'lucide-react'
-import type { PaymentMethod } from '@/types'
-
 interface Props {
   membershipId: string
   planName: string
   clientName: string
 }
 
-const METHODS: PaymentMethod[] = ['cash', 'debit', 'credit']
-
 export function CancelMembershipButton({ membershipId, planName, clientName }: Props) {
   const t = useTranslations('cancel_membership')
-  const tPay = useTranslations('payment')
   const router = useRouter()
 
   const [open, setOpen] = useState(false)
   const [notes, setNotes] = useState('')
   const [applyFee, setApplyFee] = useState(false)
   const [feeAmount, setFeeAmount] = useState('')
-  const [method, setMethod] = useState<PaymentMethod | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -31,7 +25,6 @@ export function CancelMembershipButton({ membershipId, planName, clientName }: P
     setNotes('')
     setApplyFee(false)
     setFeeAmount('')
-    setMethod(null)
     setError(null)
     setOpen(true)
   }
@@ -42,7 +35,7 @@ export function CancelMembershipButton({ membershipId, planName, clientName }: P
   }
 
   const feeUsd = applyFee ? parseFloat(feeAmount) : 0
-  const feeValid = !applyFee || (feeAmount !== '' && !isNaN(feeUsd) && feeUsd > 0 && method !== null)
+  const feeValid = !applyFee || (feeAmount !== '' && !isNaN(feeUsd) && feeUsd > 0)
 
   async function handleConfirm() {
     if (!feeValid || loading) return
@@ -52,13 +45,11 @@ export function CancelMembershipButton({ membershipId, planName, clientName }: P
     const body: {
       notes?: string
       cancellation_fee_usd?: number
-      payment_method?: PaymentMethod
     } = {}
 
     if (notes.trim()) body.notes = notes.trim()
-    if (applyFee && feeUsd > 0 && method) {
+    if (applyFee && feeUsd > 0) {
       body.cancellation_fee_usd = feeUsd
-      body.payment_method = method
     }
 
     try {
@@ -162,29 +153,6 @@ export function CancelMembershipButton({ membershipId, planName, clientName }: P
                     </div>
                   </div>
 
-                  {/* Payment method */}
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                      {t('method_label')}
-                    </label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {METHODS.map(m => (
-                        <button
-                          key={m}
-                          type="button"
-                          onClick={() => setMethod(m)}
-                          disabled={loading}
-                          className={`h-9 rounded-lg text-sm font-semibold border transition-colors disabled:opacity-50 ${
-                            method === m
-                              ? 'bg-red-600 text-white border-red-600'
-                              : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                          }`}
-                        >
-                          {tPay(`method_${m}` as Parameters<typeof tPay>[0])}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
                 </div>
               )}
             </div>

@@ -1,9 +1,5 @@
 import { NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
-import type { PaymentMethod } from '@/types'
-
-const VALID_METHODS: PaymentMethod[] = ['cash', 'debit', 'credit']
-
 export async function POST(
   req: Request,
   { params }: { params: { id: string } }
@@ -17,15 +13,10 @@ export async function POST(
   const body: {
     notes?: string
     cancellation_fee_usd?: number
-    payment_method?: PaymentMethod
   } = await req.json().catch(() => ({}))
 
-  const { notes, cancellation_fee_usd, payment_method } = body
+  const { notes, cancellation_fee_usd } = body
   const hasFee = typeof cancellation_fee_usd === 'number' && cancellation_fee_usd > 0
-
-  if (hasFee && (!payment_method || !VALID_METHODS.includes(payment_method))) {
-    return NextResponse.json({ error: 'payment_method_required' }, { status: 400 })
-  }
 
   const supabase = createServiceClient()
 
@@ -53,14 +44,14 @@ export async function POST(
     return NextResponse.json({ error: 'cancel_failed' }, { status: 500 })
   }
 
-  if (hasFee && payment_method) {
+  if (hasFee) {
     const { error: paymentError } = await supabase
       .from('payments')
       .insert({
         client_id: membership.client_id,
         membership_id: params.id,
         amount_usd: cancellation_fee_usd,
-        method: payment_method,
+        method: null,
         concept: 'cancellation_fee',
         notes: notes ?? null,
       })

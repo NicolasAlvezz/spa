@@ -57,7 +57,6 @@ export interface StatsData {
   // Revenue
   revenueTotal: number
   revenueByConcept: ConceptRow[]
-  revenueByMethod: ConceptRow[]
   revenueByMonth: MonthPoint[]      // last 12 months always
 
   // Clients
@@ -124,12 +123,10 @@ export async function getStatsData(period: StatsPeriod): Promise<StatsData> {
   const revenueTotal = payments.reduce((s, p) => s + Number(p.amount_usd), 0)
 
   const conceptMap: Record<string, number> = {}
-  const methodMap:  Record<string, number> = {}
   const revMonthMap: Record<string, number> = {}
 
   for (const p of payments) {
     conceptMap[p.concept] = (conceptMap[p.concept] ?? 0) + Number(p.amount_usd)
-    methodMap[p.method]   = (methodMap[p.method]   ?? 0) + Number(p.amount_usd)
     const mk = toMonthKey(p.paid_at)
     revMonthMap[mk] = (revMonthMap[mk] ?? 0) + Number(p.amount_usd)
   }
@@ -139,15 +136,9 @@ export async function getStatsData(period: StatsPeriod): Promise<StatsData> {
     additional_visit:   'Additional visit',
     welcome_offer:      'Welcome offer',
   }
-  const methodLabels: Record<string, string> = {
-    cash: 'Cash', debit: 'Debit', credit: 'Credit',
-  }
 
   const revenueByConcept: ConceptRow[] = Object.entries(conceptMap).map(([k, v]) => ({
     label: conceptLabels[k] ?? k, value: v,
-  }))
-  const revenueByMethod: ConceptRow[] = Object.entries(methodMap).map(([k, v]) => ({
-    label: methodLabels[k] ?? k, value: v,
   }))
   const revenueByMonth: MonthPoint[] = months12.map(({ key, label }) => ({
     month: label, value: revMonthMap[key] ?? 0,
@@ -243,7 +234,7 @@ export async function getStatsData(period: StatsPeriod): Promise<StatsData> {
 
   return {
     period,
-    revenueTotal, revenueByConcept, revenueByMethod, revenueByMonth,
+    revenueTotal, revenueByConcept, revenueByMonth,
     totalClients, clientsActive, clientsExpired, clientsNoPlan,
     newClientsByMonth, clientsByHowHeard, healthcareWorkers,
     totalVisits, visitsBySessionType, visitsByService,

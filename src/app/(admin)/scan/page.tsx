@@ -10,7 +10,7 @@ import { TherapistSelector } from '@/components/spa/TherapistSelector'
 import { formatDate } from '@/lib/utils/dates'
 import { getDefaultTherapistName, THERAPIST_NAMES } from '@/lib/constants/therapists'
 import { parseVisitApiError, type ScanErrorKey } from '@/lib/visit-api-errors'
-import type { CheckinResult, PaymentMethod } from '@/types'
+import type { CheckinResult } from '@/types'
 
 const THERAPIST_STORAGE_KEY = 'scan_selected_therapist'
 
@@ -193,7 +193,7 @@ export default function ScanPage() {
     }
   }, [result, tCheck, therapistName])
 
-  const handleAdditionalVisitConfirm = useCallback(async (method: PaymentMethod) => {
+  const handleAdditionalVisitConfirm = useCallback(async () => {
     if (!result?.membership) return
     const planPrice = result.membership.membership_plans?.price_usd
     if (!planPrice) return
@@ -205,7 +205,6 @@ export default function ScanPage() {
         body: JSON.stringify({
           client_id: result.client.id,
           membership_id: result.membership.id,
-          payment_method: method,
           amount_usd: planPrice,
           therapist_name: therapistName,
         }),
@@ -228,16 +227,13 @@ export default function ScanPage() {
     }
   }, [result, tCheck, therapistName])
 
-  const handleConfirmSplitPayment = useCallback(async (method: PaymentMethod) => {
+  const handleConfirmSplitPayment = useCallback(async () => {
     if (!result?.membership) return
     try {
       const res = await fetch('/api/memberships/confirm-split-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          membership_id: result.membership.id,
-          payment_method: method,
-        }),
+        body: JSON.stringify({ membership_id: result.membership.id }),
       })
       if (!res.ok) {
         setErrorKey('network_error')
@@ -258,7 +254,6 @@ export default function ScanPage() {
 
   const handleAssignConfirm = useCallback(async (
     planId: string,
-    method: PaymentMethod,
     amountUsd: number,
     splitPayment?: boolean,
   ) => {
@@ -271,7 +266,6 @@ export default function ScanPage() {
         body: JSON.stringify({
           client_id: result.client.id,
           plan_id: planId,
-          payment_method: method,
           amount_usd: amountUsd,
           split_payment: splitPayment ?? false,
           confirm_lose_unused_sessions: confirmLose,
@@ -314,7 +308,7 @@ export default function ScanPage() {
     }
   }, [result, t, pendingRequestId])
 
-  const handleRenewConfirm = useCallback(async (method: PaymentMethod) => {
+  const handleRenewConfirm = useCallback(async () => {
     if (!result?.membership) return
     const plan = result.membership.membership_plans
     if (!plan?.price_usd) {
@@ -329,7 +323,6 @@ export default function ScanPage() {
         body: JSON.stringify({
           client_id: result.client.id,
           plan_id: result.membership.plan_id,
-          payment_method: method,
           amount_usd: plan.price_usd,
         }),
       })
@@ -350,7 +343,7 @@ export default function ScanPage() {
     }
   }, [result, tCheck, locale])
 
-  const handleServiceVisit = useCallback(async (serviceTypeId: string, serviceName: string, priceUsd: number | null, paymentMethod: PaymentMethod) => {
+  const handleServiceVisit = useCallback(async (serviceTypeId: string, serviceName: string, priceUsd: number | null) => {
     if (!result) return
     setResultError(null)
     setPhase('registering_service')
@@ -362,7 +355,6 @@ export default function ScanPage() {
           client_id: result.client.id,
           membership_id: null,
           service_type_id: serviceTypeId,
-          payment_method: paymentMethod,
           therapist_name: therapistName,
         }),
       })
@@ -663,22 +655,17 @@ export default function ScanPage() {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-const METHODS: PaymentMethod[] = ['cash', 'debit', 'credit']
-const methodKeys = { cash: 'method_cash', debit: 'method_debit', credit: 'method_credit' } as const
-
 interface RenewPanelProps {
   result: CheckinResult
-  onConfirm: (method: PaymentMethod) => Promise<void>
+  onConfirm: () => Promise<void>
   onCancel: () => void
 }
 
 function RenewPanel({ result, onConfirm, onCancel }: RenewPanelProps) {
   const t = useTranslations('checkin')
   const tScan = useTranslations('scan')
-  const tPayment = useTranslations('payment')
   const locale = useLocale() as 'en' | 'es'
 
-  const [method, setMethod] = useState<PaymentMethod | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   const plan = result.membership?.membership_plans
@@ -686,9 +673,9 @@ function RenewPanel({ result, onConfirm, onCancel }: RenewPanelProps) {
   const amount = plan?.price_usd ?? 80
 
   const handleConfirm = async () => {
-    if (!method || submitting) return
+    if (submitting) return
     setSubmitting(true)
-    await onConfirm(method)
+    await onConfirm()
   }
 
   return (
@@ -717,20 +704,8 @@ function RenewPanel({ result, onConfirm, onCancel }: RenewPanelProps) {
         </p>
       </div>
 
-      <div>
-        <p className="text-slate-400 text-xs uppercase tracking-wide mb-3">{t('renew_method')}</p>
-        <div className="grid grid-cols-3 gap-3">
-          {METHODS.map((m) => (
-            <button key={m} onClick={() => setMethod(m)} disabled={submitting}
-              className={`h-14 rounded-xl text-base font-semibold transition-colors disabled:opacity-50 ${method === m ? 'bg-brand-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
-              {tPayment(methodKeys[m])}
-            </button>
-          ))}
-        </div>
-      </div>
-
       <div className="flex flex-col gap-3 pt-2">
-        <button onClick={handleConfirm} disabled={!method || submitting}
+        <button onClick={handleConfirm} disabled={submitting}
           className="w-full h-16 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xl font-bold transition-colors">
           {submitting ? t('renewing') : t('renew_confirm')}
         </button>
@@ -761,26 +736,24 @@ interface ConfirmPaymentPanelProps {
   planPrice: number
   allowsSplit: boolean
   splitFirstAmount: number | null
-  onConfirm: (planId: string, method: PaymentMethod, amountUsd: number, splitPayment?: boolean) => Promise<void>
+  onConfirm: (planId: string, amountUsd: number, splitPayment?: boolean) => Promise<void>
   onCancel: () => void
 }
 
 function ConfirmPaymentPanel({ result, planId, planName, planPrice, allowsSplit, splitFirstAmount, onConfirm, onCancel }: ConfirmPaymentPanelProps) {
   const t = useTranslations('checkin')
   const tScan = useTranslations('scan')
-  const tPayment = useTranslations('payment')
   const locale = useLocale() as 'en' | 'es'
 
-  const [method, setMethod] = useState<PaymentMethod | null>(null)
   const [useSplitPayment, setUseSplitPayment] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
   const paymentAmount = useSplitPayment && splitFirstAmount ? splitFirstAmount : planPrice
 
   const handleConfirm = async () => {
-    if (!method || submitting) return
+    if (submitting) return
     setSubmitting(true)
-    await onConfirm(planId, method, paymentAmount, useSplitPayment)
+    await onConfirm(planId, paymentAmount, useSplitPayment)
   }
 
   return (
@@ -810,7 +783,6 @@ function ConfirmPaymentPanel({ result, planId, planName, planPrice, allowsSplit,
       {/* Split payment option (only for eligible packs) */}
       {allowsSplit && splitFirstAmount && (
         <div>
-          <p className="text-slate-400 text-xs uppercase tracking-wide mb-3">{tPayment('payment_option')}</p>
           <div className="flex flex-col gap-2">
             <button onClick={() => setUseSplitPayment(false)} disabled={submitting}
               className={`w-full px-4 py-3 rounded-xl text-left text-sm font-medium transition-colors disabled:opacity-50 ${!useSplitPayment ? 'bg-brand-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
@@ -832,21 +804,8 @@ function ConfirmPaymentPanel({ result, planId, planName, planPrice, allowsSplit,
         </div>
       )}
 
-      {/* Payment method */}
-      <div>
-        <p className="text-slate-400 text-xs uppercase tracking-wide mb-3">{tPayment('method')}</p>
-        <div className="grid grid-cols-3 gap-3">
-          {METHODS.map((m) => (
-            <button key={m} onClick={() => setMethod(m)} disabled={submitting}
-              className={`h-14 rounded-xl text-base font-semibold transition-colors disabled:opacity-50 ${method === m ? 'bg-brand-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
-              {tPayment(methodKeys[m])}
-            </button>
-          ))}
-        </div>
-      </div>
-
       <div className="flex flex-col gap-3 pt-2">
-        <button onClick={handleConfirm} disabled={!method || submitting}
+        <button onClick={handleConfirm} disabled={submitting}
           className="w-full h-16 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xl font-bold transition-colors">
           {submitting ? t('assigning') : `${t('assign_confirm')} — $${paymentAmount}`}
         </button>
@@ -863,16 +822,14 @@ function ConfirmPaymentPanel({ result, planId, planName, planPrice, allowsSplit,
 
 interface AdditionalVisitPanelProps {
   result: CheckinResult
-  onConfirm: (method: PaymentMethod) => Promise<void>
+  onConfirm: () => Promise<void>
   onCancel: () => void
 }
 
 function AdditionalVisitPanel({ result, onConfirm, onCancel }: AdditionalVisitPanelProps) {
   const t = useTranslations('checkin')
-  const tPayment = useTranslations('payment')
   const locale = useLocale() as 'en' | 'es'
 
-  const [method, setMethod] = useState<PaymentMethod | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   const plan = result.membership?.membership_plans
@@ -880,9 +837,9 @@ function AdditionalVisitPanel({ result, onConfirm, onCancel }: AdditionalVisitPa
   const price = plan?.price_usd ?? 0
 
   const handleConfirm = async () => {
-    if (!method || submitting) return
+    if (submitting) return
     setSubmitting(true)
-    await onConfirm(method)
+    await onConfirm()
   }
 
   return (
@@ -905,20 +862,8 @@ function AdditionalVisitPanel({ result, onConfirm, onCancel }: AdditionalVisitPa
         <span className="text-lg font-bold text-amber-300 ml-4 flex-shrink-0">${price}</span>
       </div>
 
-      <div>
-        <p className="text-slate-400 text-xs uppercase tracking-wide mb-3">{tPayment('method')}</p>
-        <div className="grid grid-cols-3 gap-3">
-          {METHODS.map((m) => (
-            <button key={m} onClick={() => setMethod(m)} disabled={submitting}
-              className={`h-14 rounded-xl text-base font-semibold transition-colors disabled:opacity-50 ${method === m ? 'bg-amber-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
-              {tPayment(methodKeys[m])}
-            </button>
-          ))}
-        </div>
-      </div>
-
       <div className="flex flex-col gap-3 pt-2">
-        <button onClick={handleConfirm} disabled={!method || submitting}
+        <button onClick={handleConfirm} disabled={submitting}
           className="w-full h-16 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xl font-bold transition-colors">
           {submitting ? t('assigning') : `${locale === 'es' ? 'Confirmar — $' : 'Confirm — $'}${price}`}
         </button>
@@ -933,28 +878,24 @@ function AdditionalVisitPanel({ result, onConfirm, onCancel }: AdditionalVisitPa
 
 interface ConfirmSplitPanelProps {
   result: CheckinResult
-  onConfirm: (method: PaymentMethod) => Promise<void>
+  onConfirm: () => Promise<void>
   onCancel: () => void
 }
 
 function ConfirmSplitPanel({ result, onConfirm, onCancel }: ConfirmSplitPanelProps) {
   const t = useTranslations('checkin')
   const tScan = useTranslations('scan')
-  const tPayment = useTranslations('payment')
 
-  const [method, setMethod] = useState<PaymentMethod | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   const plan = result.membership?.membership_plans
-  // Both price_usd and split_first_amount must exist for split payment plans;
-  // if either is missing, the renew flow shouldn't have allowed split in the first place.
   const secondAmount =
     plan && plan.split_first_amount != null ? plan.price_usd - plan.split_first_amount : 0
 
   const handleConfirm = async () => {
-    if (!method || submitting) return
+    if (submitting) return
     setSubmitting(true)
-    await onConfirm(method)
+    await onConfirm()
   }
 
   return (
@@ -979,20 +920,8 @@ function ConfirmSplitPanel({ result, onConfirm, onCancel }: ConfirmSplitPanelPro
         <p className="text-brand-400 text-4xl font-bold">${secondAmount}</p>
       </div>
 
-      <div>
-        <p className="text-slate-400 text-xs uppercase tracking-wide mb-3">{tPayment('method')}</p>
-        <div className="grid grid-cols-3 gap-3">
-          {METHODS.map((m) => (
-            <button key={m} onClick={() => setMethod(m)} disabled={submitting}
-              className={`h-14 rounded-xl text-base font-semibold transition-colors disabled:opacity-50 ${method === m ? 'bg-brand-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
-              {tPayment(methodKeys[m])}
-            </button>
-          ))}
-        </div>
-      </div>
-
       <div className="flex flex-col gap-3 pt-2">
-        <button onClick={handleConfirm} disabled={!method || submitting}
+        <button onClick={handleConfirm} disabled={submitting}
           className="w-full h-16 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xl font-bold transition-colors">
           {submitting ? tScan('confirming_split') : tScan('confirm_split')}
         </button>
@@ -1018,20 +947,18 @@ interface ServiceVisitPanelProps {
   result: CheckinResult
   therapistName: string
   onTherapistChange: (name: string) => void
-  onConfirm: (serviceTypeId: string, serviceName: string, priceUsd: number | null, paymentMethod: PaymentMethod) => Promise<void>
+  onConfirm: (serviceTypeId: string, serviceName: string, priceUsd: number | null) => Promise<void>
   onCancel: () => void
 }
 
 function ServiceVisitPanel({ result, therapistName, onTherapistChange, onConfirm, onCancel }: ServiceVisitPanelProps) {
   const t = useTranslations('checkin')
   const tScan = useTranslations('scan')
-  const tPayment = useTranslations('payment')
   const locale = useLocale() as 'en' | 'es'
 
   const [services, setServices] = useState<ServiceType[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [method, setMethod] = useState<PaymentMethod | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
@@ -1042,10 +969,10 @@ function ServiceVisitPanel({ result, therapistName, onTherapistChange, onConfirm
   }, [])
 
   const handleConfirm = async () => {
-    if (!selectedId || !method || submitting) return
+    if (!selectedId || submitting) return
     const service = services.find(s => s.id === selectedId)!
     setSubmitting(true)
-    await onConfirm(selectedId, locale === 'es' ? service.name_es : service.name_en, service.price_usd, method)
+    await onConfirm(selectedId, locale === 'es' ? service.name_es : service.name_en, service.price_usd)
   }
 
   return (
@@ -1112,23 +1039,10 @@ function ServiceVisitPanel({ result, therapistName, onTherapistChange, onConfirm
         )}
       </div>
 
-      {/* Payment method */}
-      <div>
-        <p className="text-slate-400 text-xs uppercase tracking-wide mb-3">{tPayment('method')}</p>
-        <div className="grid grid-cols-3 gap-3">
-          {METHODS.map((m) => (
-            <button key={m} onClick={() => setMethod(m)} disabled={submitting}
-              className={`h-14 rounded-xl text-base font-semibold transition-colors disabled:opacity-50 ${method === m ? 'bg-green-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
-              {tPayment(methodKeys[m])}
-            </button>
-          ))}
-        </div>
-      </div>
-
       <div className="flex flex-col gap-3 pt-2">
         <button
           onClick={handleConfirm}
-          disabled={!selectedId || !method || submitting}
+          disabled={!selectedId || submitting}
           className="w-full h-16 rounded-xl bg-green-500 hover:bg-green-400 active:bg-green-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xl font-bold transition-colors"
         >
           {submitting ? tScan('registering_visit') : tScan('confirm_visit')}

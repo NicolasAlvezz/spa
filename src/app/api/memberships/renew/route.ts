@@ -2,10 +2,6 @@ import { NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { calculateRollover } from '@/lib/utils/membership'
 import { MONTHLY_PLAN_MIN_MONTHS } from '@/lib/constants/membership'
-import type { PaymentMethod } from '@/types'
-
-const VALID_PAYMENT_METHODS: PaymentMethod[] = ['cash', 'debit', 'credit']
-
 export async function POST(req: Request) {
   const authClient = await createClient()
   const { data: { user }, error: authError } = await authClient.auth.getUser()
@@ -17,21 +13,16 @@ export async function POST(req: Request) {
   const body: {
     client_id: string
     plan_id: string
-    payment_method: PaymentMethod
     amount_usd: number
-    split_payment?: boolean  // true = paying $400 now, $400 before 5th session
-    confirm_lose_unused_sessions?: boolean  // admin acknowledged that unused pack sessions will be lost
+    split_payment?: boolean
+    confirm_lose_unused_sessions?: boolean
     membership_request_id?: string | null
   } = await req.json()
 
-  const { client_id, plan_id, payment_method, amount_usd, split_payment, confirm_lose_unused_sessions, membership_request_id } = body
+  const { client_id, plan_id, amount_usd, split_payment, confirm_lose_unused_sessions, membership_request_id } = body
 
-  if (!client_id || !plan_id || !payment_method) {
+  if (!client_id || !plan_id) {
     return NextResponse.json({ error: 'missing_required_fields' }, { status: 400 })
-  }
-
-  if (!VALID_PAYMENT_METHODS.includes(payment_method)) {
-    return NextResponse.json({ error: 'invalid_payment_method' }, { status: 400 })
   }
 
   if (typeof amount_usd !== 'number' || !Number.isFinite(amount_usd) || amount_usd <= 0) {
@@ -158,7 +149,7 @@ export async function POST(req: Request) {
       client_id,
       membership_id: newMembership.id,
       amount_usd,
-      method: payment_method,
+      method: null,
       concept: isPack ? 'pack_purchase' : 'monthly_membership',
     })
 

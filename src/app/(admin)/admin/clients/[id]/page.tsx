@@ -395,7 +395,6 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
               <tr className="bg-gray-50/80 text-left text-xs text-gray-500 uppercase tracking-wide border-b border-gray-100">
                 <th className="px-6 py-3 font-medium">{tPay('col_date')}</th>
                 <th className="px-6 py-3 font-medium">{tPay('col_concept')}</th>
-                <th className="px-6 py-3 font-medium">{tPay('col_method')}</th>
                 <th className="px-6 py-3 font-medium text-right">{tPay('col_amount')}</th>
                 <th className="px-6 py-3 font-medium">{tPay('col_notes')}</th>
                 <th className="px-6 py-3 font-medium">{t('visit_col_contract')}</th>
@@ -409,9 +408,6 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
                   </td>
                   <td className="px-6 py-3.5 text-gray-600">
                     {tPay(conceptKey[p.concept] ?? 'concept_membership')}
-                  </td>
-                  <td className="px-6 py-3.5 text-gray-600">
-                    {tPay(`method_${p.method}` as Parameters<typeof tPay>[0])}
                   </td>
                   <td className="px-6 py-3.5 font-semibold text-right text-gray-900 tabular-nums">
                     USD {p.amount_usd}

@@ -76,32 +76,16 @@ export default async function StatsPage({ searchParams }: Props) {
           sub={periodLabel[period]}
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-          {/* By concept */}
-          <div>
-            <SectionSubtitle>{t('by_concept')}</SectionSubtitle>
-            {data.revenueByConcept.length === 0
-              ? <Empty />
-              : <BreakdownBars
-                  items={data.revenueByConcept}
-                  color="#f59e0b"
-                  format="currency"
-                />
-            }
-          </div>
-
-          {/* By method */}
-          <div>
-            <SectionSubtitle>{t('by_method')}</SectionSubtitle>
-            {data.revenueByMethod.length === 0
-              ? <Empty />
-              : <BreakdownBars
-                  items={data.revenueByMethod}
-                  color="#0ea5e9"
-                  format="currency"
-                />
-            }
-          </div>
+        <div className="mt-6">
+          <SectionSubtitle>{t('by_concept')}</SectionSubtitle>
+          {data.revenueByConcept.length === 0
+            ? <Empty />
+            : <BreakdownBars
+                items={data.revenueByConcept}
+                color="#f59e0b"
+                format="currency"
+              />
+          }
         </div>
 
         {/* Chart — last 12 months always */}
