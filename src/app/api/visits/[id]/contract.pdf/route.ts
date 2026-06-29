@@ -33,7 +33,7 @@ export async function GET(
       consent_acceptance:consent_acceptances!consumed_by_visit(
         id, accepted_at, language, version,
         medical_title, medical_body, agreement_title, agreement_body,
-        ip_address, user_agent
+        ip_address, user_agent, signature_image
       )
     `)
     .eq('id', params.id)
@@ -76,6 +76,7 @@ export async function GET(
       agreementBody: consent.agreement_body,
       ipAddress: consent.ip_address ?? null,
       userAgent: consent.user_agent ?? null,
+      signatureImage: consent.signature_image ?? null,
       labels,
     })
   } catch (pdfError) {

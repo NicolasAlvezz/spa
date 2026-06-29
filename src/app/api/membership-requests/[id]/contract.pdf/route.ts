@@ -33,6 +33,7 @@ export async function GET(
       signed_at,
       signed_ip,
       signed_user_agent,
+      signature_image,
       clients!inner(first_name, last_name, phone, address),
       membership_plans!inner(name_en, name_es, price_usd)
     `)
@@ -69,6 +70,7 @@ export async function GET(
       termsBody:       request.terms_body,
       signedIp:        request.signed_ip ?? null,
       signedUserAgent: request.signed_user_agent ?? null,
+      signatureImage:  request.signature_image ?? null,
       labels,
     })
   } catch (pdfError) {

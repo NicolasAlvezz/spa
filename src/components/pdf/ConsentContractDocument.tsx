@@ -4,6 +4,7 @@ import {
   Page,
   View,
   Text,
+  Image,
   StyleSheet,
   renderToBuffer,
 } from '@react-pdf/renderer'
@@ -49,6 +50,7 @@ export interface ConsentContractProps {
   agreementBody: string
   ipAddress: string | null
   userAgent: string | null
+  signatureImage: string | null
   // Localization
   labels: ConsentPdfLabels
 }
@@ -128,6 +130,14 @@ const styles = StyleSheet.create({
     borderTopColor: '#e5e7eb',
     marginVertical: 14,
   },
+  signatureImage: {
+    marginTop: 8,
+    height: 80,
+    objectFit: 'contain',
+    alignSelf: 'flex-start',
+    borderBottomWidth: 1,
+    borderBottomColor: '#d1d5db',
+  },
   footer: {
     marginTop: 8,
     padding: 8,
@@ -163,7 +173,7 @@ function ConsentContractDocument(props: ConsentContractProps) {
     visitedAt,
     acceptedAt, language, version,
     medicalTitle, medicalBody, agreementTitle, agreementBody,
-    ipAddress, userAgent,
+    ipAddress, userAgent, signatureImage,
     labels,
   } = props
 
@@ -230,6 +240,9 @@ function ConsentContractDocument(props: ConsentContractProps) {
             <Text style={styles.label}>{labels.label_version}</Text>
             <Text style={styles.value}>{version}</Text>
           </View>
+          {signatureImage ? (
+            <Image src={signatureImage} style={styles.signatureImage} />
+          ) : null}
         </View>
 
         <View style={styles.divider} />

@@ -4,6 +4,7 @@ import {
   Page,
   View,
   Text,
+  Image,
   StyleSheet,
   renderToBuffer,
 } from '@react-pdf/renderer'
@@ -48,6 +49,7 @@ export interface MembershipContractProps {
   termsBody: string
   signedIp: string | null
   signedUserAgent: string | null
+  signatureImage: string | null
   // Localization labels
   labels: MembershipContractPdfLabels
 }
@@ -127,6 +129,14 @@ const styles = StyleSheet.create({
     borderTopColor: '#e5e7eb',
     marginVertical: 14,
   },
+  signatureImage: {
+    marginTop: 8,
+    height: 80,
+    objectFit: 'contain',
+    alignSelf: 'flex-start',
+    borderBottomWidth: 1,
+    borderBottomColor: '#d1d5db',
+  },
   footer: {
     marginTop: 8,
     padding: 8,
@@ -162,7 +172,7 @@ function MembershipContractDocument(props: MembershipContractProps) {
     planName, priceUsd,
     signedAt, language, version,
     termsTitle, termsBody,
-    signedIp, signedUserAgent,
+    signedIp, signedUserAgent, signatureImage,
     labels,
   } = props
 
@@ -232,6 +242,9 @@ function MembershipContractDocument(props: MembershipContractProps) {
             <Text style={styles.label}>{labels.label_version}</Text>
             <Text style={styles.value}>{version}</Text>
           </View>
+          {signatureImage ? (
+            <Image src={signatureImage} style={styles.signatureImage} />
+          ) : null}
         </View>
 
         <View style={styles.divider} />
