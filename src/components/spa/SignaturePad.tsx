@@ -14,10 +14,11 @@ export function SignaturePad({ label, clearLabel, onSignature }: Props) {
   const [isEmpty, setIsEmpty] = useState(true)
 
   function handleEnd() {
-    if (padRef.current && !padRef.current.isEmpty()) {
-      setIsEmpty(false)
-      onSignature(padRef.current.getTrimmedCanvas().toDataURL('image/png'))
-    }
+    if (!padRef.current) return
+    // Don't rely on isEmpty() — it can incorrectly return true on iOS Safari.
+    // If onEnd fired, the user drew something.
+    setIsEmpty(false)
+    onSignature(padRef.current.getTrimmedCanvas().toDataURL('image/png'))
   }
 
   function handleClear() {
