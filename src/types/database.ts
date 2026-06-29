@@ -232,6 +232,7 @@ export interface Database {
           user_agent: string | null
           consumed_at: string | null
           consumed_by_visit: string | null
+          signature_image: string | null
         }
         Insert: {
           id?: string
@@ -247,10 +248,12 @@ export interface Database {
           user_agent?: string | null
           consumed_at?: string | null
           consumed_by_visit?: string | null
+          signature_image?: string | null
         }
         Update: {
           consumed_at?: string | null
           consumed_by_visit?: string | null
+          signature_image?: string | null
         }
         Relationships: Relationship[]
       }
@@ -372,6 +375,7 @@ export interface Database {
           signed_at: string | null
           signed_ip: string | null
           signed_user_agent: string | null
+          signature_image: string | null
           expires_at: string
           created_at: string
           updated_at: string
@@ -389,6 +393,7 @@ export interface Database {
           signed_at?: string | null
           signed_ip?: string | null
           signed_user_agent?: string | null
+          signature_image?: string | null
           expires_at: string
           created_at?: string
           updated_at?: string
@@ -397,6 +402,7 @@ export interface Database {
           status?: 'pending' | 'signed' | 'declined' | 'cancelled' | 'expired'
           signed_at?: string | null
           signed_ip?: string | null
+          signature_image?: string | null
           signed_user_agent?: string | null
           updated_at?: string
         }

@@ -49,6 +49,8 @@ export async function POST(
     return NextResponse.json({ error: 'not_pending', status: request.status }, { status: 409 })
   }
 
+  const body: { signature_image?: string } = await req.json().catch(() => ({}))
+
   const ip =
     req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
     req.headers.get('x-real-ip') ??
@@ -63,6 +65,7 @@ export async function POST(
       signed_at:         signedAt,
       signed_ip:         ip,
       signed_user_agent: userAgent,
+      signature_image:   body.signature_image ?? null,
     })
     .eq('id', params.id)
 

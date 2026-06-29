@@ -18,8 +18,8 @@ export async function POST(req: Request) {
   // The client only sends *what* it's signing, never *what the text says*.
   // The snapshot of the legal text is taken server-side from messages/*.json,
   // so a tampered browser can never falsify the stored evidence.
-  const body: { client_id?: string; language?: ConsentLanguage } = await req.json()
-  const { client_id, language } = body
+  const body: { client_id?: string; language?: ConsentLanguage; signature_image?: string } = await req.json()
+  const { client_id, language, signature_image } = body
 
   if (!client_id || !language || !VALID_LANGUAGES.includes(language)) {
     return NextResponse.json({ error: 'invalid_request' }, { status: 400 })
@@ -58,6 +58,7 @@ export async function POST(req: Request) {
       agreement_body:  snapshot.agreement_body,
       ip_address: ip,
       user_agent: userAgent,
+      signature_image: signature_image ?? null,
     })
     .select('id, accepted_at')
     .single()

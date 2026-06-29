@@ -1,8 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import dynamic from 'next/dynamic'
 import { useTranslations } from 'next-intl'
 import { Clock, CheckCircle2, XCircle, AlertTriangle, Calendar, Loader2 } from 'lucide-react'
+
+const SignaturePad = dynamic(
+  () => import('@/components/spa/SignaturePad').then(m => m.SignaturePad),
+  { ssr: false, loading: () => <div className="h-[160px] rounded-xl border-2 border-dashed border-gray-200 bg-gray-50" /> }
+)
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -70,6 +76,8 @@ function PendingContractCard({
   const [contractState, setContractState] = useState<ContractState>('pending')
   const [error, setError] = useState<string | null>(null)
   const [secondsLeft, setSecondsLeft] = useState(0)
+  const [signature, setSignature] = useState<string | null>(null)
+  const [signatureError, setSignatureError] = useState(false)
 
   const plan = request.membership_plans
   const planName = locale === 'es' ? plan.name_es : plan.name_en
@@ -89,9 +97,18 @@ function PendingContractCard({
   }, [request.expires_at])
 
   async function handleSign() {
+    if (!signature) {
+      setSignatureError(true)
+      return
+    }
+    setSignatureError(false)
     setError(null)
     setContractState('signing')
-    const res = await fetch(`/api/membership-requests/${request.id}/sign`, { method: 'POST' })
+    const res = await fetch(`/api/membership-requests/${request.id}/sign`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ signature_image: signature }),
+    })
     if (res.ok) {
       setContractState('signed')
     } else if (res.status === 410) {
@@ -202,6 +219,21 @@ function PendingContractCard({
               {request.terms_body}
             </p>
           </div>
+        </div>
+
+        {/* Signature pad */}
+        <div className="space-y-1">
+          <SignaturePad
+            label={t('signature_label')}
+            clearLabel={t('signature_clear')}
+            onSignature={(dataUrl) => {
+              setSignature(dataUrl)
+              if (dataUrl) setSignatureError(false)
+            }}
+          />
+          {signatureError && (
+            <p className="text-xs text-red-500">{t('signature_required')}</p>
+          )}
         </div>
 
         {/* Error */}

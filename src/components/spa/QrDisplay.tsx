@@ -3,10 +3,16 @@
 import QRCode from 'react-qr-code'
 import Image from 'next/image'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { useTranslations, useLocale } from 'next-intl'
 import enMessages from '../../../messages/en.json'
 import esMessages from '../../../messages/es.json'
 import { useEffect, useState, useCallback } from 'react'
+
+const SignaturePad = dynamic(
+  () => import('./SignaturePad').then(m => m.SignaturePad),
+  { ssr: false, loading: () => <div className="h-[160px] rounded-xl border-2 border-dashed border-gray-200 bg-gray-50" /> }
+)
 import { CalendarDays, Activity, RotateCcw, Clock, ChevronRight, ExternalLink } from 'lucide-react'
 import { MembershipBadge } from './MembershipBadge'
 import { formatDate, formatDateTime } from '@/lib/utils/dates'
@@ -37,6 +43,8 @@ export function QrDisplay({ client, nextAppointment, recentVisits, hasActiveCons
   const [consented, setConsented] = useState(hasActiveConsent)
   const [isAccepting, setIsAccepting] = useState(false)
   const [acceptError, setAcceptError] = useState(false)
+  const [signature, setSignature] = useState<string | null>(null)
+  const [signatureError, setSignatureError] = useState(false)
   const [qrSize, setQrSize] = useState(200)
 
   useEffect(() => {
@@ -49,6 +57,11 @@ export function QrDisplay({ client, nextAppointment, recentVisits, hasActiveCons
   }, [])
 
   const handleAccept = useCallback(async () => {
+    if (!signature) {
+      setSignatureError(true)
+      return
+    }
+    setSignatureError(false)
     setIsAccepting(true)
     setAcceptError(false)
     try {
@@ -60,6 +73,7 @@ export function QrDisplay({ client, nextAppointment, recentVisits, hasActiveCons
         body: JSON.stringify({
           client_id: client.id,
           language: locale,
+          signature_image: signature,
         }),
       })
       if (!res.ok) throw new Error('failed')
@@ -69,7 +83,7 @@ export function QrDisplay({ client, nextAppointment, recentVisits, hasActiveCons
     } finally {
       setIsAccepting(false)
     }
-  }, [client.id, locale])
+  }, [client.id, locale, signature])
 
   const membership = getCurrentMembership(client.memberships)
   const plan = membership?.membership_plans
@@ -121,6 +135,23 @@ export function QrDisplay({ client, nextAppointment, recentVisits, hasActiveCons
             <p>{esMessages.consent.agreement_body}</p>
           </div>
 
+        </div>
+
+        {/* Signature pad */}
+        <div className="space-y-1">
+          <SignaturePad
+            label="Sign here / Firme aquí"
+            clearLabel="Clear / Borrar"
+            onSignature={(dataUrl) => {
+              setSignature(dataUrl)
+              if (dataUrl) setSignatureError(false)
+            }}
+          />
+          {signatureError && (
+            <p className="text-xs text-red-500 text-center">
+              Please sign above / Por favor firme arriba
+            </p>
+          )}
         </div>
 
         {/* Error message — shown bilingual by design, same as the consent text */}
