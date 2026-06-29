@@ -26,6 +26,7 @@ export default function NewClientPage() {
   const [success, setSuccess] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [channel, setChannel] = useState<'sms' | 'whatsapp'>('whatsapp')
+  const [showSmsDisabled, setShowSmsDisabled] = useState(false)
   const [alreadyInvited, setAlreadyInvited] = useState<string | null>(null)
   const [alreadyRegistered, setAlreadyRegistered] = useState<string | null>(null)
   const [showQrModal, setShowQrModal] = useState(false)
@@ -158,6 +159,35 @@ export default function NewClientPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-md">
+
+      {/* SMS temporarily disabled modal */}
+      {showSmsDisabled && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full flex flex-col gap-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle size={20} className="text-amber-500 mt-0.5 shrink-0" />
+              <div>
+                <p className="font-semibold text-gray-900">
+                  {label('SMS temporarily unavailable', 'SMS temporalmente no disponible')}
+                </p>
+                <p className="text-sm text-gray-500 mt-1">
+                  {label(
+                    'This option is not available at the moment. Please use WhatsApp to send the invitation.',
+                    'Esta opción no está disponible por el momento. Por favor usá WhatsApp para enviar la invitación.',
+                  )}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowSmsDisabled(false)}
+              className="h-10 rounded-xl bg-gray-100 hover:bg-gray-200 text-sm font-medium text-gray-700 transition-colors"
+            >
+              {label('Close', 'Cerrar')}
+            </button>
+          </div>
+        </div>
+      )}
       <Link
         href="/admin/clients"
         className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 transition-colors"
@@ -223,13 +253,9 @@ export default function NewClientPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setChannel('sms')}
+                onClick={() => setShowSmsDisabled(true)}
                 disabled={isPending}
-                className={`flex-1 flex items-center justify-center gap-2 h-11 rounded-xl border text-sm font-medium transition-colors ${
-                  channel === 'sms'
-                    ? 'border-blue-500 bg-blue-50 text-blue-700'
-                    : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
-                }`}
+                className="flex-1 flex items-center justify-center gap-2 h-11 rounded-xl border text-sm font-medium transition-colors border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
               >
                 <Smartphone size={16} />
                 SMS
