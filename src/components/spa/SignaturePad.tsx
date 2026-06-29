@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect, useCallback } from 'react'
 import ReactSignatureCanvas from 'react-signature-canvas'
 
 interface Props {
@@ -12,17 +12,29 @@ interface Props {
 export function SignaturePad({ label, clearLabel, onSignature }: Props) {
   const padRef = useRef<ReactSignatureCanvas>(null)
   const [isEmpty, setIsEmpty] = useState(true)
+  const isDrawingRef = useRef(false)
 
-  function handleEnd() {
-    if (!padRef.current) return
-    // Don't rely on isEmpty() — it can incorrectly return true on iOS Safari.
-    // If onEnd fired, the user drew something.
+  const captureSignature = useCallback(() => {
+    if (!isDrawingRef.current || !padRef.current) return
+    isDrawingRef.current = false
     setIsEmpty(false)
     onSignature(padRef.current.getTrimmedCanvas().toDataURL('image/png'))
-  }
+  }, [onSignature])
+
+  useEffect(() => {
+    // Listen on document so iOS Safari always catches the finger-lift event,
+    // even when the canvas's own onEnd doesn't fire.
+    document.addEventListener('pointerup', captureSignature)
+    document.addEventListener('touchend', captureSignature)
+    return () => {
+      document.removeEventListener('pointerup', captureSignature)
+      document.removeEventListener('touchend', captureSignature)
+    }
+  }, [captureSignature])
 
   function handleClear() {
     padRef.current?.clear()
+    isDrawingRef.current = false
     setIsEmpty(true)
     onSignature(null)
   }
@@ -44,7 +56,7 @@ export function SignaturePad({ label, clearLabel, onSignature }: Props) {
       <div className="relative border-2 border-dashed border-gray-300 rounded-xl overflow-hidden bg-white">
         <ReactSignatureCanvas
           ref={padRef}
-          onEnd={handleEnd}
+          onBegin={() => { isDrawingRef.current = true }}
           canvasProps={{
             width: 600,
             height: 180,
