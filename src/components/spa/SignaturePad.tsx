@@ -18,7 +18,9 @@ export function SignaturePad({ label, clearLabel, onSignature }: Props) {
     if (!isDrawingRef.current || !padRef.current) return
     isDrawingRef.current = false
     setIsEmpty(false)
-    onSignature(padRef.current.getTrimmedCanvas().toDataURL('image/png'))
+    // getTrimmedCanvas() relies on trim-canvas which doesn't bundle correctly
+    // in Next.js production builds — use getCanvas() directly instead.
+    onSignature(padRef.current.getCanvas().toDataURL('image/png'))
   }, [onSignature])
 
   useEffect(() => {
