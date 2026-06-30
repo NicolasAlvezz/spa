@@ -357,6 +357,7 @@ export default function ScanPage() {
           membership_id: null,
           service_type_id: serviceTypeId,
           therapist_name: therapistName,
+          ...(priceUsd !== null && priceUsd > 0 ? { amount_usd: priceUsd } : {}),
         }),
       })
 
