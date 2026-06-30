@@ -1,7 +1,7 @@
 -- Add additional_price_usd: preferred price for extra visits within the same month.
 -- Nullable — falls back to price_usd in application code when null.
 alter table public.membership_plans
-  add column additional_price_usd numeric(10,2) default null;
+  add column if not exists additional_price_usd numeric(10,2) default null;
 
 -- Deactivate old healthcare-worker plans
 update public.membership_plans
