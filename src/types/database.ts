@@ -97,6 +97,10 @@ export interface Database {
           total_sessions: number | null
           allows_split_payment: boolean
           split_first_amount: number | null
+          contract_title_en: string | null
+          contract_title_es: string | null
+          contract_body_en: string | null
+          contract_body_es: string | null
         }
         Insert: {
           id?: string
@@ -117,6 +121,10 @@ export interface Database {
           total_sessions?: number | null
           allows_split_payment?: boolean
           split_first_amount?: number | null
+          contract_title_en?: string | null
+          contract_title_es?: string | null
+          contract_body_en?: string | null
+          contract_body_es?: string | null
         }
         Update: {
           slug?: string
@@ -135,6 +143,10 @@ export interface Database {
           total_sessions?: number | null
           allows_split_payment?: boolean
           split_first_amount?: number | null
+          contract_title_en?: string | null
+          contract_title_es?: string | null
+          contract_body_en?: string | null
+          contract_body_es?: string | null
         }
         Relationships: Relationship[]
       }

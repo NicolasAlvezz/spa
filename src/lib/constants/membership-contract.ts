@@ -12,10 +12,35 @@ export interface ContractSnapshot {
   terms_body: string
 }
 
+export interface PlanContractFields {
+  contract_title_en: string | null
+  contract_title_es: string | null
+  contract_body_en: string | null
+  contract_body_es: string | null
+}
+
 /**
- * Server-side source of truth for the membership contract text snapshot.
- * Text is taken from messages/*.json at request creation time so the stored
- * snapshot cannot be tampered with from the browser.
+ * Returns the contract snapshot for a plan, using the plan's own contract text
+ * if set, otherwise falling back to the generic text from messages/*.json.
+ */
+export function getPlanContractSnapshot(
+  plan: PlanContractFields,
+  language: ContractLanguage,
+): ContractSnapshot {
+  const titleKey = language === 'es' ? 'contract_title_es' : 'contract_title_en'
+  const bodyKey  = language === 'es' ? 'contract_body_es'  : 'contract_body_en'
+  const planTitle = plan[titleKey]
+  const planBody  = plan[bodyKey]
+
+  if (planTitle && planBody) {
+    return { terms_title: planTitle, terms_body: planBody }
+  }
+
+  return getContractSnapshot(language)
+}
+
+/**
+ * Generic fallback contract snapshot from messages/*.json.
  */
 export function getContractSnapshot(language: ContractLanguage): ContractSnapshot {
   const mc = (language === 'es' ? esMessages : enMessages).membership_contract

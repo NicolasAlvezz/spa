@@ -7,7 +7,6 @@ import {
   getClientVisits,
   getClientPayments,
   getClientHistorySummary,
-  getServiceVisitsTotalPaid,
   type PaymentWithContract,
 } from '@/lib/supabase/queries/clients'
 import { DangerZone } from '@/components/spa/DangerZone'
@@ -50,11 +49,10 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
 
   const since = periodSince(period)
 
-  const [visits, payments, history, serviceVisitsTotal] = await Promise.all([
+  const [visits, payments, history] = await Promise.all([
     getClientVisits(client.id, since),
     getClientPayments(client.id),
     getClientHistorySummary(client.id),
-    getServiceVisitsTotalPaid(client.id),
   ])
 
   const membership = getCurrentMembership(client.memberships)
@@ -77,7 +75,7 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
     cancellation_fee:   'concept_cancellation_fee',
   }
 
-  const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount_usd), 0) + serviceVisitsTotal
+  const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount_usd), 0)
 
   const periodLabels: Record<Period, string> = {
     '1m':  t('period_1m'),
@@ -321,7 +319,6 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
                 <th className="px-6 py-3 font-medium">{t('visit_col_therapist')}</th>
                 <th className="px-6 py-3 font-medium">{t('visit_col_type')}</th>
                 <th className="px-6 py-3 font-medium">{locale === 'es' ? 'Precio' : 'Price'}</th>
-                <th className="px-6 py-3 font-medium">{locale === 'es' ? 'Método' : 'Method'}</th>
                 <th className="px-6 py-3 font-medium">{t('visit_col_notes')}</th>
                 <th className="px-6 py-3 font-medium">{t('visit_col_contract')}</th>
               </tr>
@@ -344,10 +341,11 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
                     <SessionTypeBadge label={sessionTypeLabel[v.session_type] ?? v.session_type} type={v.session_type} />
                   </td>
                   <td className="px-6 py-3.5 text-gray-700 text-sm font-medium">
-                    {v.service_types?.price_usd != null ? `$${v.service_types.price_usd}` : <span className="text-gray-300">—</span>}
-                  </td>
-                  <td className="px-6 py-3.5 text-gray-600 text-sm">
-                    {v.payment_method ? tPay(`method_${v.payment_method}` as Parameters<typeof tPay>[0]) : <span className="text-gray-300">—</span>}
+                    {v.session_type === 'additional'
+                      ? `$${v.memberships?.membership_plans?.additional_price_usd ?? v.memberships?.membership_plans?.price_usd ?? '—'}`
+                      : v.session_type === 'post_op' && v.service_types?.price_usd != null
+                        ? `$${v.service_types.price_usd}`
+                        : <span className="text-gray-300">—</span>}
                   </td>
                   <td className="px-6 py-3.5 text-gray-400 text-xs">{v.notes ?? '—'}</td>
                   <td className="px-6 py-3.5">
@@ -386,7 +384,11 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
             USD {totalPaid.toFixed(0)} total
           </span>
         </div>
-        {payments.length === 0 ? (
+        {(() => {
+          const membershipPayments = payments.filter(p =>
+            p.concept !== 'additional_visit' && p.concept !== 'post_op_visit'
+          )
+          return membershipPayments.length === 0 ? (
           <p className="text-sm text-gray-400 px-6 py-10 text-center">{t('no_payments')}</p>
         ) : (
           <div className="overflow-x-auto">
@@ -401,7 +403,7 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {payments.map((p: PaymentWithContract) => (
+              {membershipPayments.map((p: PaymentWithContract) => (
                 <tr key={p.id} className="hover:bg-gray-50/60 transition-colors">
                   <td className="px-6 py-3.5 text-gray-700 tabular-nums">
                     {formatDate(p.paid_at, locale)}
@@ -433,7 +435,8 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
             </tbody>
           </table>
           </div>
-        )}
+        )
+        })()}
       </div>
       {/* ── Danger Zone ────────────────────────────────────────────────── */}
       <DangerZone

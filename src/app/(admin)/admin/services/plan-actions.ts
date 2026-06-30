@@ -52,6 +52,11 @@ function parseFormData(formData: FormData) {
     extras_en:          extrasEnRaw ? extrasEnRaw.split(',').map((s) => s.trim()).filter(Boolean) : [],
     extras_es:          extrasEsRaw ? extrasEsRaw.split(',').map((s) => s.trim()).filter(Boolean) : [],
     is_active:          formData.get('is_active') === 'true',
+    // Per-plan contract text (monthly only; nullable)
+    contract_title_en: ((formData.get('contract_title_en') as string | null)?.trim() || null),
+    contract_title_es: ((formData.get('contract_title_es') as string | null)?.trim() || null),
+    contract_body_en:  ((formData.get('contract_body_en')  as string | null)?.trim() || null),
+    contract_body_es:  ((formData.get('contract_body_es')  as string | null)?.trim() || null),
   }
 }
 

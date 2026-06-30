@@ -181,7 +181,7 @@ export function CheckinCard({
               >
                 <CreditCard size={20} />
                 {locale === 'es' ? 'Registrar visita extra' : 'Register additional visit'}
-                {plan?.price_usd ? ` — $${plan.price_usd}` : ''}
+                {plan ? ` — $${plan.additional_price_usd ?? plan.price_usd}` : ''}
               </button>
             </>
           ) : (

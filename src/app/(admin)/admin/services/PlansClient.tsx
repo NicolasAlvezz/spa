@@ -36,6 +36,10 @@ function PlanFormModal({ plan, onClose, onSaved }: FormModalProps) {
     extras_en:            (plan?.extras_en ?? []).join(', '),
     extras_es:            (plan?.extras_es ?? []).join(', '),
     is_active:            plan?.is_active             ?? true,
+    contract_title_en:    plan?.contract_title_en    ?? '',
+    contract_title_es:    plan?.contract_title_es    ?? '',
+    contract_body_en:     plan?.contract_body_en     ?? '',
+    contract_body_es:     plan?.contract_body_es     ?? '',
   })
 
   const isPack = form.plan_type === 'pack'
@@ -86,6 +90,10 @@ function PlanFormModal({ plan, onClose, onSaved }: FormModalProps) {
         split_first_amount:   plan?.split_first_amount ?? null,
         is_active:            Boolean(form.is_active),
         created_at:           plan?.created_at ?? new Date().toISOString(),
+        contract_title_en:    form.contract_title_en.trim() || null,
+        contract_title_es:    form.contract_title_es.trim() || null,
+        contract_body_en:     form.contract_body_en.trim()  || null,
+        contract_body_es:     form.contract_body_es.trim()  || null,
       }
       onSaved(updated)
       onClose()
@@ -248,6 +256,48 @@ function PlanFormModal({ plan, onClose, onSaved }: FormModalProps) {
               onChange={(e) => set('extras_es', e.target.value)}
               disabled={isPending} className={inputCls} placeholder="ej. Aromaterapia, Hot Stones, Recuperación muscular" />
           </div>
+
+          {/* ── Contract text (monthly only) ── */}
+          {!isPack && (
+            <>
+              <div className="border-t border-gray-100 pt-4">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Contract text</p>
+                <p className={hintCls}>Shown to the client when you send a membership contract. Leave empty to use the default generic contract.</p>
+              </div>
+
+              <div>
+                <label className={labelCls}>Contract title (English)</label>
+                <input type="text" value={form.contract_title_en}
+                  onChange={(e) => set('contract_title_en', e.target.value)}
+                  disabled={isPending} className={inputCls} placeholder="e.g. Basic Membership Commitment Agreement" />
+              </div>
+
+              <div>
+                <label className={labelCls}>Contract title (Español)</label>
+                <input type="text" value={form.contract_title_es}
+                  onChange={(e) => set('contract_title_es', e.target.value)}
+                  disabled={isPending} className={inputCls} placeholder="ej. Acuerdo de Compromiso de Membresía Básica" />
+              </div>
+
+              <div>
+                <label className={labelCls}>Contract body (English)</label>
+                <textarea value={form.contract_body_en}
+                  onChange={(e) => set('contract_body_en', e.target.value)}
+                  disabled={isPending} rows={8}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-shadow disabled:opacity-60 bg-white mt-1.5 resize-y font-mono leading-relaxed"
+                  placeholder="Full contract text in English…" />
+              </div>
+
+              <div>
+                <label className={labelCls}>Contract body (Español)</label>
+                <textarea value={form.contract_body_es}
+                  onChange={(e) => set('contract_body_es', e.target.value)}
+                  disabled={isPending} rows={8}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-shadow disabled:opacity-60 bg-white mt-1.5 resize-y font-mono leading-relaxed"
+                  placeholder="Texto completo del contrato en español…" />
+              </div>
+            </>
+          )}
 
           {/* ── Active ── */}
           <div className="flex items-start gap-3 p-3.5 rounded-xl border border-gray-200">

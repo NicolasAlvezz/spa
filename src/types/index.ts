@@ -52,6 +52,7 @@ export type ClientDetail = ClientListRow
 export type VisitWithService = DbVisit & {
   service_types: { slug: string; name_en: string; name_es: string; price_usd: number | null } | null
   payment_method: string | null
+  memberships: { membership_plans: { additional_price_usd: number | null; price_usd: number } | null } | null
 }
 
 // Consent snapshot attached to a visit (returned as array by PostgREST reverse-FK join)

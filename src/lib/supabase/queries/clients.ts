@@ -69,6 +69,7 @@ export async function getClientVisits(clientId: string, since?: string): Promise
     .select(`
       *,
       service_types(slug, name_en, name_es, price_usd),
+      memberships(membership_plans(additional_price_usd, price_usd)),
       consent_acceptance:consent_acceptances!consumed_by_visit(id, accepted_at, language, version)
     `)
     .eq('client_id', clientId)

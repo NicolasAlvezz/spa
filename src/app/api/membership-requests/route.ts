@@ -3,7 +3,7 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 import {
   MEMBERSHIP_CONTRACT_VERSION,
   MEMBERSHIP_REQUEST_TTL_MS,
-  getContractSnapshot,
+  getPlanContractSnapshot,
   type ContractLanguage,
 } from '@/lib/constants/membership-contract'
 
@@ -30,6 +30,17 @@ export async function POST(req: Request) {
 
   const supabase = createServiceClient()
 
+  // Fetch plan to use its specific contract text
+  const { data: plan } = await supabase
+    .from('membership_plans')
+    .select('contract_title_en, contract_title_es, contract_body_en, contract_body_es')
+    .eq('id', plan_id)
+    .single()
+
+  if (!plan) {
+    return NextResponse.json({ error: 'plan_not_found' }, { status: 404 })
+  }
+
   // Conflict check: no active pending request for this client
   const { data: existing } = await supabase
     .from('membership_requests')
@@ -47,7 +58,7 @@ export async function POST(req: Request) {
     )
   }
 
-  const snapshot = getContractSnapshot(language as ContractLanguage)
+  const snapshot = getPlanContractSnapshot(plan, language as ContractLanguage)
   const expiresAt = new Date(Date.now() + MEMBERSHIP_REQUEST_TTL_MS).toISOString()
 
   const { data, error } = await supabase
