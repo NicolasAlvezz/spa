@@ -34,7 +34,12 @@ function parseFormData(formData: FormData) {
     slug:               toSlug(nameEn),
     name_en:            nameEn,
     name_es:            (formData.get('name_es') as string).trim(),
-    price_usd:          parseFloat(formData.get('price_usd') as string),
+    price_usd:            parseFloat(formData.get('price_usd') as string),
+    additional_price_usd: (() => {
+      const v = (formData.get('additional_price_usd') as string | null)?.trim()
+      if (!v || isNaN(parseFloat(v))) return null
+      return parseFloat(v)
+    })(),
     plan_type:          planType,
     // Monthly-only (zero-filled for packs so NOT NULL columns are satisfied)
     sessions_per_month: isPack ? 0 : parseInt(formData.get('sessions_per_month') as string, 10),

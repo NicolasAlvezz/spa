@@ -27,6 +27,7 @@ function PlanFormModal({ plan, onClose, onSaved }: FormModalProps) {
     name_en:              plan?.name_en              ?? '',
     name_es:              plan?.name_es              ?? '',
     price_usd:            plan?.price_usd            ?? '',
+    additional_price_usd: plan?.additional_price_usd ?? '',
     sessions_per_month:   plan?.sessions_per_month   ?? 4,
     rollover_max:         plan?.rollover_max          ?? 2,
     min_months:           plan?.min_months            ?? 3,
@@ -72,6 +73,7 @@ function PlanFormModal({ plan, onClose, onSaved }: FormModalProps) {
         name_en:              form.name_en,
         name_es:              form.name_es,
         price_usd:            Number(form.price_usd),
+        additional_price_usd: form.additional_price_usd !== '' ? Number(form.additional_price_usd) : null,
         plan_type:            form.plan_type,
         sessions_per_month:   isPack ? 0 : Number(form.sessions_per_month),
         rollover_max:         isPack ? 0 : Number(form.rollover_max),
@@ -161,6 +163,17 @@ function PlanFormModal({ plan, onClose, onSaved }: FormModalProps) {
               onChange={(e) => set('price_usd', e.target.value)}
               required disabled={isPending} className={inputCls} placeholder="80" />
           </div>
+
+          {/* ── Additional visit price (monthly only) ── */}
+          {!isPack && (
+            <div>
+              <label className={labelCls}>Additional visit price (USD)</label>
+              <p className={hintCls}>Preferred price for extra visits in the same month. Leave empty to use the monthly price.</p>
+              <input type="number" min={0} step={0.01} value={form.additional_price_usd}
+                onChange={(e) => set('additional_price_usd', e.target.value)}
+                disabled={isPending} className={inputCls} placeholder="e.g. 95" />
+            </div>
+          )}
 
           {/* ── Monthly-only fields ── */}
           {!isPack && (

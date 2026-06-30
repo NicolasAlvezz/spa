@@ -84,6 +84,7 @@ export interface Database {
           name_en: string
           name_es: string
           price_usd: number
+          additional_price_usd: number | null
           sessions_per_month: number
           rollover_max: number
           min_months: number
@@ -103,6 +104,7 @@ export interface Database {
           name_en: string
           name_es: string
           price_usd: number
+          additional_price_usd?: number | null
           sessions_per_month?: number
           rollover_max?: number
           min_months?: number
@@ -121,6 +123,7 @@ export interface Database {
           name_en?: string
           name_es?: string
           price_usd?: number
+          additional_price_usd?: number | null
           sessions_per_month?: number
           rollover_max?: number
           min_months?: number

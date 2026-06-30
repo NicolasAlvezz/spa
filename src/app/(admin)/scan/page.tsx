@@ -195,7 +195,8 @@ export default function ScanPage() {
 
   const handleAdditionalVisitConfirm = useCallback(async () => {
     if (!result?.membership) return
-    const planPrice = result.membership.membership_plans?.price_usd
+    const plan = result.membership.membership_plans
+    const planPrice = plan?.additional_price_usd ?? plan?.price_usd
     if (!planPrice) return
     setPhase('registering')
     try {
@@ -834,7 +835,7 @@ function AdditionalVisitPanel({ result, onConfirm, onCancel }: AdditionalVisitPa
 
   const plan = result.membership?.membership_plans
   const planName = plan ? (locale === 'es' ? plan.name_es : plan.name_en) : ''
-  const price = plan?.price_usd ?? 0
+  const price = plan?.additional_price_usd ?? plan?.price_usd ?? 0
 
   const handleConfirm = async () => {
     if (submitting) return
