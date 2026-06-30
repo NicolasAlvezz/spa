@@ -67,8 +67,10 @@ export async function getDashboardStats(opts?: { from?: string; to?: string }): 
   const supabase = createServiceClient()
 
   const now   = new Date()
-  const today = now.toISOString().split('T')[0]
-  const nextWeek = new Date(now.getTime() + 7 * 86_400_000).toISOString().split('T')[0]
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(now)
+  const nextWeek = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(
+    new Date(now.getTime() + 7 * 86_400_000)
+  )
 
   // Date range for visits/revenue — default to current month
   const rangeFrom = opts?.from ?? (today.slice(0, 7) + '-01')
@@ -89,6 +91,7 @@ export async function getDashboardStats(opts?: { from?: string; to?: string }): 
     { count: visitsInRange },
     { data: payments },
     { count: expiringThisWeek },
+    { data: serviceVisits },
   ] = await Promise.all([
     supabase
       .from('memberships')
@@ -114,11 +117,24 @@ export async function getDashboardStats(opts?: { from?: string; to?: string }): 
       .eq('status', 'active')
       .gte('expires_at', today)
       .lte('expires_at', nextWeek),
+
+    supabase
+      .from('visits')
+      .select('service_types(price_usd)')
+      .is('membership_id', null)
+      .not('service_type_id', 'is', null)
+      .gte('visited_at', visitFrom)
+      .lt('visited_at', visitTo),
   ])
 
-  const revenueInRange = (payments ?? []).reduce(
+  const revenueFromPayments = (payments ?? []).reduce(
     (sum, p) => sum + Number(p.amount_usd), 0
   )
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const revenueFromServiceVisits = (serviceVisits as any[] ?? []).reduce(
+    (sum, v) => sum + Number(v.service_types?.price_usd ?? 0), 0
+  )
+  const revenueInRange = revenueFromPayments + revenueFromServiceVisits
 
   return {
     activeClients:    activeClients ?? 0,
