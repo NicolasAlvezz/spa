@@ -10,6 +10,7 @@ import {
   NewClientsBarChart,
   BreakdownBars,
 } from '@/components/spa/StatsCharts'
+import { InfoPopover } from '@/components/spa/InfoPopover'
 
 interface Props {
   searchParams: { period?: string }
@@ -67,7 +68,10 @@ export default async function StatsPage({ searchParams }: Props) {
       {/* ═══════════════════════════════════════════════════════════════ */}
       {/* 1. REVENUE                                                     */}
       {/* ═══════════════════════════════════════════════════════════════ */}
-      <Section icon={DollarSign} title={t('revenue_section')} color="brand">
+      <Section icon={DollarSign} title={t('revenue_section')} color="brand" info={{
+        title: 'Revenue',
+        description: 'Total income calculated from two sources: (1) membership payments recorded in the system, and (2) the price of individual service sessions for clients without an active membership.',
+      }}>
 
         {/* Total */}
         <BigStat
@@ -98,13 +102,22 @@ export default async function StatsPage({ searchParams }: Props) {
       {/* ═══════════════════════════════════════════════════════════════ */}
       {/* 2. CLIENTS                                                     */}
       {/* ═══════════════════════════════════════════════════════════════ */}
-      <Section icon={Users} title={t('clients_section')} color="blue">
+      <Section icon={Users} title={t('clients_section')} color="blue" info={{
+        title: 'Clients',
+        description: 'Overview of your client base. "With membership" shows clients with a currently active membership. "Without membership" includes clients whose membership expired, was cancelled, or never had one.',
+      }}>
 
         {/* Totals row */}
         <div className="grid grid-cols-3 gap-4">
           <MiniStat label={t('clients_total')}  value={data.totalClients}              />
-          <MiniStat label={t('status_active')}  value={data.clientsActive}  color="green" />
-          <MiniStat label={t('status_no_plan')} value={data.clientsNoPlan}  color="gray"  />
+          <MiniStat label={t('status_active')}  value={data.clientsActive}  color="green" info={{
+            title: 'With membership',
+            description: 'Clients who currently have an active membership that has not yet expired or been cancelled.',
+          }} />
+          <MiniStat label={t('status_no_plan')} value={data.clientsNoPlan}  color="gray" info={{
+            title: 'Without membership',
+            description: 'Clients who have no active membership — this includes clients whose membership expired, was cancelled, or who were never assigned a plan.',
+          }} />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
@@ -142,7 +155,10 @@ export default async function StatsPage({ searchParams }: Props) {
       {/* ═══════════════════════════════════════════════════════════════ */}
       {/* 3. VISITS                                                      */}
       {/* ═══════════════════════════════════════════════════════════════ */}
-      <Section icon={Activity} title={t('visits_section')} color="green">
+      <Section icon={Activity} title={t('visits_section')} color="green" info={{
+        title: 'Visits',
+        description: 'All service sessions registered in the system. "Included" sessions are covered by the monthly membership. "Additional" sessions are extra visits beyond what the plan includes.',
+      }}>
 
         <div className="grid grid-cols-2 gap-4">
           <BigStat
@@ -180,7 +196,10 @@ export default async function StatsPage({ searchParams }: Props) {
       {/* ═══════════════════════════════════════════════════════════════ */}
       {/* 4. MEMBERSHIPS                                                 */}
       {/* ═══════════════════════════════════════════════════════════════ */}
-      <Section icon={CreditCard} title={t('memberships_section')} color="purple">
+      <Section icon={CreditCard} title={t('memberships_section')} color="purple" info={{
+        title: 'Memberships',
+        description: 'Distribution of all memberships ever created in the system, grouped by plan. "Completed commitments" are memberships that fulfilled the minimum 3-month contract.',
+      }}>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
@@ -212,12 +231,13 @@ export default async function StatsPage({ searchParams }: Props) {
 type SectionColor = 'brand' | 'blue' | 'green' | 'purple'
 
 function Section({
-  icon: Icon, title, color, children,
+  icon: Icon, title, color, children, info,
 }: {
   icon: React.ElementType
   title: string
   color: SectionColor
   children: React.ReactNode
+  info?: { title: string; description: string }
 }) {
   const palette: Record<SectionColor, { bg: string; icon: string }> = {
     brand:  { bg: 'bg-brand-50',  icon: 'text-brand-500'  },
@@ -228,12 +248,12 @@ function Section({
   const c = palette[color]
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-      {/* Section header */}
       <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 bg-gray-50/50">
         <div className={`flex items-center justify-center w-8 h-8 rounded-lg ${c.bg}`}>
           <Icon size={15} className={c.icon} />
         </div>
         <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">{title}</h2>
+        {info && <InfoPopover title={info.title} description={info.description} />}
       </div>
       <div className="p-6">{children}</div>
     </div>
@@ -251,9 +271,10 @@ function BigStat({ label, value, sub }: { label: string; value: string; sub?: st
 }
 
 function MiniStat({
-  label, value, color = 'default',
+  label, value, color = 'default', info,
 }: {
   label: string; value: number; color?: 'green' | 'red' | 'gray' | 'default'
+  info?: { title: string; description: string }
 }) {
   const textColor = {
     green:   'text-green-600',
@@ -263,7 +284,10 @@ function MiniStat({
   }[color]
   return (
     <div className="bg-gray-50 rounded-xl p-4">
-      <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">{label}</p>
+      <div className="flex items-center gap-1.5 mb-1">
+        <p className="text-xs text-gray-400 uppercase tracking-wide">{label}</p>
+        {info && <InfoPopover title={info.title} description={info.description} />}
+      </div>
       <p className={`text-2xl font-bold ${textColor}`}>{value}</p>
     </div>
   )

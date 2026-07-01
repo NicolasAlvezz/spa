@@ -105,8 +105,8 @@ export async function getStatsData(period: StatsPeriod): Promise<StatsData> {
 
     // Visits
     (start
-      ? supabase.from('visits').select('session_type, visited_at, service_types(name_en)').gte('visited_at', start)
-      : supabase.from('visits').select('session_type, visited_at, service_types(name_en)')
+      ? supabase.from('visits').select('session_type, visited_at, membership_id, service_types(name_en, price_usd)').gte('visited_at', start)
+      : supabase.from('visits').select('session_type, visited_at, membership_id, service_types(name_en, price_usd)')
     ),
 
     // All memberships for plan distribution
@@ -120,7 +120,7 @@ export async function getStatsData(period: StatsPeriod): Promise<StatsData> {
 
   // ── Revenue ────────────────────────────────────────────────────────────────
 
-  const revenueTotal = payments.reduce((s, p) => s + Number(p.amount_usd), 0)
+  const paymentsRevenue = payments.reduce((s, p) => s + Number(p.amount_usd), 0)
 
   const conceptMap: Record<string, number> = {}
   const revMonthMap: Record<string, number> = {}
@@ -131,17 +131,37 @@ export async function getStatsData(period: StatsPeriod): Promise<StatsData> {
     revMonthMap[mk] = (revMonthMap[mk] ?? 0) + Number(p.amount_usd)
   }
 
+  // Add revenue from individual service visits (no membership linked)
+  let serviceVisitRevenue = 0
+  const serviceVisitMonthMap: Record<string, number> = {}
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  for (const v of visits as any[]) {
+    if (v.membership_id === null && v.service_types?.price_usd != null) {
+      const price = Number(v.service_types.price_usd)
+      serviceVisitRevenue += price
+      const mk = toMonthKey(v.visited_at)
+      serviceVisitMonthMap[mk] = (serviceVisitMonthMap[mk] ?? 0) + price
+    }
+  }
+  if (serviceVisitRevenue > 0) {
+    conceptMap['service_visit'] = (conceptMap['service_visit'] ?? 0) + serviceVisitRevenue
+  }
+
+  const revenueTotal = paymentsRevenue + serviceVisitRevenue
+
   const conceptLabels: Record<string, string> = {
     monthly_membership: 'Monthly membership',
     additional_visit:   'Additional visit',
     welcome_offer:      'Welcome offer',
+    service_visit:      'Service visit',
   }
 
   const revenueByConcept: ConceptRow[] = Object.entries(conceptMap).map(([k, v]) => ({
     label: conceptLabels[k] ?? k, value: v,
   }))
   const revenueByMonth: MonthPoint[] = months12.map(({ key, label }) => ({
-    month: label, value: revMonthMap[key] ?? 0,
+    month: label,
+    value: (revMonthMap[key] ?? 0) + (serviceVisitMonthMap[key] ?? 0),
   }))
 
   // ── Clients ────────────────────────────────────────────────────────────────

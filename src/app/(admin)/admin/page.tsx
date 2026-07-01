@@ -11,6 +11,7 @@ import {
 } from '@/lib/supabase/queries/clients'
 import { DayCalendar } from '@/components/spa/DayCalendar'
 import { DashboardDateFilter } from '@/components/spa/DashboardDateFilter'
+import { InfoPopover } from '@/components/spa/InfoPopover'
 
 interface Props {
   searchParams: { from?: string; to?: string }
@@ -74,24 +75,40 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
           label={t('active_clients')}
           value={String(stats.activeClients)}
           color="green"
+          info={{
+            title: 'Clients with membership',
+            description: 'Number of clients who currently have an active membership — not expired and not cancelled.',
+          }}
         />
         <StatCard
           icon={Activity}
           label={isCustomRange ? t('visits_in_range') : t('visits_this_month')}
           value={String(stats.visitsThisMonth)}
           color="blue"
+          info={{
+            title: 'Visits',
+            description: 'Total service sessions registered in the selected date range, regardless of session type or membership status.',
+          }}
         />
         <StatCard
           icon={DollarSign}
           label={isCustomRange ? t('revenue_in_range') : t('revenue_this_month')}
           value={`$${stats.revenueThisMonth.toFixed(0)}`}
           color="brand"
+          info={{
+            title: 'Revenue',
+            description: 'Sum of all membership payments recorded in the system, plus the price of individual service sessions (visits not linked to a membership) in the selected date range.',
+          }}
         />
         <StatCard
           icon={AlertTriangle}
           label={t('expiring_soon')}
           value={String(stats.expiringThisWeek)}
           color={stats.expiringThisWeek > 0 ? 'red' : 'gray'}
+          info={{
+            title: 'Expiring this week',
+            description: 'Active memberships whose expiration date falls within the next 7 days. These clients will need to renew soon.',
+          }}
         />
       </div>
 
@@ -164,12 +181,13 @@ function formatTime(iso: string) {
 type Color = 'green' | 'blue' | 'brand' | 'red' | 'gray'
 
 function StatCard({
-  icon: Icon, label, value, color,
+  icon: Icon, label, value, color, info,
 }: {
   icon: React.ElementType
   label: string
   value: string
   color: Color
+  info?: { title: string; description: string }
 }) {
   const palette: Record<Color, { bg: string; icon: string; val: string }> = {
     green:  { bg: 'bg-green-50',  icon: 'text-green-500',  val: 'text-green-700'  },
@@ -184,7 +202,10 @@ function StatCard({
       <div className={`inline-flex items-center justify-center w-9 h-9 rounded-lg ${c.bg} mb-3`}>
         <Icon size={17} className={c.icon} />
       </div>
-      <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">{label}</p>
+      <div className="flex items-center gap-1.5 mb-1">
+        <p className="text-xs text-gray-400 uppercase tracking-wide">{label}</p>
+        {info && <InfoPopover title={info.title} description={info.description} />}
+      </div>
       <p className={`text-3xl font-bold ${c.val}`}>{value}</p>
     </div>
   )
