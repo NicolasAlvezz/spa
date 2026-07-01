@@ -24,7 +24,7 @@ export default async function MembershipsPage() {
     getTranslations('membership_contract'),
     supabase
       .from('membership_requests')
-      .select('id, terms_title, terms_body, expires_at, membership_plans!inner(name_en, name_es, price_usd, plan_type)')
+      .select('id, terms_title, terms_body, expires_at, version, language, admin_signature_image, membership_plans!inner(name_en, name_es, price_usd, plan_type)')
       .eq('client_id', client.id)
       .eq('status', 'pending')
       .gt('expires_at', now)
@@ -55,6 +55,14 @@ export default async function MembershipsPage() {
         pendingRequest={pendingRequest}
         memberships={memberships}
         locale={locale}
+        clientProfile={{
+          first_name: client.first_name,
+          last_name: client.last_name,
+          phone: client.phone,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          email: (client as any).email ?? null,
+          address: client.address,
+        }}
       />
 
     </div>

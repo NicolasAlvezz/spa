@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
+import dynamic from 'next/dynamic'
 import { useTranslations, useLocale } from 'next-intl'
 import { ScanLine, WifiOff, UserX, Loader2, CheckCircle2, Camera, RotateCcw, Star, CreditCard, FileText, AlertTriangle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -10,7 +11,13 @@ import { TherapistSelector } from '@/components/spa/TherapistSelector'
 import { formatDate } from '@/lib/utils/dates'
 import { getDefaultTherapistName, THERAPIST_NAMES } from '@/lib/constants/therapists'
 import { parseVisitApiError, type ScanErrorKey } from '@/lib/visit-api-errors'
+import { getBasicContractTemplate } from '@/lib/constants/membership-contract-templates'
 import type { CheckinResult } from '@/types'
+
+const SignaturePad = dynamic(
+  () => import('@/components/spa/SignaturePad').then(m => m.SignaturePad),
+  { ssr: false, loading: () => <div className="h-[160px] rounded-xl border-2 border-dashed border-slate-600" /> }
+)
 
 const THERAPIST_STORAGE_KEY = 'scan_selected_therapist'
 
@@ -1082,7 +1089,9 @@ function RequestContractPanel({ result, onSent, onCancel }: RequestContractPanel
   const [language, setLanguage] = useState<'en' | 'es'>(
     result.client.preferred_language === 'es' ? 'es' : 'en'
   )
-  const [showTerms, setShowTerms] = useState(false)
+  const [showContractPreview, setShowContractPreview] = useState(false)
+  const [adminSignature, setAdminSignature] = useState<string | null>(null)
+  const [adminSigError, setAdminSigError] = useState(false)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -1097,13 +1106,23 @@ function RequestContractPanel({ result, onSent, onCancel }: RequestContractPanel
 
   async function handleSend() {
     if (!selectedPlanId || !selectedPlan || sending) return
+    if (!adminSignature) {
+      setAdminSigError(true)
+      return
+    }
+    setAdminSigError(false)
     setError(null)
     setSending(true)
     try {
       const res = await fetch('/api/membership-requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ client_id: result.client.id, plan_id: selectedPlanId, language }),
+        body: JSON.stringify({
+          client_id: result.client.id,
+          plan_id: selectedPlanId,
+          language,
+          admin_signature_image: adminSignature,
+        }),
       })
       if (res.status === 409) {
         setError(tContract('conflict_pending'))
@@ -1188,16 +1207,50 @@ function RequestContractPanel({ result, onSent, onCancel }: RequestContractPanel
         </div>
       </div>
 
-      {/* Terms preview */}
-      <div>
-        <button onClick={() => setShowTerms(v => !v)} className="text-brand-400 text-xs underline underline-offset-2">
-          {showTerms ? (loc === 'es' ? 'Ocultar términos' : 'Hide terms') : (loc === 'es' ? 'Ver términos del contrato' : 'Preview contract terms')}
-        </button>
-        {showTerms && (
-          <div className="mt-2 bg-slate-800 rounded-xl p-4 max-h-40 overflow-y-auto">
-            <p className="text-white text-xs font-semibold mb-2">{tContract('terms_title')}</p>
-            <p className="text-slate-400 text-xs leading-relaxed whitespace-pre-wrap">{tContract('terms_body')}</p>
-          </div>
+      {/* Contract preview (collapsible) */}
+      {selectedPlan && (
+        <div>
+          <button
+            onClick={() => setShowContractPreview(v => !v)}
+            className="text-brand-400 text-xs underline underline-offset-2"
+          >
+            {showContractPreview
+              ? tContract('contract_preview_hide')
+              : tContract('contract_preview_show')}
+          </button>
+          {showContractPreview && (() => {
+            const tmpl = getBasicContractTemplate(language)
+            return (
+              <div className="mt-3 bg-slate-800 rounded-xl p-4 max-h-64 overflow-y-auto space-y-3">
+                <p className="text-white text-xs font-bold uppercase">{tmpl.slide3_contract_title}</p>
+                <p className="text-slate-400 text-xs leading-relaxed">{tmpl.slide3_preamble}</p>
+                <p className="text-white text-xs font-bold uppercase">{tmpl.slide4_title}</p>
+                <p className="text-slate-400 text-xs leading-relaxed whitespace-pre-wrap">{tmpl.slide4_benefits}</p>
+                <p className="text-white text-xs font-bold uppercase">{tmpl.slide5_title}</p>
+                <p className="text-slate-400 text-xs leading-relaxed whitespace-pre-wrap">{tmpl.slide5_terms}</p>
+              </div>
+            )
+          })()}
+        </div>
+      )}
+
+      {/* Admin signature */}
+      <div className="space-y-2">
+        <p className="text-slate-400 text-xs uppercase tracking-wide">
+          {tContract('admin_sig_label')}
+        </p>
+        <div className="rounded-xl overflow-hidden border border-slate-600">
+          <SignaturePad
+            label=""
+            clearLabel={tContract('admin_sig_clear')}
+            onSignature={(dataUrl) => {
+              setAdminSignature(dataUrl)
+              if (dataUrl) setAdminSigError(false)
+            }}
+          />
+        </div>
+        {adminSigError && (
+          <p className="text-red-400 text-xs">{tContract('admin_sig_required')}</p>
         )}
       </div>
 
@@ -1206,7 +1259,7 @@ function RequestContractPanel({ result, onSent, onCancel }: RequestContractPanel
       )}
 
       <div className="flex flex-col gap-3 pt-2">
-        <button onClick={handleSend} disabled={!selectedPlanId || sending}
+        <button onClick={handleSend} disabled={!selectedPlanId || !adminSignature || sending}
           className="w-full h-16 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xl font-bold transition-colors flex items-center justify-center gap-2">
           {sending ? (
             <><Loader2 size={20} className="animate-spin" />{tContract('sending_contract')}</>
