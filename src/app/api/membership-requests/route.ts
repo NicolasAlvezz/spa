@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import {
-  MEMBERSHIP_CONTRACT_VERSION,
+  BASIC_CONTRACT_VERSION,
   MEMBERSHIP_REQUEST_TTL_MS,
   getPlanContractSnapshot,
   type ContractLanguage,
@@ -17,8 +17,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 
-  const body: { client_id?: string; plan_id?: string; language?: string } = await req.json()
-  const { client_id, plan_id, language } = body
+  const body: {
+    client_id?: string
+    plan_id?: string
+    language?: string
+    admin_signature_image?: string | null
+  } = await req.json()
+  const { client_id, plan_id, language, admin_signature_image } = body
 
   if (
     !client_id || !UUID_RE.test(client_id) ||
@@ -26,6 +31,10 @@ export async function POST(req: Request) {
     !language  || !VALID_LANGUAGES.includes(language as ContractLanguage)
   ) {
     return NextResponse.json({ error: 'invalid_request' }, { status: 400 })
+  }
+
+  if (!admin_signature_image || typeof admin_signature_image !== 'string') {
+    return NextResponse.json({ error: 'admin_signature_required' }, { status: 400 })
   }
 
   const supabase = createServiceClient()
@@ -66,12 +75,14 @@ export async function POST(req: Request) {
     .insert({
       client_id,
       plan_id,
-      requested_by: user.email ?? user.id,
-      language: language as ContractLanguage,
-      version: MEMBERSHIP_CONTRACT_VERSION,
-      terms_title: snapshot.terms_title,
-      terms_body:  snapshot.terms_body,
-      expires_at:  expiresAt,
+      requested_by:         user.email ?? user.id,
+      language:             language as ContractLanguage,
+      version:              BASIC_CONTRACT_VERSION,
+      terms_title:          snapshot.terms_title,
+      terms_body:           snapshot.terms_body,
+      expires_at:           expiresAt,
+      admin_signature_image,
+      admin_signed_at:      new Date().toISOString(),
     })
     .select('id, client_id, plan_id, status, expires_at, created_at')
     .single()
