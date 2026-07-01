@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, ChevronRight, X, CreditCard, Loader2 } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
@@ -324,6 +324,7 @@ export function ClientsTable({ clients, plans }: Props) {
   const locale = useLocale() as 'en' | 'es'
   const t = useTranslations('clients')
   const router = useRouter()
+  const [, startTransition] = useTransition()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [sortOrder, setSortOrder] = useState<SortOrder>('recent')
@@ -579,7 +580,7 @@ export function ClientsTable({ clients, plans }: Props) {
           plans={plans}
           locale={locale}
           onClose={() => setPlanClient(null)}
-          onAssigned={() => router.refresh()}
+          onAssigned={() => startTransition(() => router.refresh())}
         />
       )}
     </div>
