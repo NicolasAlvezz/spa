@@ -36,7 +36,9 @@ function lastNMonths(n: number): { key: string; label: string }[] {
   for (let i = n - 1; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
     const key   = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-    const label = d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
+    const month = d.toLocaleDateString('en-US', { month: 'short' })
+    const year2 = String(d.getFullYear()).slice(2)
+    const label = `${month} '${year2}`
     months.push({ key, label })
   }
   return months

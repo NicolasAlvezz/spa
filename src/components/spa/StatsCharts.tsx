@@ -17,14 +17,15 @@ interface RevenueChartProps { data: MonthPoint[] }
 
 export function RevenueBarChart({ data }: RevenueChartProps) {
   return (
-    <div className="w-full min-w-0 h-[200px] sm:h-[280px]">
+    <div className="w-full min-w-0 h-[220px] sm:h-[300px]">
     <ResponsiveContainer width="100%" height="100%">
-      <BarChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+      <BarChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 24 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
         <XAxis
           dataKey="month"
           tick={{ fontSize: 11, fill: '#94a3b8' }}
           axisLine={false} tickLine={false}
+          angle={-35} textAnchor="end" interval={0}
         />
         <YAxis
           tick={{ fontSize: 11, fill: '#94a3b8' }}
@@ -34,6 +35,7 @@ export function RevenueBarChart({ data }: RevenueChartProps) {
         />
         <Tooltip
           formatter={(v) => [`$${Number(v ?? 0).toFixed(0)}`, 'Revenue']}
+          labelFormatter={(label) => `Month: ${label}`}
           contentStyle={{ borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 12 }}
         />
         <Bar dataKey="value" fill={AMBER} radius={[4, 4, 0, 0]} maxBarSize={32} />
@@ -49,14 +51,15 @@ interface ClientsChartProps { data: MonthPoint[] }
 
 export function NewClientsBarChart({ data }: ClientsChartProps) {
   return (
-    <div className="w-full min-w-0 h-[180px] sm:h-[260px]">
+    <div className="w-full min-w-0 h-[200px] sm:h-[280px]">
     <ResponsiveContainer width="100%" height="100%">
-      <BarChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+      <BarChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 24 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
         <XAxis
           dataKey="month"
           tick={{ fontSize: 11, fill: '#94a3b8' }}
           axisLine={false} tickLine={false}
+          angle={-35} textAnchor="end" interval={0}
         />
         <YAxis
           tick={{ fontSize: 11, fill: '#94a3b8' }}
@@ -66,6 +69,7 @@ export function NewClientsBarChart({ data }: ClientsChartProps) {
         />
         <Tooltip
           formatter={(v) => [Number(v ?? 0), 'New clients']}
+          labelFormatter={(label) => `Month: ${label}`}
           contentStyle={{ borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 12 }}
         />
         <Bar dataKey="value" fill={SLATE} radius={[4, 4, 0, 0]} maxBarSize={32} />
