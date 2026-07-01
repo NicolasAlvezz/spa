@@ -2,6 +2,8 @@ import enMessages from '../../../messages/en.json'
 import esMessages from '../../../messages/es.json'
 
 export const MEMBERSHIP_CONTRACT_VERSION = 'membership-v1.0'
+export const BASIC_CONTRACT_VERSION = 'basic-v1.0'
+export const BASIC_TEMPLATE_ID = 'basic'
 
 export const MEMBERSHIP_REQUEST_TTL_MS = 30 * 60 * 1000 // 30 minutes
 

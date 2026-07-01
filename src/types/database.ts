@@ -394,6 +394,19 @@ export interface Database {
           expires_at: string
           created_at: string
           updated_at: string
+          admin_signature_image: string | null
+          admin_signed_at: string | null
+          contract_fields: {
+            full_name: string
+            date_of_birth: string
+            phone: string
+            email: string
+            address: string
+            city_state: string
+            start_date: string
+          } | null
+          payment_method: 'credit' | 'debit' | null
+          card_last4: string | null
         }
         Insert: {
           id?: string
@@ -412,6 +425,11 @@ export interface Database {
           expires_at: string
           created_at?: string
           updated_at?: string
+          admin_signature_image?: string | null
+          admin_signed_at?: string | null
+          contract_fields?: Record<string, string> | null
+          payment_method?: 'credit' | 'debit' | null
+          card_last4?: string | null
         }
         Update: {
           status?: 'pending' | 'signed' | 'declined' | 'cancelled' | 'expired'
@@ -420,6 +438,11 @@ export interface Database {
           signature_image?: string | null
           signed_user_agent?: string | null
           updated_at?: string
+          admin_signature_image?: string | null
+          admin_signed_at?: string | null
+          contract_fields?: Record<string, string> | null
+          payment_method?: 'credit' | 'debit' | null
+          card_last4?: string | null
         }
         Relationships: Relationship[]
       }
