@@ -8,7 +8,7 @@ update public.membership_plans
   set is_active = false
   where slug in ('healthcare_basic', 'healthcare_95');
 
--- Insert new open-access monthly plans
+-- Insert new open-access monthly plans (upsert — safe to re-run)
 insert into public.membership_plans
   (slug, name_en, name_es, price_usd, additional_price_usd,
    sessions_per_month, rollover_max, min_months,
@@ -49,4 +49,17 @@ values
       'Otras terapias complementarias según recomendación del terapeuta'
     ],
     false, true, 'monthly'
-  );
+  )
+on conflict (slug) do update set
+  name_en              = excluded.name_en,
+  name_es              = excluded.name_es,
+  price_usd            = excluded.price_usd,
+  additional_price_usd = excluded.additional_price_usd,
+  sessions_per_month   = excluded.sessions_per_month,
+  rollover_max         = excluded.rollover_max,
+  min_months           = excluded.min_months,
+  extras_en            = excluded.extras_en,
+  extras_es            = excluded.extras_es,
+  requires_healthcare  = excluded.requires_healthcare,
+  is_active            = excluded.is_active,
+  plan_type            = excluded.plan_type;
