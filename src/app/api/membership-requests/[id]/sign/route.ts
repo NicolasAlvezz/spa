@@ -93,23 +93,20 @@ export async function POST(
   const userAgent = req.headers.get('user-agent') ?? null
   const signedAt = new Date().toISOString()
 
-  const updatePayload: Record<string, unknown> = {
-    status:            'signed',
-    signed_at:         signedAt,
-    signed_ip:         ip,
-    signed_user_agent: userAgent,
-    signature_image:   signature_image ?? null,
-  }
-
-  if (request.version === BASIC_CONTRACT_VERSION) {
-    updatePayload.contract_fields  = contract_fields
-    updatePayload.payment_method   = payment_method
-    updatePayload.card_last4       = card_last4
-  }
-
   const { error } = await supabase
     .from('membership_requests')
-    .update(updatePayload)
+    .update({
+      status:            'signed',
+      signed_at:         signedAt,
+      signed_ip:         ip,
+      signed_user_agent: userAgent,
+      signature_image:   signature_image ?? null,
+      ...(request.version === BASIC_CONTRACT_VERSION ? {
+        contract_fields:  contract_fields as Record<string, string>,
+        payment_method:   payment_method,
+        card_last4:       card_last4,
+      } : {}),
+    })
     .eq('id', params.id)
 
   if (error) {
