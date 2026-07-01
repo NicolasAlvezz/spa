@@ -1,5 +1,5 @@
 // src/lib/constants/membership-contract-templates.ts
-// All text reproduced verbatim from PPTX slides. Do not modify legal clauses.
+// Text reproduced verbatim from PPTX slides — do NOT alter, correct typos, or rephrase.
 
 export interface BasicContractTemplate {
   // Slide 1
@@ -53,13 +53,13 @@ export interface BasicContractTemplate {
 }
 
 export const BASIC_CONTRACT_ES: BasicContractTemplate = {
-  slide1_title: 'MEMBRESIAS BÁSICA',
+  slide1_title: 'MEMBRESIAS\nBASICA',
 
   slide2_heading: 'MEMBRESÍA PREMIUM',
   slide2_wellness_title: 'VM Integral Massage',
   slide2_invest_subtitle: 'Membresía de Bienestar\nInvierte en ti mes a mes.',
   slide2_description:
-    'La Membresía Basica ha sido diseñada para quienes desean convertir el masaje terapéutico en una parte esencial de su bienestar físico y mental. Este programa ofrece acceso a beneficios exclusivos, servicios complementarios sin costo adicional y ventajas especiales que brindan una experiencia superior en cada visita.',
+    'La Membresía Basica ha sido diseñada para quienes desean convertir el masaje terapéutico en una parte esencial de su bienestar físico y mental. Este programa ofrece acceso a beneficios exclusivos, servicios complementarios sin costo adicional y ventajas especiales que brindan una experiencia superior\nen cada visita.',
   slide2_cost_label: 'Costo de la membresia basica',
   slide2_cost_value: '$89 por mes',
   slide2_intro_heading: 'Masaje Introductorio',
@@ -82,22 +82,39 @@ export const BASIC_CONTRACT_ES: BasicContractTemplate = {
   slide4_intro:
     'El Miembro tendrá derecho a los siguientes beneficios mientras mantenga su membresía activa y al corriente en sus pagos:',
   slide4_benefits:
-    'Masaje Mensual\n• Un (1) masajes terapéuticos de 60 minutos por mes.\n• Precio preferencial de $89 para masajes terapéuticos adicionales durante el mismo mes.\n\n' +
-    '2. Acceso a Promociones Especiales\n• 5% de descuento adicional sobre promociones, paquetes y eventos especiales realizados por VM Integral Massage, durante el año.\n\n' +
-    '3. Servicios Complementarios Incluidos\nDurante cada sesión, el miembro podrá disfrutar sin costo adicional de los servicios complementarios disponibles, incluyendo:\n• Herramientas de Recuperación Muscular\n• Otras terapias complementarias disponibles según recomendación del terapeuta\n\n' +
-    '4. Prioridad en Reservaciones\n• Acceso preferencial a los horarios disponibles.\n\n' +
-    '5. Sesiones Acumulables\n• Las sesiones no utilizadas podrán acumularse hasta por sesenta (60) días.\n• Las sesiones acumuladas vencen automáticamente después de dicho período.\n\n' +
-    '6. Beneficios para Familiares\n• Los familiares directos del miembro recibirán un 5% de descuento en los servicios ofrecidos por VM Integral Massage en su primer masaje.\nLos servicios estéticos están excluidos.\n\n' +
-    '7. Programa de Referidos\n• Reciba un crédito de $10 por cada nuevo cliente referido que complete un servicio.\n• Los créditos no son acumulables, deben utilizarse dentro de los 30 días posteriores a su emisión.\n• No son transferibles ni canjeables por efectivo.\n• No son transferibles a otra persona.\n\n' +
-    '8. Regalo de Cumpleaños\n• Durante el mes de cumpleaños, el miembro recibirá una mejora gratuita en una de sus sesiones, incluyendo 15 minutos adicionales de masaje sin costo.',
+    'Masaje Mensual\n' +
+    '• Un (1) masajes terapéuticos de 60 minutos por mes.\n' +
+    '• Precio preferencial de $89 para masajes terapéuticos adicionales durante el mismo mes.\n\n' +
+    '2. Acceso a Promociones Especiales\n' +
+    '• 5% de descuento adicional sobre promociones, paquetes y eventos especiales realizados por VM Integral Massage, durante el año.\n\n' +
+    '3. Servicios Complementarios Incluidos\n' +
+    'Durante cada sesión, el miembro podrá disfrutar sin costo adicional de los servicios complementarios disponibles, incluyendo:\n' +
+    '• Herramientas de Recuperación Muscular\n' +
+    '• Otras terapias complementarias disponibles según recomendación del terapeuta\n\n' +
+    '4. Prioridad en Reservaciones\n' +
+    '• Acceso preferencial a los horarios disponibles.\n\n' +
+    '5. Sesiones Acumulables\n' +
+    '• Las sesiones no utilizadas podrán acumularse hasta por sesenta (60) días.\n' +
+    '• Las sesiones acumuladas vencen automáticamente después de dicho período.\n\n' +
+    '6. Beneficios para Familiares\n' +
+    '• Los familiares directos del miembro recibirán un 5% de descuento en  los servicios ofrecidos por VM Integral Massage en su primer masaje.\n' +
+    'Los servivios esteticos estan excluidos.\n\n' +
+    '7. Programa de Referidos\n' +
+    '• Reciba un crédito de $10 por cada nuevo cliente referido que complete un servicio.\n' +
+    '• Los créditos no son acumulables,\u00a0\u00a0deben utilizarse dentro de los 30 días posteriores\u00a0 a su\n' +
+    'emisión.\n' +
+    '• No son transferibles ni canjeables por efectivo.\n' +
+    'No son transferibles a otra persona.\n\n' +
+    '8. Regalo de Cumpleaños\n' +
+    '• Durante el mes de cumpleaños, el miembro recibirá una mejora gratuita en una de sus sesiones, incluyendo 15 minutos adicionales de masaje sin costo.',
 
   slide5_title: 'TÉRMINOS Y CONDICIONES',
   slide5_terms:
     'La membresía tiene una permanencia mínima obligatoria de seis (6) meses, si desea cancelar la misma antes de ese period tiene una multa de $200.\n\n' +
     'El pago mensual será debitado automáticamente mediante el método de pago autorizado por el miembro.\n\n' +
     'La membresía se renovará automáticamente cada mes hasta que sea cancelada conforme a las disposiciones de este contrato.\n\n' +
-    'Después de cumplir el período mínimo de permanencia, el miembro podrá cancelar la membresía notificando sus deseos de forma presencial y deberá firmar su cancelación, en caso que el miembro no notifique el deseo de cancelar su membresía la misma se renovará automáticamente. Se enviará un mensaje de recordatorio del vencimiento de la misma 30 días antes.\n\n' +
-    'La membresía es personal e intransferible.\n\n' +
+    'Después de cumplir el período mínimo de permanencia, el miembro podrá cancelar la membresía notificando sus deseos de forma presencial y debra firmar su cancelacion,  en caso que el miembro no notifique el deseo de cancelar su membresia la  misma se renovara automatiucamente. Se enviara un mensaje de recordatorio del vencimiento de la misma 30 dias antes .\n\n' +
+    'La membresía es personal e intransferible\n\n' +
     'Los beneficios son exclusivos para miembros activos y con pagos al día.\n\n' +
     'Los masajes estéticos, tratamientos cosméticos y otros servicios no especificados expresamente en este contrato no están incluidos.\n\n' +
     'Las sesiones acumuladas vencerán automáticamente después de sesenta (60) días.\n\n' +
@@ -130,9 +147,9 @@ export const BASIC_CONTRACT_ES: BasicContractTemplate = {
 export const BASIC_CONTRACT_EN: BasicContractTemplate = {
   slide1_title: 'BASIC MEMBERSHIP',
 
-  slide2_heading: 'BASIC MEMBERSHIP',
+  slide2_heading: 'MEMBRESÍA BASICA',
   slide2_wellness_title: 'VM Integral Massage',
-  slide2_invest_subtitle: 'Wellness Membership\n\nInvest in Yourself Month After Month',
+  slide2_invest_subtitle: 'Wellness Membership\nInvest in Yourself Month After Month',
   slide2_description:
     'The Basic Membership has been designed for those who want to make therapeutic massage an essential part of their physical and mental well-being. This program provides access to exclusive benefits, complimentary add-on services, and special advantages that enhance every visit.',
   slide2_cost_label: 'Basic Membership Cost',
@@ -157,14 +174,30 @@ export const BASIC_CONTRACT_EN: BasicContractTemplate = {
   slide4_intro:
     'The Member shall be entitled to the following benefits while maintaining an active membership account and remaining current on all membership payments:',
   slide4_benefits:
-    '1. Monthly Massage\n• One (1) 60-minute therapeutic massage per month.\n• Preferred rate of $89 for additional therapeutic massages during the same month.\n\n' +
-    '2. Access to Special Promotions\n• An additional 5% discount on promotions, packages, and special events offered by VM Integral Massage throughout the year.\n\n' +
-    '3. Complimentary Add-On Services\nDuring each session, members may enjoy the following complimentary services at no additional cost:\n• Muscle Recovery Tools\n• Other complementary therapies available based on the therapist\'s recommendation\n\n' +
-    '4. Priority Scheduling\n• Preferred access to available appointment times.\n\n' +
-    '5. Accumulated Sessions\n• Unused sessions may be accumulated for up to sixty (60) days.\n• Accumulated sessions automatically expire after that period.\n\n' +
-    '6. Family Benefits\n• Immediate family members will receive a 5% discount on their first massage service at VM Integral Massage.\n• Aesthetic and cosmetic services are excluded.\n\n' +
-    '7. Referral Program\n• Receive a $10 credit for each new client referred who completes a service.\n• Credits are not cumulative and must be used within thirty (30) days of issuance.\n• Credits are non-transferable and cannot be redeemed for cash.\n• Credits may not be transferred to another person.\n\n' +
-    '8. Birthday Gift\n• During their birthday month, members will receive a complimentary upgrade on one of their sessions, including an additional 15 minutes of massage at no extra charge.',
+    '1. Monthly Massage\n' +
+    '• One (1) 60-minute therapeutic massage per month.\n' +
+    '• Preferred rate of $89 for additional therapeutic massages during the same month.\n\n' +
+    '2. Access to Special Promotions\n' +
+    '• An additional 5% discount on promotions, packages, and special events offered by VM Integral Massage throughout the year.\n\n' +
+    '3. Complimentary Add-On Services\n' +
+    'During each session, members may enjoy the following complimentary services at no additional cost:\n' +
+    '• Muscle Recovery Tools\n' +
+    '• Other complementary therapies available based on the therapist\'s recommendation\n\n' +
+    '4. Priority Scheduling\n' +
+    '• Preferred access to available appointment times.\n\n' +
+    '5. Accumulated Sessions\n' +
+    '• Unused sessions may be accumulated for up to sixty (60) days.\n' +
+    '• Accumulated sessions automatically expire after that period.\n\n' +
+    '6. Family Benefits\n' +
+    '• Immediate family members will receive a 5% discount on their first massage service at VM Integral Massage.\n' +
+    '• Aesthetic and cosmetic services are excluded.\n\n' +
+    '7. Referral Program\n' +
+    '• Receive a $10 credit for each new client referred who completes a service.\n' +
+    '• Credits are not cumulative and must be used within thirty (30) days of issuance.\n' +
+    '• Credits are non-transferable and cannot be redeemed for cash.\n' +
+    '• Credits may not be transferred to another person.\n\n' +
+    '8. Birthday Gift\n' +
+    '• During their birthday month, members will receive a complimentary upgrade on one of their sessions, including an additional 15 minutes of massage at no extra charge.',
 
   slide5_title: 'MEMBERSHIP TERMS & CONDITIONS',
   slide5_terms:
