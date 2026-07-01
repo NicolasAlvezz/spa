@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { renderMembershipContract } from '@/components/pdf/MembershipContractDocument'
-import { renderBasicMembershipContract } from '@/components/pdf/BasicMembershipContract'
-import { getBasicContractTemplate } from '@/lib/constants/membership-contract-templates'
+import { renderGoogleContract } from '@/lib/contracts/render-google-contract'
 import { BASIC_CONTRACT_VERSION } from '@/lib/constants/membership-contract'
 import type { ContractLanguage } from '@/lib/constants/membership-contract'
 import enMessages from '../../../../../../messages/en.json'
@@ -30,7 +29,7 @@ export async function GET(
     .from('membership_requests')
     .select(`
       id, language, version, terms_title, terms_body,
-      signed_at, signed_ip, signed_user_agent,
+      signed_at, signed_ip, signed_user_agent, admin_signed_at,
       signature_image, admin_signature_image,
       contract_fields, payment_method, card_last4,
       clients!inner(id, first_name, last_name, phone, address, user_id),
@@ -56,27 +55,26 @@ export async function GET(
   let buffer: Buffer
 
   if (request.version === BASIC_CONTRACT_VERSION && request.contract_fields) {
-    // ── New 6-page basic contract renderer ──
-    const template = getBasicContractTemplate(language)
+    // ── PNG-background basic contract renderer ──
     const fields = request.contract_fields as Record<string, string>
     try {
-      buffer = await renderBasicMembershipContract({
-        template,
+      buffer = await renderGoogleContract({
         language,
-        full_name:    fields.full_name    ?? `${client.first_name} ${client.last_name}`,
-        date_of_birth: fields.date_of_birth ?? '',
-        phone:        fields.phone        ?? client.phone,
-        email:        fields.email        ?? '',
-        address:      fields.address      ?? client.address,
-        city_state:   fields.city_state   ?? '',
-        start_date:   fields.start_date   ?? '',
-        payment_method: (request.payment_method as 'credit' | 'debit') ?? 'credit',
-        card_last4:   request.card_last4  ?? '????',
-        client_signature_image: request.signature_image ?? '',
-        admin_signature_image:  request.admin_signature_image ?? null,
-        signed_at:    request.signed_at,
-        signed_ip:    request.signed_ip   ?? null,
-        signed_user_agent: request.signed_user_agent ?? null,
+        contractFields: {
+          full_name:     fields.full_name     ?? `${client.first_name} ${client.last_name}`,
+          date_of_birth: fields.date_of_birth ?? '',
+          phone:         fields.phone         ?? client.phone,
+          email:         fields.email         ?? '',
+          address:       fields.address       ?? client.address,
+          city_state:    fields.city_state    ?? '',
+          start_date:    fields.start_date    ?? '',
+        },
+        paymentMethod:       (request.payment_method as 'credit' | 'debit') ?? 'credit',
+        cardLast4:           request.card_last4       ?? '????',
+        signatureImage:      request.signature_image  ?? null,
+        adminSignatureImage: request.admin_signature_image ?? null,
+        signedAt:            request.signed_at         ?? null,
+        adminSignedAt:       request.admin_signed_at   ?? null,
       })
     } catch (err) {
       console.error('[contract.pdf basic] render error:', err)
