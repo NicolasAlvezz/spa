@@ -45,3 +45,29 @@ export function addOneMonth(dateString: string): string {
 export function today(): string {
   return format(new Date(), 'yyyy-MM-dd')
 }
+
+/** IANA timezone for the spa (Kissimmee, FL). */
+export const SPA_TZ = 'America/New_York'
+
+/**
+ * Returns today's date as a YYYY-MM-DD string in the spa's local timezone.
+ * Use this in server-side code instead of `today()` to avoid UTC-vs-ET mismatches.
+ */
+export function todayInSpaTz(): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: SPA_TZ }).format(new Date())
+}
+
+/**
+ * Returns the current UTC offset string for the spa timezone, e.g. "-04:00" (EDT) or "-05:00" (EST).
+ * Handles DST automatically.
+ */
+export function spaTzOffset(): string {
+  const parts = new Intl.DateTimeFormat('en', {
+    timeZone: SPA_TZ,
+    timeZoneName: 'shortOffset',
+  }).formatToParts(new Date())
+  const gmtStr = parts.find(p => p.type === 'timeZoneName')?.value ?? 'GMT-5'
+  const match = gmtStr.match(/GMT([+-])(\d+)/)
+  if (!match) return '-05:00'
+  return `${match[1]}${match[2].padStart(2, '0')}:00`
+}

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getMembershipStatus, getCurrentMembership } from '@/lib/utils/membership'
 import { CONSENT_WINDOW_MS } from '@/lib/constants/consent'
+import { todayInSpaTz, spaTzOffset } from '@/lib/utils/dates'
 import type { CheckinResult, MembershipWithPlan } from '@/types'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -42,15 +43,15 @@ export async function GET(
   const membership = getCurrentMembership(memberships)
   const membership_status = getMembershipStatus(membership)
 
-  // Visits this calendar month
-  const startOfMonth = new Date()
-  startOfMonth.setDate(1)
-  startOfMonth.setHours(0, 0, 0, 0)
+  // Use the spa's local timezone (America/New_York) for day/month boundaries
+  // so visits near midnight don't land in the wrong day or month.
+  const todayNY = todayInSpaTz()
+  const offset = spaTzOffset()
+  const monthStartNY = todayNY.substring(0, 7) + '-01'
 
-  const todayStart = new Date()
-  todayStart.setHours(0, 0, 0, 0)
-  const todayEnd = new Date()
-  todayEnd.setHours(23, 59, 59, 999)
+  const startOfMonth = `${monthStartNY}T00:00:00${offset}`
+  const todayStart = `${todayNY}T00:00:00${offset}`
+  const todayEnd = `${todayNY}T23:59:59.999${offset}`
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabaseAny = supabase as any
@@ -62,7 +63,7 @@ export async function GET(
       .from('visits')
       .select('*')
       .eq('client_id', uuid)
-      .gte('visited_at', startOfMonth.toISOString())
+      .gte('visited_at', startOfMonth)
       .order('visited_at', { ascending: false }),
     supabase
       .from('payments')
@@ -75,8 +76,8 @@ export async function GET(
       .select('id, scheduled_at, notes, service_types(name_en, name_es)')
       .eq('client_id', uuid)
       .eq('status', 'scheduled')
-      .gte('scheduled_at', todayStart.toISOString())
-      .lte('scheduled_at', todayEnd.toISOString())
+      .gte('scheduled_at', todayStart)
+      .lte('scheduled_at', todayEnd)
       .order('scheduled_at', { ascending: true })
       .limit(1)
       .maybeSingle(),

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { calculateRollover } from '@/lib/utils/membership'
 import { MONTHLY_PLAN_MIN_MONTHS } from '@/lib/constants/membership'
+import { todayInSpaTz } from '@/lib/utils/dates'
 export async function POST(req: Request) {
   const authClient = await createClient()
   const { data: { user }, error: authError } = await authClient.auth.getUser()
@@ -67,8 +68,8 @@ export async function POST(req: Request) {
     }
   }
 
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+  // Use the spa's local date (America/New_York) to avoid UTC-vs-ET day mismatches
+  const todayStr = todayInSpaTz()
 
   let started_at: string
   let expires_at: string
@@ -76,24 +77,23 @@ export async function POST(req: Request) {
 
   if (isPack) {
     // Packs don't expire by time — use a far-future sentinel date
-    started_at = today.toISOString().split('T')[0]
+    started_at = todayStr
     expires_at = '9999-12-31'
   } else {
     // Monthly plan: calculate 1-month period
     if (currentMembership && currentMembership.membership_plans) {
-      const currentExpiry = new Date(currentMembership.expires_at)
-      currentExpiry.setHours(0, 0, 0, 0)
+      const currentExpiry = currentMembership.expires_at // YYYY-MM-DD string
 
-      if (currentExpiry >= today) {
-        started_at = currentMembership.expires_at
-        const newExpiry = new Date(currentExpiry)
-        newExpiry.setMonth(newExpiry.getMonth() + 1)
-        expires_at = newExpiry.toISOString().split('T')[0]
+      if (currentExpiry >= todayStr) {
+        started_at = currentExpiry
+        const d = new Date(currentExpiry + 'T12:00:00Z')
+        d.setUTCMonth(d.getUTCMonth() + 1)
+        expires_at = d.toISOString().split('T')[0]
       } else {
-        started_at = today.toISOString().split('T')[0]
-        const newExpiry = new Date(today)
-        newExpiry.setMonth(newExpiry.getMonth() + 1)
-        expires_at = newExpiry.toISOString().split('T')[0]
+        started_at = todayStr
+        const d = new Date(todayStr + 'T12:00:00Z')
+        d.setUTCMonth(d.getUTCMonth() + 1)
+        expires_at = d.toISOString().split('T')[0]
       }
 
       // Rollover only carries over from a monthly plan — packs use sessions_remaining,
@@ -108,10 +108,10 @@ export async function POST(req: Request) {
         )
       }
     } else {
-      started_at = today.toISOString().split('T')[0]
-      const newExpiry = new Date(today)
-      newExpiry.setMonth(newExpiry.getMonth() + 1)
-      expires_at = newExpiry.toISOString().split('T')[0]
+      started_at = todayStr
+      const d = new Date(todayStr + 'T12:00:00Z')
+      d.setUTCMonth(d.getUTCMonth() + 1)
+      expires_at = d.toISOString().split('T')[0]
     }
   }
 

@@ -972,7 +972,8 @@ function ServiceVisitPanel({ result, therapistName, onTherapistChange, onConfirm
 
   const handleConfirm = async () => {
     if (!selectedId || submitting) return
-    const service = services.find(s => s.id === selectedId)!
+    const service = services.find(s => s.id === selectedId)
+    if (!service) return
     setSubmitting(true)
     await onConfirm(selectedId, locale === 'es' ? service.name_es : service.name_en, service.price_usd)
   }
