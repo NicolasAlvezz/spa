@@ -13,7 +13,7 @@ export async function GET() {
     .from('service_types')
     .select('id, slug, name_en, name_es, price_usd, duration_minutes')
     .eq('is_active', true)
-    .order('name_en')
+    .order('sort_order')
 
   if (error) {
     return NextResponse.json({ error: 'query_failed' }, { status: 500 })
