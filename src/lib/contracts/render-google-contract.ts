@@ -13,6 +13,7 @@ import { join } from 'path'
 import Docxtemplater from 'docxtemplater'
 import PizZip from 'pizzip'
 import CloudConvert from 'cloudconvert'
+import { createClient } from '@supabase/supabase-js'
 import { PDFDocument } from 'pdf-lib'
 
 export interface GoogleContractParams {
@@ -79,9 +80,26 @@ function fillDocxTemplate(
   return doc.getZip().generate({ type: 'nodebuffer', compression: 'DEFLATE' })
 }
 
+async function getCloudConvertApiKey(): Promise<string> {
+  // Try env var first (local dev), then fall back to Supabase settings table (production)
+  if (process.env.CLOUDCONVERT_API_KEY) return process.env.CLOUDCONVERT_API_KEY
+
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+  const { data, error } = await supabase
+    .from('app_settings')
+    .select('value')
+    .eq('key', 'cloudconvert_api_key')
+    .single()
+
+  if (error || !data?.value) throw new Error('CloudConvert API key not found in env or app_settings')
+  return data.value
+}
+
 async function convertDocxToPdf(docxBytes: Buffer): Promise<Buffer> {
-  const apiKey = process.env.CLOUDCONVERT_API_KEY
-  if (!apiKey) throw new Error('CLOUDCONVERT_API_KEY env var is not set')
+  const apiKey = await getCloudConvertApiKey()
 
   const cloudConvert = new CloudConvert(apiKey)
 
