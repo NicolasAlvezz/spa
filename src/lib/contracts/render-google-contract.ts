@@ -57,7 +57,10 @@ function parseDataURL(dataURL: string): Uint8Array | null {
 }
 
 async function exportDocxFromDrive(fileId: string): Promise<Buffer> {
-  const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON
+  // Support both plain JSON and base64-encoded JSON (base64 avoids newline issues in Vercel)
+  const rawB64 = process.env.GOOGLE_SERVICE_ACCOUNT_JSON_B64
+  const rawPlain = process.env.GOOGLE_SERVICE_ACCOUNT_JSON
+  const raw = rawB64 ? Buffer.from(rawB64, 'base64').toString('utf8') : rawPlain
   if (!raw) throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON env var is not set')
 
   const auth = new google.auth.GoogleAuth({
