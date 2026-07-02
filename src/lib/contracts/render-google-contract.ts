@@ -60,8 +60,8 @@ async function exportDocxFromDrive(fileId: string): Promise<Buffer> {
   // Support both plain JSON and base64-encoded JSON (base64 avoids newline issues in Vercel)
   const rawB64 = process.env.GOOGLE_SERVICE_ACCOUNT_JSON_B64
   const rawPlain = process.env.GOOGLE_SERVICE_ACCOUNT_JSON
-  const raw = rawB64 ? Buffer.from(rawB64, 'base64').toString('utf8') : rawPlain
-  if (!raw) throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON env var is not set')
+  if (!rawB64 && !rawPlain) throw new Error(`Both GOOGLE_SERVICE_ACCOUNT_JSON_B64 and GOOGLE_SERVICE_ACCOUNT_JSON are missing. Env keys present: ${Object.keys(process.env).filter(k=>k.startsWith('GOOGLE')).join(', ')}`)
+  const raw = rawB64 ? Buffer.from(rawB64, 'base64').toString('utf8') : rawPlain!
 
   const auth = new google.auth.GoogleAuth({
     credentials: JSON.parse(raw),
