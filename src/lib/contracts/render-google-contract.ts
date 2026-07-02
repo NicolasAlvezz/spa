@@ -158,12 +158,12 @@ export async function renderGoogleContract(
     adminSignedAt,
   } = params
 
-  const templateEnvKey =
-    language === 'es'
-      ? 'GOOGLE_CONTRACT_TEMPLATE_ID_ES'
-      : 'GOOGLE_CONTRACT_TEMPLATE_ID_EN'
-  const templateId = process.env[templateEnvKey]
-  if (!templateId) throw new Error(`${templateEnvKey} env var is not set`)
+  const TEMPLATE_IDS: Record<string, string> = {
+    es: process.env.GOOGLE_CONTRACT_TEMPLATE_ID_ES ?? '1QKEmNRFsD7tC4G6WM8RXvxngWjd7XgZiv9EH_4rEPkk',
+    en: process.env.GOOGLE_CONTRACT_TEMPLATE_ID_EN ?? '',
+  }
+  const templateId = TEMPLATE_IDS[language]
+  if (!templateId) throw new Error(`No Google Docs template configured for language: ${language}`)
 
   const locale = language === 'es' ? 'es-US' : 'en-US'
   const clientDate = formatDate(signedAt, locale)
