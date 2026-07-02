@@ -77,8 +77,9 @@ export async function GET(
         adminSignedAt:       request.admin_signed_at   ?? null,
       })
     } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
       console.error('[contract.pdf basic] render error:', err)
-      return NextResponse.json({ error: 'pdf_render_failed' }, { status: 500 })
+      return NextResponse.json({ error: 'pdf_render_failed', detail: msg }, { status: 500 })
     }
   } else {
     // ── Legacy renderer (membership-v1.0) ──
