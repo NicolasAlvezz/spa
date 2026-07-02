@@ -8,7 +8,8 @@
  *   4. Overlay signature images with pdf-lib
  */
 
-import { google } from 'googleapis'
+import { readFileSync } from 'fs'
+import { join } from 'path'
 import Docxtemplater from 'docxtemplater'
 import PizZip from 'pizzip'
 import CloudConvert from 'cloudconvert'
@@ -56,29 +57,12 @@ function parseDataURL(dataURL: string): Uint8Array | null {
   }
 }
 
-async function exportDocxFromDrive(fileId: string): Promise<Buffer> {
-  // Support both plain JSON and base64-encoded JSON (base64 avoids newline issues in Vercel)
-  const rawB64 = process.env.GOOGLE_SERVICE_ACCOUNT_JSON_B64
-  const rawPlain = process.env.GOOGLE_SERVICE_ACCOUNT_JSON
-  if (!rawB64 && !rawPlain) throw new Error(`SA missing. Total env vars: ${Object.keys(process.env).length}. CLOUDCONVERT: ${!!process.env.CLOUDCONVERT_API_KEY}. NEXT_PUBLIC_SUPABASE_URL: ${!!process.env.NEXT_PUBLIC_SUPABASE_URL}. GOOGLE keys: ${Object.keys(process.env).filter(k=>k.includes('GOOGLE')).join('|')}`)
-  const raw = rawB64 ? Buffer.from(rawB64, 'base64').toString('utf8') : rawPlain!
-
-  const auth = new google.auth.GoogleAuth({
-    credentials: JSON.parse(raw),
-    scopes: ['https://www.googleapis.com/auth/drive.readonly'],
-  })
-  const drive = google.drive({ version: 'v3', auth })
-
-  const response = await drive.files.export(
-    {
-      fileId,
-      mimeType:
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    },
-    { responseType: 'arraybuffer' }
-  )
-
-  return Buffer.from(response.data as ArrayBuffer)
+function loadDocxTemplate(language: string): Buffer {
+  // Templates are committed to the repo — no Google API call needed at runtime.
+  // To update a template: re-run export-template.mjs and commit the new .docx file.
+  const filename = `template-${language}.docx`
+  const templatePath = join(process.cwd(), 'src', 'lib', 'contracts', filename)
+  return readFileSync(templatePath)
 }
 
 function fillDocxTemplate(
@@ -161,13 +145,6 @@ export async function renderGoogleContract(
     adminSignedAt,
   } = params
 
-  const TEMPLATE_IDS: Record<string, string> = {
-    es: process.env.GOOGLE_CONTRACT_TEMPLATE_ID_ES ?? '1QKEmNRFsD7tC4G6WM8RXvxngWjd7XgZiv9EH_4rEPkk',
-    en: process.env.GOOGLE_CONTRACT_TEMPLATE_ID_EN ?? '',
-  }
-  const templateId = TEMPLATE_IDS[language]
-  if (!templateId) throw new Error(`No Google Docs template configured for language: ${language}`)
-
   const locale = language === 'es' ? 'es-US' : 'en-US'
   const clientDate = formatDate(signedAt, locale)
   const adminDate  = formatDate(adminSignedAt, locale)
@@ -196,8 +173,8 @@ export async function renderGoogleContract(
     rep_date:        adminDate,
   }
 
-  // 1. Export Google Doc as DOCX
-  const docxBytes = await exportDocxFromDrive(templateId)
+  // 1. Load DOCX template from filesystem
+  const docxBytes = loadDocxTemplate(language)
 
   // 2. Fill placeholders
   const filledDocx = fillDocxTemplate(docxBytes, templateData)
