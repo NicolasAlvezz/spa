@@ -292,7 +292,17 @@
     "sessions_used_total": "Sesiones usadas",
     "today_appointment": "Cita de hoy",
     "appointment_service": "Servicio",
-    "split_installment": "2do pago del paquete"
+    "split_installment": "2do pago del paquete",
+    "referral_title": "¿Alguien recomendó a este cliente?",
+    "referral_subtitle": "Buscá al miembro que lo recomendó. Dejá vacío si nadie lo refirió.",
+    "referral_search_placeholder": "Buscar por nombre...",
+    "referral_no_results": "No se encontraron miembros",
+    "referral_continue_no_referral": "Continuar — sin referido",
+    "referral_confirm": "Confirmar — {name}",
+    "referral_searching": "Buscando...",
+    "credit_available": "USD {amount} a favor",
+    "credit_use": "Usar crédito (−USD {amount})",
+    "credit_applied_label": "+ USD {credit} crédito"
   },
   "payment": {
     "method_cash": "Efectivo",
@@ -361,6 +371,7 @@
     "detail_language": "Idioma",
     "detail_notes": "Notas",
     "total_paid": "Total pagado",
+    "credit_balance_label": "Saldo a favor",
     "healthcare_worker": "Trabajador de salud",
     "id_verified_badge": "ID Verificado",
     "visit_col_date": "Fecha",

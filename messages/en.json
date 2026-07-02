@@ -292,7 +292,17 @@
     "sessions_used_total": "Sessions used",
     "today_appointment": "Today's appointment",
     "appointment_service": "Service",
-    "split_installment": "2nd pack installment"
+    "split_installment": "2nd pack installment",
+    "referral_title": "Did someone refer this client?",
+    "referral_subtitle": "Search for the member who recommended them. Leave empty if no one referred them.",
+    "referral_search_placeholder": "Search by name...",
+    "referral_no_results": "No members found",
+    "referral_continue_no_referral": "Continue — no referral",
+    "referral_confirm": "Confirm — {name}",
+    "referral_searching": "Searching...",
+    "credit_available": "USD {amount} credit available",
+    "credit_use": "Apply credit (−USD {amount})",
+    "credit_applied_label": "+ USD {credit} credit"
   },
   "payment": {
     "method_cash": "Cash",
@@ -361,6 +371,7 @@
     "detail_language": "Language",
     "detail_notes": "Notes",
     "total_paid": "Total paid",
+    "credit_balance_label": "Credit balance",
     "healthcare_worker": "Healthcare",
     "id_verified_badge": "ID Verified",
     "visit_col_date": "Date",

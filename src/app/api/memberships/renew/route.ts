@@ -18,9 +18,10 @@ export async function POST(req: Request) {
     split_payment?: boolean
     confirm_lose_unused_sessions?: boolean
     membership_request_id?: string | null
+    use_credit?: boolean
   } = await req.json()
 
-  const { client_id, plan_id, amount_usd, split_payment, confirm_lose_unused_sessions, membership_request_id } = body
+  const { client_id, plan_id, amount_usd, split_payment, confirm_lose_unused_sessions, membership_request_id, use_credit } = body
 
   if (!client_id || !plan_id) {
     return NextResponse.json({ error: 'missing_required_fields' }, { status: 400 })
@@ -143,14 +144,34 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'failed_to_create_membership' }, { status: 500 })
   }
 
+  // Apply credit if requested: deduct full credit_balance, reset to 0
+  let finalAmount = amount_usd
+  let creditApplied = 0
+  if (use_credit) {
+    const { data: clientRow } = await supabase
+      .from('clients')
+      .select('credit_balance')
+      .eq('id', client_id)
+      .single()
+    creditApplied = Number(clientRow?.credit_balance ?? 0)
+    if (creditApplied > 0) {
+      finalAmount = Math.max(0, amount_usd - creditApplied)
+      await supabase
+        .from('clients')
+        .update({ credit_balance: 0 })
+        .eq('id', client_id)
+    }
+  }
+
   const { error: paymentError } = await supabase
     .from('payments')
     .insert({
       client_id,
       membership_id: newMembership.id,
-      amount_usd,
+      amount_usd: finalAmount,
       method: null,
       concept: isPack ? 'pack_purchase' : 'monthly_membership',
+      ...(creditApplied > 0 ? { notes: `Credit applied: $${creditApplied}` } : {}),
     })
 
   if (paymentError) {

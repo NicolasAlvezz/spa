@@ -73,7 +73,8 @@ export type VisitWithServiceAndConsent = VisitWithService & {
 
 // Response from GET /api/clients/[uuid]/checkin
 export interface CheckinResult {
-  client: Pick<DbClient, 'id' | 'first_name' | 'last_name' | 'phone' | 'preferred_language'> & { notes: string | null }
+  client: Pick<DbClient, 'id' | 'first_name' | 'last_name' | 'phone' | 'preferred_language'> & { notes: string | null; credit_balance: number }
+  is_first_membership: boolean
   membership: MembershipWithPlan | null
   membership_status: MembershipStatus
   sessions_used_this_month: number

@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import { useTranslations, useLocale } from 'next-intl'
-import { ScanLine, WifiOff, UserX, Loader2, CheckCircle2, Camera, RotateCcw, Star, CreditCard, FileText, AlertTriangle } from 'lucide-react'
+import { ScanLine, WifiOff, UserX, Loader2, CheckCircle2, Camera, RotateCcw, Star, CreditCard, FileText, AlertTriangle, Gift, Search, Check } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { QrScanner } from '@/components/spa/QrScanner'
 import { CheckinCard } from '@/components/spa/CheckinCard'
@@ -27,6 +27,7 @@ type Phase =
   | 'result'
   | 'registering'
   | 'renewing'
+  | 'referral'
   | 'assigning'
   | 'confirming_split'
   | 'waiting_signature'
@@ -63,6 +64,7 @@ export default function ScanPage() {
   const [contractPlanPrice, setContractPlanPrice] = useState<number | null>(null)
   const [contractAllowsSplit, setContractAllowsSplit] = useState(false)
   const [contractSplitFirstAmount, setContractSplitFirstAmount] = useState<number | null>(null)
+  const [referralChecked, setReferralChecked] = useState(false)
 
   useEffect(() => {
     const stored = sessionStorage.getItem(THERAPIST_STORAGE_KEY)
@@ -87,6 +89,7 @@ export default function ScanPage() {
     setContractAllowsSplit(false)
     setContractSplitFirstAmount(null)
     setResultError(null)
+    setReferralChecked(false)
     setPhase('scanning')
   }, [])
 
@@ -200,11 +203,13 @@ export default function ScanPage() {
     }
   }, [result, tCheck, therapistName])
 
-  const handleAdditionalVisitConfirm = useCallback(async () => {
+  const handleAdditionalVisitConfirm = useCallback(async (useCredit = false) => {
     if (!result?.membership) return
     const plan = result.membership.membership_plans
     const planPrice = plan?.additional_price_usd ?? plan?.price_usd
     if (!planPrice) return
+    const creditApplied = useCredit ? result.client.credit_balance : 0
+    const finalPrice = Math.max(0, planPrice - creditApplied)
     setPhase('registering')
     try {
       const res = await fetch('/api/visits', {
@@ -215,6 +220,7 @@ export default function ScanPage() {
           membership_id: result.membership.id,
           amount_usd: planPrice,
           therapist_name: therapistName,
+          use_credit: useCredit,
         }),
       })
       if (!res.ok) {
@@ -224,10 +230,10 @@ export default function ScanPage() {
         setPhase('error')
         return
       }
-      setSuccessInfo({
-        title: tCheck('visit_registered'),
-        detail: tCheck('session_additional', { price: planPrice }),
-      })
+      const detail = creditApplied > 0
+        ? `${tCheck('session_additional', { price: finalPrice })} ${tCheck('credit_applied_label', { credit: creditApplied })}`
+        : tCheck('session_additional', { price: planPrice })
+      setSuccessInfo({ title: tCheck('visit_registered'), detail })
       setPhase('success')
     } catch {
       setErrorKey('network_error')
@@ -264,6 +270,7 @@ export default function ScanPage() {
     planId: string,
     amountUsd: number,
     splitPayment?: boolean,
+    useCredit?: boolean,
   ) => {
     if (!result) return
 
@@ -278,6 +285,7 @@ export default function ScanPage() {
           split_payment: splitPayment ?? false,
           confirm_lose_unused_sessions: confirmLose,
           membership_request_id: pendingRequestId ?? null,
+          use_credit: useCredit ?? false,
         }),
       })
 
@@ -396,6 +404,21 @@ export default function ScanPage() {
     }
   }, [result, tCheck, therapistName])
 
+  const handleReferralComplete = useCallback(async (referrerId: string | null) => {
+    if (!result) return
+    setReferralChecked(true)
+    try {
+      await fetch(`/api/clients/${encodeURIComponent(result.client.id)}/referral`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ referred_by_client_id: referrerId }),
+      })
+    } catch {
+      // Non-fatal — proceed to assigning even if referral save fails
+    }
+    setPhase('assigning')
+  }, [result])
+
   const handleContractSent = useCallback((
     requestId: string,
     planId: string,
@@ -450,6 +473,7 @@ export default function ScanPage() {
     phase === 'registering' ||
     phase === 'registering_service' ||
     phase === 'renewing' ||
+    phase === 'referral' ||
     phase === 'assigning' ||
     phase === 'service_visit' ||
     phase === 'confirming_split' ||
@@ -520,7 +544,7 @@ export default function ScanPage() {
               onTherapistChange={setTherapistName}
               onScanAgain={reset}
               onRegisterVisit={handleRegisterVisit}
-              onAssignMembership={() => setPhase('assigning')}
+              onAssignMembership={() => result?.is_first_membership && !referralChecked ? setPhase('referral') : setPhase('assigning')}
               onChangePlan={() => setPhase('assigning')}
               onRegisterServiceVisit={() => setPhase('service_visit')}
               onConfirmSplitPayment={() => setPhase('confirming_split')}
@@ -559,6 +583,15 @@ export default function ScanPage() {
           </div>
         )}
 
+        {phase === 'referral' && result && (
+          <div className="w-full max-w-md">
+            <ReferralPanel
+              result={result}
+              onComplete={handleReferralComplete}
+            />
+          </div>
+        )}
+
         {phase === 'assigning' && result && (
           <div className="w-full max-w-md">
             <RequestContractPanel
@@ -592,6 +625,7 @@ export default function ScanPage() {
               planPrice={contractPlanPrice ?? 0}
               allowsSplit={contractAllowsSplit}
               splitFirstAmount={contractSplitFirstAmount}
+              creditBalance={result.client.credit_balance}
               onConfirm={handleAssignConfirm}
               onCancel={() => setPhase('result')}
             />
@@ -745,24 +779,28 @@ interface ConfirmPaymentPanelProps {
   planPrice: number
   allowsSplit: boolean
   splitFirstAmount: number | null
-  onConfirm: (planId: string, amountUsd: number, splitPayment?: boolean) => Promise<void>
+  creditBalance: number
+  onConfirm: (planId: string, amountUsd: number, splitPayment?: boolean, useCredit?: boolean) => Promise<void>
   onCancel: () => void
 }
 
-function ConfirmPaymentPanel({ result, planId, planName, planPrice, allowsSplit, splitFirstAmount, onConfirm, onCancel }: ConfirmPaymentPanelProps) {
+function ConfirmPaymentPanel({ result, planId, planName, planPrice, allowsSplit, splitFirstAmount, creditBalance, onConfirm, onCancel }: ConfirmPaymentPanelProps) {
   const t = useTranslations('checkin')
   const tScan = useTranslations('scan')
   const locale = useLocale() as 'en' | 'es'
 
   const [useSplitPayment, setUseSplitPayment] = useState(false)
+  const [useCredit, setUseCredit] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
-  const paymentAmount = useSplitPayment && splitFirstAmount ? splitFirstAmount : planPrice
+  const baseAmount = useSplitPayment && splitFirstAmount ? splitFirstAmount : planPrice
+  const creditApplied = useCredit ? Math.min(creditBalance, baseAmount) : 0
+  const paymentAmount = Math.max(0, baseAmount - creditApplied)
 
   const handleConfirm = async () => {
     if (submitting) return
     setSubmitting(true)
-    await onConfirm(planId, paymentAmount, useSplitPayment)
+    await onConfirm(planId, baseAmount, useSplitPayment, useCredit)
   }
 
   return (
@@ -813,6 +851,21 @@ function ConfirmPaymentPanel({ result, planId, planName, planPrice, allowsSplit,
         </div>
       )}
 
+      {/* Credit toggle */}
+      {creditBalance > 0 && (
+        <button
+          onClick={() => setUseCredit(v => !v)}
+          disabled={submitting}
+          className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 ${useCredit ? 'bg-green-600/30 border border-green-500/60 text-green-300' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
+        >
+          <span className="flex items-center gap-2">
+            <Gift size={16} className={useCredit ? 'text-green-400' : 'text-slate-400'} />
+            {t('credit_use', { amount: creditBalance })}
+          </span>
+          {useCredit && <Check size={16} className="text-green-400 flex-shrink-0" />}
+        </button>
+      )}
+
       <div className="flex flex-col gap-3 pt-2">
         <button onClick={handleConfirm} disabled={submitting}
           className="w-full h-16 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xl font-bold transition-colors">
@@ -831,7 +884,7 @@ function ConfirmPaymentPanel({ result, planId, planName, planPrice, allowsSplit,
 
 interface AdditionalVisitPanelProps {
   result: CheckinResult
-  onConfirm: () => Promise<void>
+  onConfirm: (useCredit: boolean) => Promise<void>
   onCancel: () => void
 }
 
@@ -840,15 +893,19 @@ function AdditionalVisitPanel({ result, onConfirm, onCancel }: AdditionalVisitPa
   const locale = useLocale() as 'en' | 'es'
 
   const [submitting, setSubmitting] = useState(false)
+  const [useCredit, setUseCredit] = useState(false)
 
   const plan = result.membership?.membership_plans
   const planName = plan ? (locale === 'es' ? plan.name_es : plan.name_en) : ''
   const price = plan?.additional_price_usd ?? plan?.price_usd ?? 0
+  const creditBalance = result.client.credit_balance
+  const creditApplied = useCredit ? Math.min(creditBalance, price) : 0
+  const finalPrice = Math.max(0, price - creditApplied)
 
   const handleConfirm = async () => {
     if (submitting) return
     setSubmitting(true)
-    await onConfirm()
+    await onConfirm(useCredit)
   }
 
   return (
@@ -871,14 +928,159 @@ function AdditionalVisitPanel({ result, onConfirm, onCancel }: AdditionalVisitPa
         <span className="text-lg font-bold text-amber-300 ml-4 flex-shrink-0">${price}</span>
       </div>
 
+      {creditBalance > 0 && (
+        <button
+          onClick={() => setUseCredit(v => !v)}
+          disabled={submitting}
+          className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 ${useCredit ? 'bg-green-600/30 border border-green-500/60 text-green-300' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
+        >
+          <span className="flex items-center gap-2">
+            <Gift size={16} className={useCredit ? 'text-green-400' : 'text-slate-400'} />
+            {t('credit_use', { amount: creditBalance })}
+          </span>
+          {useCredit && <Check size={16} className="text-green-400 flex-shrink-0" />}
+        </button>
+      )}
+
       <div className="flex flex-col gap-3 pt-2">
         <button onClick={handleConfirm} disabled={submitting}
           className="w-full h-16 rounded-xl bg-amber-500 hover:bg-amber-400 active:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xl font-bold transition-colors">
-          {submitting ? t('assigning') : `${locale === 'es' ? 'Confirmar — $' : 'Confirm — $'}${price}`}
+          {submitting ? t('assigning') : `${locale === 'es' ? 'Confirmar — $' : 'Confirm — $'}${finalPrice}`}
         </button>
         <button onClick={onCancel} disabled={submitting}
           className="w-full h-12 rounded-xl bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-slate-300 text-base font-medium transition-colors">
           {t('cancel')}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─── Referral Panel ───────────────────────────────────────────────────────────
+
+interface MemberSearchResult {
+  id: string
+  first_name: string
+  last_name: string
+  plan_name_en: string
+  plan_name_es: string
+}
+
+interface ReferralPanelProps {
+  result: CheckinResult
+  onComplete: (referrerId: string | null) => Promise<void>
+}
+
+function ReferralPanel({ result, onComplete }: ReferralPanelProps) {
+  const t = useTranslations('checkin')
+  const locale = useLocale() as 'en' | 'es'
+
+  const [query, setQuery] = useState('')
+  const [members, setMembers] = useState<MemberSearchResult[]>([])
+  const [searching, setSearching] = useState(false)
+  const [selected, setSelected] = useState<MemberSearchResult | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (searchTimeout.current) clearTimeout(searchTimeout.current)
+    if (query.trim().length < 2) { setMembers([]); setSearching(false); return }
+    setSearching(true)
+    searchTimeout.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/clients/members-search?q=${encodeURIComponent(query.trim())}&exclude=${encodeURIComponent(result.client.id)}`)
+        const data: MemberSearchResult[] = res.ok ? await res.json() : []
+        setMembers(data)
+      } catch {
+        setMembers([])
+      } finally {
+        setSearching(false)
+      }
+    }, 350)
+  }, [query, result.client.id])
+
+  const handleSubmit = async (referrerId: string | null) => {
+    if (submitting) return
+    setSubmitting(true)
+    await onComplete(referrerId)
+  }
+
+  return (
+    <div className="w-full flex flex-col gap-6">
+      <div className="flex items-center gap-3">
+        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-purple-500/20">
+          <Gift size={18} className="text-purple-400" />
+        </div>
+        <span className="text-purple-400 text-lg font-semibold uppercase tracking-wide">
+          {t('referral_title')}
+        </span>
+      </div>
+
+      <h2 className="text-2xl md:text-4xl font-bold text-white leading-tight">
+        {result.client.first_name} {result.client.last_name}
+      </h2>
+
+      <p className="text-slate-400 text-sm leading-relaxed">{t('referral_subtitle')}</p>
+
+      {/* Search input */}
+      <div className="relative">
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+        <input
+          type="text"
+          value={query}
+          onChange={e => { setQuery(e.target.value); setSelected(null) }}
+          placeholder={t('referral_search_placeholder')}
+          disabled={submitting}
+          className="w-full h-12 bg-slate-700 rounded-xl pl-9 pr-4 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 disabled:opacity-50"
+        />
+      </div>
+
+      {/* Search results */}
+      {searching && (
+        <p className="text-slate-400 text-sm">{t('referral_searching')}</p>
+      )}
+      {!searching && query.trim().length >= 2 && members.length === 0 && (
+        <p className="text-slate-500 text-sm">{t('referral_no_results')}</p>
+      )}
+      {members.length > 0 && (
+        <div className="flex flex-col gap-2 max-h-52 overflow-y-auto pr-1">
+          {members.map(m => {
+            const isSelected = selected?.id === m.id
+            const planName = locale === 'es' ? m.plan_name_es : m.plan_name_en
+            return (
+              <button
+                key={m.id}
+                onClick={() => setSelected(isSelected ? null : m)}
+                disabled={submitting}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-left transition-colors disabled:opacity-50 ${isSelected ? 'bg-purple-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
+              >
+                <div>
+                  <span className="font-semibold block">{m.first_name} {m.last_name}</span>
+                  <span className={`text-xs ${isSelected ? 'text-purple-200' : 'text-slate-400'}`}>{planName}</span>
+                </div>
+                {isSelected && <Check size={16} className="text-white flex-shrink-0" />}
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      <div className="flex flex-col gap-3 pt-2">
+        {selected && (
+          <button
+            onClick={() => handleSubmit(selected.id)}
+            disabled={submitting}
+            className="w-full h-16 rounded-xl bg-purple-600 hover:bg-purple-500 active:bg-purple-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-base font-bold transition-colors"
+          >
+            {submitting ? <Loader2 size={20} className="animate-spin mx-auto" /> : t('referral_confirm', { name: `${selected.first_name} ${selected.last_name}` })}
+          </button>
+        )}
+        <button
+          onClick={() => handleSubmit(null)}
+          disabled={submitting}
+          className="w-full h-12 rounded-xl bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-slate-300 text-sm font-medium transition-colors"
+        >
+          {t('referral_continue_no_referral')}
         </button>
       </div>
     </div>

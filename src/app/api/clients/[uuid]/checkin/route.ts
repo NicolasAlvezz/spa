@@ -31,7 +31,7 @@ export async function GET(
   // Client + memberships
   const { data: client, error } = await supabase
     .from('clients')
-    .select('id, first_name, last_name, phone, preferred_language, notes, memberships(*, membership_plans(*))')
+    .select('id, first_name, last_name, phone, preferred_language, notes, credit_balance, memberships(*, membership_plans(*))')
     .eq('id', uuid)
     .single()
 
@@ -124,7 +124,10 @@ export async function GET(
       preferred_language: client.preferred_language,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       notes: (client as any).notes ?? null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      credit_balance: Number((client as any).credit_balance ?? 0),
     },
+    is_first_membership: memberships.length === 0,
     membership,
     membership_status,
     sessions_used_this_month: sessionsUsed,

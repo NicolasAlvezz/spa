@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Printer, Calendar, CreditCard, Activity, TrendingUp, BadgeCheck, FileText } from 'lucide-react'
+import { ArrowLeft, Printer, Calendar, CreditCard, Activity, TrendingUp, BadgeCheck, FileText, Gift } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
 import {
   getClientById,
@@ -173,6 +173,15 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
           color="purple"
         />
       </div>
+
+      {(client.credit_balance ?? 0) > 0 && (
+        <div className="bg-green-50 border border-green-200 rounded-xl px-5 py-4 flex items-center gap-3">
+          <Gift size={18} className="text-green-600 flex-shrink-0" />
+          <p className="text-green-800 text-sm font-semibold">
+            {t('credit_balance_label')}: <span className="font-bold">USD {Number(client.credit_balance).toFixed(2)}</span>
+          </p>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* ── Personal info ─────────────────────────────────────────────── */}

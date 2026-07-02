@@ -1,7 +1,7 @@
 'use client'
 
 import { useTranslations, useLocale } from 'next-intl'
-import { CheckCircle2, MinusCircle, Calendar, Activity, RotateCcw, Star, AlertTriangle, CreditCard, Scissors, Phone, Clock, FileText, ShieldAlert } from 'lucide-react'
+import { CheckCircle2, MinusCircle, Calendar, Activity, RotateCcw, Star, AlertTriangle, CreditCard, Scissors, Phone, Clock, FileText, ShieldAlert, Gift } from 'lucide-react'
 import { formatDate, formatDateTime } from '@/lib/utils/dates'
 import { getAvailableSessions } from '@/lib/utils/membership'
 import { TherapistSelector } from '@/components/spa/TherapistSelector'
@@ -133,6 +133,15 @@ export function CheckinCard({
           </p>
         )}
 
+        {client.credit_balance > 0 && (
+          <div className="bg-green-950/40 border border-green-700/60 rounded-xl px-4 py-3 flex items-center gap-3">
+            <Gift size={16} className="text-green-400 flex-shrink-0" />
+            <p className="text-green-300 text-sm font-semibold">
+              {tCheck('credit_available', { amount: client.credit_balance })}
+            </p>
+          </div>
+        )}
+
         <TherapistSelector value={therapistName} onChange={onTherapistChange} />
 
         {/* Actions */}
@@ -229,6 +238,15 @@ export function CheckinCard({
       {/* Today's appointment */}
       {today_appointment && (
         <TodayAppointmentBox appointment={today_appointment} locale={locale} tCheck={tCheck} />
+      )}
+
+      {client.credit_balance > 0 && (
+        <div className="bg-green-950/40 border border-green-700/60 rounded-xl px-4 py-3 flex items-center gap-3">
+          <Gift size={16} className="text-green-400 flex-shrink-0" />
+          <p className="text-green-300 text-sm font-semibold">
+            {tCheck('credit_available', { amount: client.credit_balance })}
+          </p>
+        </div>
       )}
 
       <TherapistSelector value={therapistName} onChange={onTherapistChange} />

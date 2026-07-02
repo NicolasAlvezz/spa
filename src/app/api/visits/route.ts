@@ -93,9 +93,10 @@ export async function POST(req: Request) {
     amount_usd?: number
     notes?: string
     therapist_name?: string
+    use_credit?: boolean
   } = await req.json()
 
-  const { client_id, membership_id, service_type_id, amount_usd, notes, therapist_name } = body
+  const { client_id, membership_id, service_type_id, amount_usd, notes, therapist_name, use_credit } = body
 
   if (!client_id) {
     return NextResponse.json({ error: 'client_id is required' }, { status: 400 })
@@ -238,14 +239,34 @@ export async function POST(req: Request) {
 
   // Create a payment record for additional visits that come with a price
   if (session_type === 'additional' && amount_usd && amount_usd > 0) {
+    let finalAmount = amount_usd
+    let creditApplied = 0
+
+    if (use_credit) {
+      const { data: clientRow } = await supabase
+        .from('clients')
+        .select('credit_balance')
+        .eq('id', client_id)
+        .single()
+      creditApplied = Number(clientRow?.credit_balance ?? 0)
+      if (creditApplied > 0) {
+        finalAmount = Math.max(0, amount_usd - creditApplied)
+        await supabase
+          .from('clients')
+          .update({ credit_balance: 0 })
+          .eq('id', client_id)
+      }
+    }
+
     const { error: paymentError } = await supabase
       .from('payments')
       .insert({
         client_id,
         membership_id: membership_id ?? null,
-        amount_usd,
+        amount_usd: finalAmount,
         method: null,
         concept: 'additional_visit',
+        ...(creditApplied > 0 ? { notes: `Credit applied: $${creditApplied}` } : {}),
       })
     if (paymentError) {
       console.error('[visits] failed to create additional visit payment:', paymentError)
