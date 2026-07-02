@@ -3,15 +3,10 @@ import { Users, Activity, DollarSign, AlertTriangle } from 'lucide-react'
 import {
   getDashboardStats,
   getTodayVisits,
-  getCalendarAppointments,
 } from '@/lib/supabase/queries/dashboard'
-import {
-  getClientSelectList,
-  getServiceTypes,
-} from '@/lib/supabase/queries/clients'
-import { DayCalendar } from '@/components/spa/DayCalendar'
 import { DashboardDateFilter } from '@/components/spa/DashboardDateFilter'
 import { InfoPopover } from '@/components/spa/InfoPopover'
+import { LoginQrCard } from '@/components/spa/LoginQrCard'
 
 interface Props {
   searchParams: { from?: string; to?: string }
@@ -25,15 +20,12 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
   const from = searchParams.from ?? defaultFrom
   const to   = searchParams.to   ?? defaultTo
 
-  const [t, tNav, locale, stats, visits, appointments, clients, serviceTypes] = await Promise.all([
+  const [t, tNav, locale, stats, visits] = await Promise.all([
     getTranslations('dashboard'),
     getTranslations('nav'),
     getLocale(),
     getDashboardStats({ from, to }),
     getTodayVisits(),
-    getCalendarAppointments(todayStr),
-    getClientSelectList(),
-    getServiceTypes(),
   ])
 
   const sessionLabels: Record<string, string> = {
@@ -155,13 +147,8 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
           )}
         </div>
 
-        {/* Right: Day Calendar */}
-        <DayCalendar
-          initialAppointments={appointments}
-          initialDateStr={todayStr}
-          clients={clients}
-          serviceTypes={serviceTypes}
-        />
+        {/* Right: Login QR */}
+        <LoginQrCard />
       </div>
     </div>
   )
