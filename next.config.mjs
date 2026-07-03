@@ -8,9 +8,7 @@ const nextConfig = {
   experimental: {
     instrumentationHook: true,
     outputFileTracingIncludes: {
-      '/api/membership-requests/\\[id\\]/contract.pdf': [
-        './src/lib/contracts/*.docx',
-      ],
+      '/**': ['./src/lib/contracts/*.docx'],
     },
   },
 }
