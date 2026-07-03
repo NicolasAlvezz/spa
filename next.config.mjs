@@ -7,6 +7,11 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts')
 const nextConfig = {
   experimental: {
     instrumentationHook: true,
+    outputFileTracingIncludes: {
+      '/api/membership-requests/\\[id\\]/contract.pdf': [
+        './src/lib/contracts/*.docx',
+      ],
+    },
   },
 }
 
