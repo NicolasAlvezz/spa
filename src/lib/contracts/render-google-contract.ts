@@ -1,11 +1,11 @@
 /**
- * Renders a membership contract PDF using a Google Docs template.
+ * Renders a membership contract PDF using a committed DOCX template.
  *
  * Flow:
- *   1. Export the Google Doc template as DOCX bytes (Google Drive API)
- *   2. Fill {{placeholders}} with docxtemplater (in memory, no storage needed)
- *   3. Convert filled DOCX → PDF via CloudConvert API
- *   4. Overlay signature images with pdf-lib
+ *   1. Load the DOCX template from the filesystem (committed to repo)
+ *   2. Fill {{placeholders}} with docxtemplater (text fields)
+ *   3. Embed {%signature_client} and {%signature_rep} images via docxtemplater-image-module-free
+ *   4. Convert filled DOCX → PDF via CloudConvert API
  */
 
 import { readFileSync } from 'fs'
@@ -14,7 +14,6 @@ import Docxtemplater from 'docxtemplater'
 import PizZip from 'pizzip'
 import CloudConvert from 'cloudconvert'
 import { createClient } from '@supabase/supabase-js'
-import { PDFDocument } from 'pdf-lib'
 
 export interface GoogleContractParams {
   language: 'en' | 'es'
@@ -49,20 +48,17 @@ function formatDate(iso: string | null | undefined, locale: string): string {
   }
 }
 
-function parseDataURL(dataURL: string): Uint8Array | null {
+function parseDataURL(dataURL: string): Buffer | null {
   try {
     const base64 = dataURL.includes(',') ? dataURL.split(',')[1] : dataURL
     if (!base64) return null
-    return new Uint8Array(Buffer.from(base64, 'base64'))
+    return Buffer.from(base64, 'base64')
   } catch {
     return null
   }
 }
 
 function loadDocxTemplate(language: string, planSlug?: string): Buffer {
-  // Templates are committed to the repo — no Google API call needed at runtime.
-  // To update a template: re-run export-template.mjs and commit the new .docx file.
-  // Naming: template-{lang}.docx (basic) or template-{plan}-{lang}.docx (others)
   const filename = planSlug && planSlug !== 'basic'
     ? `template-${planSlug}-${language}.docx`
     : `template-${language}.docx`
@@ -75,17 +71,32 @@ function fillDocxTemplate(
   data: Record<string, string>
 ): Buffer {
   const zip = new PizZip(docxBytes)
+
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const ImageModule = require('docxtemplater-image-module-free')
+  const imageModule = new ImageModule({
+    centered: false,
+    getImage(tagValue: string) {
+      if (!tagValue) return null
+      return parseDataURL(tagValue)
+    },
+    getSize() {
+      // Width x height in pixels — adjust if signatures look too big/small
+      return [200, 50]
+    },
+  })
+
   const doc = new Docxtemplater(zip, {
     paragraphLoop: true,
     linebreaks: true,
     delimiters: { start: '{{', end: '}}' },
+    modules: [imageModule],
   })
   doc.render(data)
   return doc.getZip().generate({ type: 'nodebuffer', compression: 'DEFLATE' })
 }
 
 async function getCloudConvertApiKey(): Promise<string> {
-  // Try env var first (local dev), then fall back to Supabase settings table (production)
   if (process.env.CLOUDCONVERT_API_KEY) return process.env.CLOUDCONVERT_API_KEY
 
   const supabase = createClient(
@@ -107,7 +118,6 @@ async function convertDocxToPdf(docxBytes: Buffer): Promise<Buffer> {
 
   const cloudConvert = new CloudConvert(apiKey)
 
-  // Create a job with two tasks: upload + convert
   const job = await cloudConvert.jobs.create({
     tasks: {
       'upload-docx': {
@@ -126,7 +136,6 @@ async function convertDocxToPdf(docxBytes: Buffer): Promise<Buffer> {
     },
   })
 
-  // Upload the DOCX
   const uploadTask = job.tasks.find((t) => t.name === 'upload-docx')
   if (!uploadTask) throw new Error('CloudConvert upload task not found')
 
@@ -138,15 +147,12 @@ async function convertDocxToPdf(docxBytes: Buffer): Promise<Buffer> {
     'contract.docx'
   )
 
-  // Wait for the job to finish
   const finished = await cloudConvert.jobs.wait(job.id)
 
-  // Get the export URL
   const exportTask = finished.tasks.find((t) => t.name === 'export-pdf')
   const fileUrl = exportTask?.result?.files?.[0]?.url
   if (!fileUrl) throw new Error('CloudConvert export URL not found')
 
-  // Download the PDF
   const pdfResponse = await fetch(fileUrl)
   if (!pdfResponse.ok) throw new Error('Failed to download PDF from CloudConvert')
 
@@ -194,61 +200,19 @@ export async function renderGoogleContract(
     cardholder_date: clientDate,
     client_date:     clientDate,
     rep_date:        adminDate,
+    // Image placeholders — docxtemplater-image-module-free picks these up via {%key}
+    signature_client: signatureImage      ?? '',
+    signature_rep:    adminSignatureImage ?? '',
   }
 
   // 1. Load DOCX template from filesystem
   const docxBytes = loadDocxTemplate(language, planSlug)
 
-  // 2. Fill placeholders
+  // 2. Fill text placeholders + embed signature images
   const filledDocx = fillDocxTemplate(docxBytes, templateData)
 
   // 3. Convert to PDF
-  let pdfBuffer = await convertDocxToPdf(filledDocx)
-
-  // 4. Overlay signature images if provided
-  if (signatureImage || adminSignatureImage) {
-    const pdfDoc = await PDFDocument.load(pdfBuffer)
-    const pages  = pdfDoc.getPages()
-
-    // Signatures span two pages:
-    //   page[-2]: "Firma del Titular"  → cardholder sig at y≈30%
-    //   page[-1]: "Firma del Cliente"  → client sig at y≈90%
-    //             "Representante VM"   → rep sig at y≈80%
-    const secondLast = pages[pages.length - 2]
-    const lastPage   = pages[pages.length - 1]
-
-    const drawSig = async (
-      page: (typeof pages)[0],
-      dataURL: string,
-      yFraction: number,
-      xFraction: number,
-      wFraction: number,
-      hPt: number
-    ) => {
-      const bytes = parseDataURL(dataURL)
-      if (!bytes) return
-      try {
-        const img = await pdfDoc.embedPng(bytes)
-        const { width, height } = page.getSize()
-        page.drawImage(img, {
-          x:      width  * xFraction,
-          y:      height * yFraction,
-          width:  width  * wFraction,
-          height: hPt,
-        })
-      } catch { /* skip if embed fails */ }
-    }
-
-    if (signatureImage) {
-      await drawSig(secondLast, signatureImage, 0.30, 0.30, 0.37, 24) // Firma del Titular
-      await drawSig(lastPage,   signatureImage, 0.90, 0.30, 0.37, 24) // Firma del Cliente
-    }
-    if (adminSignatureImage) {
-      await drawSig(lastPage, adminSignatureImage, 0.80, 0.62, 0.32, 24) // Representante VM
-    }
-
-    pdfBuffer = Buffer.from(await pdfDoc.save())
-  }
+  const pdfBuffer = await convertDocxToPdf(filledDocx)
 
   return pdfBuffer
 }
