@@ -44,3 +44,13 @@ next-env.d.ts
 
 # Supabase local CLI metadata
 supabase/.temp/
+
+# Claude Code internals
+.claude/worktrees/
+
+# Local design/docs files
+docs/superpowers/
+*.pptx
+
+# Local test scripts
+test-final.mjs
