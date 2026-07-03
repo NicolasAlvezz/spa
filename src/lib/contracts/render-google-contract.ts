@@ -18,6 +18,7 @@ import { PDFDocument } from 'pdf-lib'
 
 export interface GoogleContractParams {
   language: 'en' | 'es'
+  planSlug?: string
   contractFields: {
     full_name: string
     date_of_birth?: string
@@ -58,10 +59,13 @@ function parseDataURL(dataURL: string): Uint8Array | null {
   }
 }
 
-function loadDocxTemplate(language: string): Buffer {
+function loadDocxTemplate(language: string, planSlug?: string): Buffer {
   // Templates are committed to the repo — no Google API call needed at runtime.
   // To update a template: re-run export-template.mjs and commit the new .docx file.
-  const filename = `template-${language}.docx`
+  // Naming: template-{lang}.docx (basic) or template-{plan}-{lang}.docx (others)
+  const filename = planSlug && planSlug !== 'basic'
+    ? `template-${planSlug}-${language}.docx`
+    : `template-${language}.docx`
   const templatePath = join(process.cwd(), 'src', 'lib', 'contracts', filename)
   return readFileSync(templatePath)
 }
@@ -154,6 +158,7 @@ export async function renderGoogleContract(
 ): Promise<Buffer> {
   const {
     language,
+    planSlug,
     contractFields,
     paymentMethod,
     cardLast4,
@@ -192,7 +197,7 @@ export async function renderGoogleContract(
   }
 
   // 1. Load DOCX template from filesystem
-  const docxBytes = loadDocxTemplate(language)
+  const docxBytes = loadDocxTemplate(language, planSlug)
 
   // 2. Fill placeholders
   const filledDocx = fillDocxTemplate(docxBytes, templateData)

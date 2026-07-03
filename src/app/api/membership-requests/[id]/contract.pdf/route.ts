@@ -33,7 +33,7 @@ export async function GET(
       signature_image, admin_signature_image,
       contract_fields, payment_method, card_last4,
       clients!inner(id, first_name, last_name, phone, address, user_id),
-      membership_plans!inner(name_en, name_es, price_usd)
+      membership_plans!inner(name_en, name_es, price_usd, slug)
     `)
     .eq('id', params.id)
     .single()
@@ -60,6 +60,7 @@ export async function GET(
     try {
       buffer = await renderGoogleContract({
         language,
+        planSlug: plan.slug as string,
         contractFields: {
           full_name:     fields.full_name     ?? `${client.first_name} ${client.last_name}`,
           date_of_birth: fields.date_of_birth ?? '',
