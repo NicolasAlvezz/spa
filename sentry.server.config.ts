@@ -8,7 +8,10 @@ Sentry.init({
   dsn: "https://a79c485e658283b2b94d7b594f66ddac@o4511637938044928.ingest.us.sentry.io/4511637942370304",
 
   integrations: [
-    Sentry.consoleLoggingIntegration({ levels: ["log", "warn", "error"] }),
+    // Exclude "warn" on the server: Node.js internals emit ExperimentalWarning
+    // (e.g. vm.USE_MAIN_CONTEXT_DEFAULT_LOADER) at warn level — not actionable.
+    // Real server-side problems surface as errors or unhandled rejections.
+    Sentry.consoleLoggingIntegration({ levels: ["log", "error"] }),
   ],
 
   // Sample 10% of traces in production to keep costs low

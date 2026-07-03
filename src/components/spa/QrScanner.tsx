@@ -20,6 +20,12 @@ export function QrScanner({ onScan, onCameraError, active }: Props) {
     let cancelled = false
 
     function cleanupReader() {
+      // Stop all camera tracks so the browser releases the device
+      if (videoRef.current) {
+        const stream = videoRef.current.srcObject as MediaStream | null
+        stream?.getTracks().forEach(t => t.stop())
+        videoRef.current.srcObject = null
+      }
       if (!readerRef.current) return
       try { readerRef.current.stopAsyncDecode?.() } catch { /* ignore */ }
       try { readerRef.current.reset() } catch { /* ignore */ }

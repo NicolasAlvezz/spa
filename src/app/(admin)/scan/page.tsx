@@ -688,6 +688,12 @@ export default function ScanPage() {
               <h2 className="text-2xl font-bold text-white mb-2">{t('camera_error')}</h2>
               <p className="text-slate-400 leading-relaxed">{t('camera_error_body')}</p>
             </div>
+            <button
+              onClick={() => window.location.reload()}
+              className="w-full h-14 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-lg font-semibold transition-colors"
+            >
+              {t('camera_reload')}
+            </button>
           </div>
         )}
 

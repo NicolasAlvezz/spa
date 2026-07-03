@@ -28,6 +28,19 @@ Sentry.init({
   replaysOnErrorSampleRate: 1.0,
 
   sendDefaultPii: true,
+
+  // Supabase logs a console.error when a session's refresh token is expired/invalid.
+  // The middleware already handles this by redirecting to /login — not a bug.
+  beforeSendLog(log) {
+    const msg = typeof log.message === 'string' ? log.message : ''
+    if (msg.includes('refresh_token_not_found') || msg.includes('Refresh Token Not Found')) {
+      return null
+    }
+    return log
+  },
+
+  // Also filter as an error event in case it surfaces via an unhandled rejection
+  ignoreErrors: ['refresh_token_not_found', 'Refresh Token Not Found', 'Invalid Refresh Token'],
 });
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
