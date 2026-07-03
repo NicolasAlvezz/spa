@@ -84,6 +84,8 @@ export async function deleteClientPermanently(clientId: string): Promise<void> {
   await db.from('appointments').delete().eq('client_id', clientId) // not yet in database.ts types
   await db.from('memberships').delete().eq('client_id', clientId)
   await db.from('client_health_forms').delete().eq('client_id', clientId)
+  // Clear self-referential FK: other clients may have referred_by_client_id pointing here
+  await db.from('clients').update({ referred_by_client_id: null }).eq('referred_by_client_id', clientId)
 
   const { error } = await supabase.from('clients').delete().eq('id', clientId)
   if (error) throw new Error('Failed to delete client')
