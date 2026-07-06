@@ -544,7 +544,7 @@ export default function ScanPage() {
                 <p className="text-amber-300 text-sm leading-relaxed">{scanErrorMessage(resultError)}</p>
               </div>
             )}
-            {result.membership_status === 'no_membership' ? (
+            {result.membership_status !== 'active' ? (
               <UnifiedSelectPanel
                 result={result}
                 onScanAgain={reset}
