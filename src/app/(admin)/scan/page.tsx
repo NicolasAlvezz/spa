@@ -547,8 +547,6 @@ export default function ScanPage() {
             {result.membership_status === 'no_membership' ? (
               <UnifiedSelectPanel
                 result={result}
-                therapistName={therapistName}
-                onTherapistChange={setTherapistName}
                 onScanAgain={reset}
                 onContinue={(selection) => {
                   if (selection.type === 'plan') {
@@ -637,6 +635,7 @@ export default function ScanPage() {
           <div className="w-full max-w-md">
             <RequestContractPanel
               result={result}
+              initialPlanId={preselectedPlanId}
               onSent={handleContractSent}
               onCancel={() => setPhase('result')}
             />
@@ -1322,11 +1321,12 @@ function ServiceVisitPanel({ result, therapistName, onTherapistChange, onConfirm
 
 interface RequestContractPanelProps {
   result: CheckinResult
+  initialPlanId?: string | null
   onSent: (requestId: string, planId: string, expiresAt: string, planName: string, planPrice: number, allowsSplit: boolean, splitFirstAmount: number | null) => void
   onCancel: () => void
 }
 
-function RequestContractPanel({ result, onSent, onCancel }: RequestContractPanelProps) {
+function RequestContractPanel({ result, initialPlanId, onSent, onCancel }: RequestContractPanelProps) {
   const t = useTranslations('checkin')
   const tScan = useTranslations('scan')
   const tContract = useTranslations('membership_contract')
@@ -1334,7 +1334,7 @@ function RequestContractPanel({ result, onSent, onCancel }: RequestContractPanel
 
   const [plans, setPlans] = useState<PlanOption[]>([])
   const [loadingPlans, setLoadingPlans] = useState(true)
-  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null)
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(initialPlanId ?? null)
   const [language, setLanguage] = useState<'en' | 'es'>(
     result.client.preferred_language === 'es' ? 'es' : 'en'
   )
@@ -1671,13 +1671,11 @@ type UnifiedSelection =
 
 interface UnifiedSelectPanelProps {
   result: CheckinResult
-  therapistName: string
-  onTherapistChange: (name: string) => void
   onScanAgain: () => void
   onContinue: (selection: UnifiedSelection) => void
 }
 
-function UnifiedSelectPanel({ result, therapistName, onTherapistChange, onScanAgain, onContinue }: UnifiedSelectPanelProps) {
+function UnifiedSelectPanel({ result, onScanAgain, onContinue }: UnifiedSelectPanelProps) {
   const t = useTranslations('checkin')
   const tScan = useTranslations('scan')
   const locale = useLocale() as 'en' | 'es'
