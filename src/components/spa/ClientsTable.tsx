@@ -456,6 +456,7 @@ function FirstAssignPanel({
       })
       if (!res.ok) { setPayError(locale === 'es' ? 'Error al registrar el pago.' : 'Failed to record payment.'); setPaying(false); return }
       onAssigned()
+      onCancel()
     } catch {
       setPayError(locale === 'es' ? 'Error de conexión.' : 'Connection error.')
       setPaying(false)
