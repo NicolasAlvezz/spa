@@ -2,13 +2,21 @@
 
 import { useState, useMemo, useTransition, useEffect } from 'react'
 import { createPortal } from 'react-dom'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
-import { Search, ChevronRight, X, CreditCard, Loader2 } from 'lucide-react'
+import { Search, ChevronRight, X, CreditCard, Loader2, FileText, Check } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import { MembershipBadge } from './MembershipBadge'
 import { getMembershipStatus, getCurrentMembership } from '@/lib/utils/membership'
 import { formatDate } from '@/lib/utils/dates'
+import { createClient } from '@/lib/supabase/client'
+import { getBasicContractTemplate } from '@/lib/constants/membership-contract-templates'
 import type { ClientListRow, MembershipStatus, DbMembershipPlan } from '@/types'
+
+const SignaturePad = dynamic(
+  () => import('@/components/spa/SignaturePad').then(m => m.SignaturePad),
+  { ssr: false, loading: () => <div className="h-[160px] rounded-xl border-2 border-dashed border-gray-300" /> }
+)
 
 interface Props {
   clients: ClientListRow[]
@@ -199,19 +207,21 @@ function PlanPanel({
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="flex flex-col items-center justify-center py-8 text-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
-                  <CreditCard size={20} className="text-gray-300" />
+              <div className="flex items-center gap-2 pb-1">
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 flex-shrink-0">
+                  <CreditCard size={14} className="text-gray-400" />
                 </div>
                 <p className="text-sm font-medium text-gray-500">
                   {locale === 'es' ? 'Sin plan activo' : 'No active plan'}
                 </p>
-                <p className="text-xs text-gray-400 leading-relaxed max-w-xs">
-                  {locale === 'es'
-                    ? 'Para asignar el primer plan, escaneá el QR del cliente desde la página de escaneo. Esto asegura que el contrato sea firmado correctamente.'
-                    : 'To assign the first plan, scan the client\'s QR from the scan page. This ensures the contract is properly signed.'}
-                </p>
               </div>
+              <FirstAssignPanel
+                client={client}
+                plans={plans}
+                locale={locale}
+                onAssigned={onAssigned}
+                onCancel={onClose}
+              />
             </div>
           )}
         </div>
@@ -318,6 +328,353 @@ function PortaledPlanPanel(props: Parameters<typeof PlanPanel>[0]) {
   useEffect(() => { setMounted(true) }, [])
   if (!mounted) return null
   return createPortal(<PlanPanel {...props} />, document.body)
+}
+
+// ── First-assignment contract flow ────────────────────────────────────────────
+
+type ContractPhase = 'select' | 'contract' | 'waiting' | 'paying'
+
+function FirstAssignPanel({
+  client,
+  plans,
+  locale,
+  onAssigned,
+  onCancel,
+}: {
+  client: ClientListRow
+  plans: DbMembershipPlan[]
+  locale: 'en' | 'es'
+  onAssigned: () => void
+  onCancel: () => void
+}) {
+  const tContract = useTranslations('membership_contract')
+
+  const monthlyPlans = plans.filter(p => p.plan_type === 'monthly')
+  const [phase, setPhase] = useState<ContractPhase>('select')
+  const [selectedPlan, setSelectedPlan] = useState<DbMembershipPlan | null>(monthlyPlans[0] ?? null)
+  const [language, setLanguage] = useState<'en' | 'es'>(
+    (client.preferred_language ?? 'en') as 'en' | 'es'
+  )
+  const [adminSignature, setAdminSignature] = useState<string | null>(null)
+  const [adminSigError, setAdminSigError] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [contractError, setContractError] = useState<string | null>(null)
+  const [requestId, setRequestId] = useState<string | null>(null)
+  const [requestExpiresAt, setRequestExpiresAt] = useState<string | null>(null)
+  const [secondsLeft, setSecondsLeft] = useState(0)
+  const [cancelling, setCancelling] = useState(false)
+  const [useSplit, setUseSplit] = useState(false)
+  const [paying, setPaying] = useState(false)
+  const [payError, setPayError] = useState<string | null>(null)
+
+  // ── Step 1: select plan ────────────────────────────────────────────────────
+
+  if (phase === 'select') {
+    return (
+      <div className="space-y-4">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+          {locale === 'es' ? 'Seleccionar plan' : 'Select plan'}
+        </p>
+        <div className="flex flex-col gap-2">
+          {monthlyPlans.map(p => {
+            const isSelected = selectedPlan?.id === p.id
+            return (
+              <button
+                key={p.id}
+                onClick={() => setSelectedPlan(p)}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border text-left transition-colors ${
+                  isSelected
+                    ? 'border-brand-500 bg-brand-50 text-brand-700'
+                    : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <span className="font-semibold text-sm">
+                  {locale === 'es' ? p.name_es : p.name_en}
+                </span>
+                <span className="text-sm font-bold ml-4 flex-shrink-0">
+                  ${p.price_usd}
+                  <span className="text-xs font-normal text-gray-400 ml-1">
+                    {locale === 'es' ? '/mes' : '/mo'}
+                  </span>
+                </span>
+              </button>
+            )
+          })}
+        </div>
+        <div className="flex gap-2 pt-2">
+          <button
+            onClick={onCancel}
+            className="flex-1 h-9 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+          >
+            {locale === 'es' ? 'Cancelar' : 'Cancel'}
+          </button>
+          <button
+            onClick={() => { if (selectedPlan) setPhase('contract') }}
+            disabled={!selectedPlan}
+            className="flex-1 h-9 rounded-lg bg-brand-500 hover:bg-brand-400 text-white text-sm font-semibold transition-colors disabled:opacity-40"
+          >
+            {locale === 'es' ? 'Continuar' : 'Continue'}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Step 2: admin signs + send contract ───────────────────────────────────
+
+  async function handleSend() {
+    if (!selectedPlan || sending || !adminSignature) { setAdminSigError(true); return }
+    setAdminSigError(false)
+    setContractError(null)
+    setSending(true)
+    try {
+      const res = await fetch('/api/membership-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          client_id: client.id,
+          plan_id: selectedPlan.id,
+          language,
+          admin_signature_image: adminSignature,
+        }),
+      })
+      if (res.status === 409) { setContractError(tContract('conflict_pending')); setSending(false); return }
+      if (!res.ok) { setContractError(tContract('error_send')); setSending(false); return }
+      const data: { id: string; expires_at: string } = await res.json()
+      setRequestId(data.id)
+      setRequestExpiresAt(data.expires_at)
+      setPhase('waiting')
+    } catch {
+      setContractError(tContract('error_send'))
+      setSending(false)
+    }
+  }
+
+  if (phase === 'contract') {
+    const tmpl = getBasicContractTemplate(language)
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 pb-1">
+          <FileText size={14} className="text-brand-500" />
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            {tContract('send_contract')}
+          </p>
+        </div>
+
+        <div className="bg-gray-50 rounded-xl p-3 text-xs text-gray-600 leading-relaxed max-h-32 overflow-y-auto">
+          <p className="font-bold text-gray-700 mb-1">{tmpl.slide3_contract_title}</p>
+          <p>{tmpl.slide3_preamble}</p>
+        </div>
+
+        <div>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+            {locale === 'es' ? 'Idioma del contrato' : 'Contract language'}
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {(['en', 'es'] as const).map(lang => (
+              <button key={lang} onClick={() => setLanguage(lang)} disabled={sending}
+                className={`h-9 rounded-lg border text-sm font-medium transition-colors disabled:opacity-50 ${language === lang ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'}`}>
+                {lang === 'en' ? 'English' : 'Español'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+            {tContract('admin_sig_label')}
+          </p>
+          <div className="rounded-xl overflow-hidden border border-gray-200">
+            <SignaturePad
+              label=""
+              clearLabel={tContract('admin_sig_clear')}
+              onSignature={(dataUrl) => { setAdminSignature(dataUrl); if (dataUrl) setAdminSigError(false) }}
+            />
+          </div>
+          {adminSigError && (
+            <p className="text-red-500 text-xs mt-1">{tContract('admin_sig_required')}</p>
+          )}
+        </div>
+
+        {contractError && (
+          <p className="text-red-600 text-xs bg-red-50 border border-red-100 rounded-lg px-3 py-2">{contractError}</p>
+        )}
+
+        <div className="flex gap-2 pt-1">
+          <button onClick={() => setPhase('select')} disabled={sending}
+            className="flex-1 h-9 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50">
+            {locale === 'es' ? 'Atrás' : 'Back'}
+          </button>
+          <button onClick={handleSend} disabled={sending || !adminSignature}
+            className="flex-1 h-9 rounded-lg bg-brand-500 hover:bg-brand-400 text-white text-sm font-semibold transition-colors disabled:opacity-40 flex items-center justify-center gap-1.5">
+            {sending ? <><Loader2 size={13} className="animate-spin" />{tContract('sending_contract')}</> : tContract('send_contract')}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Step 3: waiting for client signature ──────────────────────────────────
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => {
+    if (phase !== 'waiting' || !requestExpiresAt) return
+    function tick() {
+      const remaining = Math.max(0, Math.floor((new Date(requestExpiresAt!).getTime() - Date.now()) / 1000))
+      setSecondsLeft(remaining)
+    }
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [phase, requestExpiresAt])
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => {
+    if (phase !== 'waiting' || !requestId) return
+    const supabase = createClient()
+    let active = true
+
+    const channel = supabase
+      .channel(`ct_panel_req:${requestId}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'membership_requests', filter: `id=eq.${requestId}` },
+        (payload: { new: Record<string, unknown> }) => {
+          const status = payload.new['status'] as string
+          if (status === 'signed') setPhase('paying')
+          if (status === 'declined' || status === 'expired') { setRequestId(null); setPhase('select') }
+        }
+      ).subscribe()
+
+    const pollId = setInterval(async () => {
+      if (!active) return
+      const { data } = await supabase.from('membership_requests').select('status').eq('id', requestId!).single()
+      if (!active) return
+      if (data?.status === 'signed') { active = false; setPhase('paying') }
+      if (data?.status === 'declined' || data?.status === 'expired') { active = false; setRequestId(null); setPhase('select') }
+    }, 2000)
+
+    return () => { active = false; clearInterval(pollId); supabase.removeChannel(channel) }
+  }, [phase, requestId])
+
+  async function handleCancelRequest() {
+    setCancelling(true)
+    try { await fetch(`/api/membership-requests/${requestId}`, { method: 'DELETE' }) } catch { /* ignore */ }
+    setRequestId(null)
+    setPhase('select')
+    setCancelling(false)
+  }
+
+  function formatCountdown(s: number) {
+    const m = Math.floor(s / 60)
+    const sec = s % 60
+    return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
+  }
+
+  if (phase === 'waiting') {
+    const clientName = `${client.first_name} ${client.last_name}`
+    return (
+      <div className="flex flex-col items-center gap-4 py-4 text-center">
+        <div className="relative flex items-center justify-center w-16 h-16">
+          <div className="absolute inset-0 rounded-full bg-brand-100 animate-ping" />
+          <div className="relative flex items-center justify-center w-16 h-16 rounded-full bg-brand-50 border-2 border-brand-200">
+            <FileText size={24} className="text-brand-500" />
+          </div>
+        </div>
+
+        <div>
+          <p className="text-xs font-semibold text-brand-600 uppercase tracking-widest mb-0.5">
+            {tContract('waiting_title')}
+          </p>
+          <p className="font-semibold text-gray-900">{clientName}</p>
+          <p className="text-sm text-gray-500">{locale === 'es' ? selectedPlan?.name_es : selectedPlan?.name_en}</p>
+        </div>
+
+        <p className="text-sm text-gray-500 max-w-xs leading-relaxed">
+          {tContract('waiting_body', { name: client.first_name })}
+        </p>
+
+        <div className="bg-gray-50 rounded-xl px-6 py-3 border border-gray-200">
+          <p className="text-xs text-gray-400 mb-0.5">{tContract('waiting_expires_in')}</p>
+          <p className={`text-2xl font-mono font-bold ${secondsLeft < 300 ? 'text-red-500' : 'text-brand-600'}`}>
+            {formatCountdown(secondsLeft)}
+          </p>
+        </div>
+
+        <button onClick={handleCancelRequest} disabled={cancelling}
+          className="h-9 px-4 rounded-lg border border-gray-200 text-sm text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50 flex items-center gap-1.5">
+          {cancelling ? <><Loader2 size={13} className="animate-spin" />{tContract('cancelling_request')}</> : tContract('cancel_request')}
+        </button>
+      </div>
+    )
+  }
+
+  // ── Step 4: confirm payment ────────────────────────────────────────────────
+
+  const plan = selectedPlan!
+  const splitFirstAmount = plan.split_first_amount
+  const baseAmount = useSplit && splitFirstAmount ? splitFirstAmount : plan.price_usd
+  const planName = locale === 'es' ? plan.name_es : plan.name_en
+
+  async function handlePay() {
+    if (paying || !requestId) return
+    setPaying(true)
+    setPayError(null)
+    try {
+      const res = await fetch('/api/memberships/renew', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          client_id: client.id,
+          plan_id: plan.id,
+          amount_usd: baseAmount,
+          split_payment: useSplit,
+          membership_request_id: requestId,
+        }),
+      })
+      if (!res.ok) { setPayError(locale === 'es' ? 'Error al registrar el pago.' : 'Failed to record payment.'); setPaying(false); return }
+      onAssigned()
+    } catch {
+      setPayError(locale === 'es' ? 'Error de conexión.' : 'Connection error.')
+      setPaying(false)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 text-green-600">
+        <Check size={16} />
+        <p className="text-xs font-semibold uppercase tracking-wide">
+          {locale === 'es' ? 'Contrato firmado' : 'Contract signed'}
+        </p>
+      </div>
+
+      <div className="bg-brand-50 border border-brand-200 rounded-xl px-4 py-3 flex items-center justify-between">
+        <span className="font-semibold text-brand-800 text-sm">{planName}</span>
+        <span className="font-bold text-brand-700">${plan.price_usd}<span className="text-xs font-normal text-gray-400 ml-1">{locale === 'es' ? '/mes' : '/mo'}</span></span>
+      </div>
+
+      {plan.allows_split_payment && splitFirstAmount && (
+        <button onClick={() => setUseSplit(v => !v)} disabled={paying}
+          className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl border text-sm transition-colors disabled:opacity-50 ${useSplit ? 'border-brand-400 bg-brand-50 text-brand-700' : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'}`}>
+          <span>{locale === 'es' ? 'Pago en cuotas' : 'Split payment'}</span>
+          <span className="font-semibold">{useSplit ? `$${splitFirstAmount} + $${plan.price_usd - splitFirstAmount}` : `$${plan.price_usd}`}</span>
+        </button>
+      )}
+
+      <div className="bg-gray-50 rounded-xl px-4 py-3 flex items-center justify-between">
+        <span className="text-sm text-gray-500">{locale === 'es' ? 'Total a cobrar hoy' : 'Charge today'}</span>
+        <span className="text-xl font-bold text-gray-900">${baseAmount}</span>
+      </div>
+
+      {payError && (
+        <p className="text-red-600 text-xs bg-red-50 border border-red-100 rounded-lg px-3 py-2">{payError}</p>
+      )}
+
+      <button onClick={handlePay} disabled={paying}
+        className="w-full h-10 rounded-xl bg-brand-500 hover:bg-brand-400 text-white text-sm font-semibold transition-colors disabled:opacity-40 flex items-center justify-center gap-2">
+        {paying ? <><Loader2 size={14} className="animate-spin" />{locale === 'es' ? 'Registrando…' : 'Registering…'}</> : locale === 'es' ? `Confirmar — $${baseAmount}` : `Confirm — $${baseAmount}`}
+      </button>
+    </div>
+  )
 }
 
 // ── Main table ────────────────────────────────────────────────────────────────
