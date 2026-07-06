@@ -33,6 +33,7 @@ type Phase =
   | 'waiting_signature'
   | 'paying'
   | 'service_visit'
+  | 'confirm_service'
   | 'registering_service'
   | 'additional_visit'
   | 'success'
@@ -65,6 +66,8 @@ export default function ScanPage() {
   const [contractAllowsSplit, setContractAllowsSplit] = useState(false)
   const [contractSplitFirstAmount, setContractSplitFirstAmount] = useState<number | null>(null)
   const [referralChecked, setReferralChecked] = useState(false)
+  const [selectedService, setSelectedService] = useState<{ id: string; name_en: string; name_es: string; price_usd: number | null } | null>(null)
+  const [preselectedPlanId, setPreselectedPlanId] = useState<string | null>(null)
 
   useEffect(() => {
     const stored = sessionStorage.getItem(THERAPIST_STORAGE_KEY)
@@ -90,6 +93,8 @@ export default function ScanPage() {
     setContractSplitFirstAmount(null)
     setResultError(null)
     setReferralChecked(false)
+    setSelectedService(null)
+    setPreselectedPlanId(null)
     setPhase('scanning')
   }, [])
 
@@ -476,6 +481,7 @@ export default function ScanPage() {
     phase === 'referral' ||
     phase === 'assigning' ||
     phase === 'service_visit' ||
+    phase === 'confirm_service' ||
     phase === 'confirming_split' ||
     phase === 'waiting_signature' ||
     phase === 'paying' ||
@@ -538,18 +544,53 @@ export default function ScanPage() {
                 <p className="text-amber-300 text-sm leading-relaxed">{scanErrorMessage(resultError)}</p>
               </div>
             )}
-            <CheckinCard
-              data={result}
+            {result.membership_status === 'no_membership' ? (
+              <UnifiedSelectPanel
+                result={result}
+                therapistName={therapistName}
+                onTherapistChange={setTherapistName}
+                onScanAgain={reset}
+                onContinue={(selection) => {
+                  if (selection.type === 'plan') {
+                    setPreselectedPlanId(selection.planId)
+                    if (result.is_first_membership && !referralChecked) {
+                      setPhase('referral')
+                    } else {
+                      setPhase('assigning')
+                    }
+                  } else {
+                    setSelectedService(selection.service)
+                    setPhase('confirm_service')
+                  }
+                }}
+              />
+            ) : (
+              <CheckinCard
+                data={result}
+                therapistName={therapistName}
+                onTherapistChange={setTherapistName}
+                onScanAgain={reset}
+                onRegisterVisit={handleRegisterVisit}
+                onAssignMembership={() => result?.is_first_membership && !referralChecked ? setPhase('referral') : setPhase('assigning')}
+                onChangePlan={() => setPhase('assigning')}
+                onRegisterServiceVisit={() => setPhase('service_visit')}
+                onConfirmSplitPayment={() => setPhase('confirming_split')}
+                onRegisterAdditionalVisit={() => setPhase('additional_visit')}
+                splitPaymentBlocked={splitPaymentBlocked}
+              />
+            )}
+          </div>
+        )}
+
+        {phase === 'confirm_service' && result && selectedService && (
+          <div className="w-full max-w-md">
+            <ConfirmServicePanel
+              result={result}
+              service={selectedService}
               therapistName={therapistName}
               onTherapistChange={setTherapistName}
-              onScanAgain={reset}
-              onRegisterVisit={handleRegisterVisit}
-              onAssignMembership={() => result?.is_first_membership && !referralChecked ? setPhase('referral') : setPhase('assigning')}
-              onChangePlan={() => setPhase('assigning')}
-              onRegisterServiceVisit={() => setPhase('service_visit')}
-              onConfirmSplitPayment={() => setPhase('confirming_split')}
-              onRegisterAdditionalVisit={() => setPhase('additional_visit')}
-              splitPaymentBlocked={splitPaymentBlocked}
+              onConfirm={() => handleServiceVisit(selectedService.id, locale === 'es' ? selectedService.name_es : selectedService.name_en, selectedService.price_usd)}
+              onCancel={() => { setSelectedService(null); setPhase('result') }}
             />
           </div>
         )}
@@ -1618,6 +1659,224 @@ function WaitingSignaturePanel({
           <><Loader2 size={14} className="animate-spin" />{tContract('cancelling_request')}</>
         ) : tContract('cancel_request')}
       </button>
+    </div>
+  )
+}
+
+// ─── Unified Select Panel ─────────────────────────────────────────────────────
+
+type UnifiedSelection =
+  | { type: 'plan'; planId: string }
+  | { type: 'service'; service: { id: string; name_en: string; name_es: string; price_usd: number | null } }
+
+interface UnifiedSelectPanelProps {
+  result: CheckinResult
+  therapistName: string
+  onTherapistChange: (name: string) => void
+  onScanAgain: () => void
+  onContinue: (selection: UnifiedSelection) => void
+}
+
+function UnifiedSelectPanel({ result, therapistName, onTherapistChange, onScanAgain, onContinue }: UnifiedSelectPanelProps) {
+  const t = useTranslations('checkin')
+  const tScan = useTranslations('scan')
+  const locale = useLocale() as 'en' | 'es'
+
+  const [plans, setPlans] = useState<PlanOption[]>([])
+  const [services, setServices] = useState<ServiceType[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selection, setSelection] = useState<UnifiedSelection | null>(null)
+
+  useEffect(() => {
+    Promise.all([
+      fetch('/api/membership-plans').then(r => r.json()).catch(() => []),
+      fetch('/api/service-types').then(r => r.json()).catch(() => []),
+    ]).then(([p, s]: [PlanOption[], ServiceType[]]) => {
+      setPlans(p)
+      setServices(s)
+      setLoading(false)
+    })
+  }, [])
+
+  const isPlanSelected = (id: string) => selection?.type === 'plan' && selection.planId === id
+  const isServiceSelected = (id: string) => selection?.type === 'service' && selection.service.id === id
+
+  return (
+    <div className="w-full flex flex-col gap-5">
+      <h2 className="text-2xl md:text-4xl font-bold text-white leading-tight">
+        {result.client.first_name} {result.client.last_name}
+      </h2>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-10">
+          <Loader2 size={32} className="text-brand-400 animate-spin" />
+        </div>
+      ) : (
+        <div className="flex flex-col gap-1 max-h-[52vh] overflow-y-auto pr-1">
+
+          {/* Memberships section */}
+          {plans.length > 0 && (
+            <>
+              <p className="text-slate-400 text-xs uppercase tracking-wide mb-2 mt-1">
+                {locale === 'es' ? 'Membresías' : 'Memberships'}
+              </p>
+              {plans.map(plan => {
+                const isSelected = isPlanSelected(plan.id)
+                const isPack = plan.plan_type === 'pack'
+                return (
+                  <button
+                    key={plan.id}
+                    onClick={() => setSelection({ type: 'plan', planId: plan.id })}
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-left transition-colors mb-1 ${
+                      isSelected ? 'bg-brand-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                    }`}
+                  >
+                    <div>
+                      <span className="font-semibold block">{locale === 'es' ? plan.name_es : plan.name_en}</span>
+                      {isPack && plan.total_sessions && (
+                        <span className={`text-xs ${isSelected ? 'text-brand-100' : 'text-slate-400'}`}>
+                          {plan.total_sessions} {t('pack_sessions_total')}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-lg font-bold ml-4 flex-shrink-0">
+                      ${plan.price_usd}
+                      {!isPack && <span className="text-xs font-normal opacity-75 ml-1">{tScan('per_month_short')}</span>}
+                    </span>
+                  </button>
+                )
+              })}
+            </>
+          )}
+
+          {/* Services section */}
+          {services.length > 0 && (
+            <>
+              <p className="text-slate-400 text-xs uppercase tracking-wide mb-2 mt-3">
+                {locale === 'es' ? 'Servicios' : 'Services'}
+              </p>
+              {services.map(s => {
+                const isSelected = isServiceSelected(s.id)
+                return (
+                  <button
+                    key={s.id}
+                    onClick={() => setSelection({ type: 'service', service: { id: s.id, name_en: s.name_en, name_es: s.name_es, price_usd: s.price_usd } })}
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-left transition-colors mb-1 ${
+                      isSelected ? 'bg-slate-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                    }`}
+                  >
+                    <div>
+                      <span className="font-semibold block">{locale === 'es' ? s.name_es : s.name_en}</span>
+                      {s.duration_minutes && (
+                        <span className={`text-xs ${isSelected ? 'text-slate-200' : 'text-slate-400'}`}>
+                          {s.duration_minutes} min
+                        </span>
+                      )}
+                    </div>
+                    {s.price_usd !== null && (
+                      <span className="text-lg font-bold ml-4 flex-shrink-0">${s.price_usd}</span>
+                    )}
+                  </button>
+                )
+              })}
+            </>
+          )}
+        </div>
+      )}
+
+      <div className="flex flex-col gap-3 pt-1">
+        <button
+          onClick={() => selection && onContinue(selection)}
+          disabled={!selection}
+          className="w-full h-16 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xl font-bold transition-colors"
+        >
+          {locale === 'es' ? 'Continuar' : 'Continue'}
+        </button>
+        <button
+          onClick={onScanAgain}
+          className="w-full h-12 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-300 text-base font-medium transition-colors"
+        >
+          {tScan('scan_again')}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─── Confirm Service Panel ────────────────────────────────────────────────────
+
+interface ConfirmServicePanelProps {
+  result: CheckinResult
+  service: { id: string; name_en: string; name_es: string; price_usd: number | null }
+  therapistName: string
+  onTherapistChange: (name: string) => void
+  onConfirm: () => void
+  onCancel: () => void
+}
+
+function ConfirmServicePanel({ result, service, therapistName, onTherapistChange, onConfirm, onCancel }: ConfirmServicePanelProps) {
+  const tScan = useTranslations('scan')
+  const tCheck = useTranslations('checkin')
+  const locale = useLocale() as 'en' | 'es'
+  const [submitting, setSubmitting] = useState(false)
+
+  const serviceName = locale === 'es' ? service.name_es : service.name_en
+
+  const handleConfirm = () => {
+    if (submitting) return
+    setSubmitting(true)
+    onConfirm()
+  }
+
+  return (
+    <div className="w-full flex flex-col gap-6">
+      <div className="flex items-center gap-3">
+        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-green-500/20">
+          <CheckCircle2 size={18} className="text-green-400" />
+        </div>
+        <span className="text-green-400 text-lg font-semibold uppercase tracking-wide">
+          {locale === 'es' ? 'Confirmar visita' : 'Confirm visit'}
+        </span>
+      </div>
+
+      <h2 className="text-2xl md:text-4xl font-bold text-white leading-tight">
+        {result.client.first_name} {result.client.last_name}
+      </h2>
+
+      <div className="bg-slate-800 rounded-xl px-4 py-3 flex items-center justify-between">
+        <span className="font-semibold text-white">{serviceName}</span>
+        {service.price_usd !== null && (
+          <span className="text-lg font-bold text-green-400 ml-4 flex-shrink-0">${service.price_usd}</span>
+        )}
+      </div>
+
+      <TherapistSelector
+        value={therapistName}
+        onChange={onTherapistChange}
+        disabled={submitting}
+      />
+
+      <div className="flex flex-col gap-3 pt-2">
+        <button
+          onClick={handleConfirm}
+          disabled={submitting}
+          className="w-full h-16 rounded-xl bg-green-500 hover:bg-green-400 active:bg-green-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xl font-bold transition-colors flex items-center justify-center gap-2"
+        >
+          {submitting
+            ? <><Loader2 size={20} className="animate-spin" />{tScan('registering_visit')}</>
+            : service.price_usd !== null
+              ? `${tScan('confirm_visit')} — $${service.price_usd}`
+              : tScan('confirm_visit')
+          }
+        </button>
+        <button
+          onClick={onCancel}
+          disabled={submitting}
+          className="w-full h-12 rounded-xl bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-slate-300 text-base font-medium transition-colors"
+        >
+          {tCheck('cancel')}
+        </button>
+      </div>
     </div>
   )
 }
