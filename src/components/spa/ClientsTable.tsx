@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useMemo, useTransition } from 'react'
+import { useState, useMemo, useTransition, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { Search, ChevronRight, X, CreditCard, Loader2 } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
@@ -318,6 +319,15 @@ function AssignForm({
   )
 }
 
+// ── Portal wrapper for PlanPanel ──────────────────────────────────────────────
+
+function PortaledPlanPanel(props: Parameters<typeof PlanPanel>[0]) {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+  if (!mounted) return null
+  return createPortal(<PlanPanel {...props} />, document.body)
+}
+
 // ── Main table ────────────────────────────────────────────────────────────────
 
 export function ClientsTable({ clients, plans }: Props) {
@@ -374,6 +384,9 @@ export function ClientsTable({ clients, plans }: Props) {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full h-10 pl-9 pr-3 rounded-lg border border-gray-200 bg-white text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-shadow"
+            data-gramm="false"
+            data-gramm_editor="false"
+            data-enable-grammarly="false"
           />
         </div>
         <select
@@ -573,9 +586,9 @@ export function ClientsTable({ clients, plans }: Props) {
         )}
       </p>
 
-      {/* Plan panel */}
+      {/* Plan panel — rendered via portal to document.body */}
       {planClient && (
-        <PlanPanel
+        <PortaledPlanPanel
           client={planClient}
           plans={plans}
           locale={locale}
