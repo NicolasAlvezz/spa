@@ -199,27 +199,19 @@ function PlanPanel({
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="flex flex-col items-center justify-center py-6 text-center">
-                <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+              <div className="flex flex-col items-center justify-center py-8 text-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
                   <CreditCard size={20} className="text-gray-300" />
                 </div>
                 <p className="text-sm font-medium text-gray-500">
                   {locale === 'es' ? 'Sin plan activo' : 'No active plan'}
                 </p>
+                <p className="text-xs text-gray-400 leading-relaxed max-w-xs">
+                  {locale === 'es'
+                    ? 'Para asignar el primer plan, escaneá el QR del cliente desde la página de escaneo. Esto asegura que el contrato sea firmado correctamente.'
+                    : 'To assign the first plan, scan the client\'s QR from the scan page. This ensures the contract is properly signed.'}
+                </p>
               </div>
-              <AssignForm
-                plans={plans}
-                locale={locale}
-                selectedPlanId={selectedPlanId}
-                amount={amount}
-                submitting={submitting}
-                error={error}
-                onPlanChange={handlePlanChange}
-                onAmountChange={setAmount}
-                onSubmit={handleAssign}
-                methodBtn={methodBtn}
-                label={locale === 'es' ? 'Asignar plan' : 'Assign plan'}
-              />
             </div>
           )}
         </div>
