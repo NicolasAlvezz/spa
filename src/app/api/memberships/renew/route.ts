@@ -77,9 +77,11 @@ export async function POST(req: Request) {
   let rollover_sessions = 0
 
   if (isPack) {
-    // Packs don't expire by time — use a far-future sentinel date
+    // Packs expire 2 months from purchase date
     started_at = todayStr
-    expires_at = '9999-12-31'
+    const packExpiry = new Date(todayStr + 'T12:00:00Z')
+    packExpiry.setUTCMonth(packExpiry.getUTCMonth() + 2)
+    expires_at = packExpiry.toISOString().split('T')[0]
   } else {
     // Monthly plan: calculate 1-month period
     if (currentMembership && currentMembership.membership_plans) {

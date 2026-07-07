@@ -82,6 +82,11 @@ export function CheckinCard({
           {planName && (
             <p className="text-slate-400 text-lg mt-2">{planName}</p>
           )}
+          {isPack && (
+            <p className="text-brand-400 text-xs font-semibold uppercase tracking-wide mt-1">
+              {locale === 'es' ? 'Post-operatorio únicamente' : 'Post-operative massages only'}
+            </p>
+          )}
         </div>
 
         <ClientInfoBar client={client} lastVisit={data.last_visit} locale={locale} />
@@ -109,7 +114,7 @@ export function CheckinCard({
               <StatBox icon={Star} label={tCheck('sessions_remaining')} value={String(sessionsRemaining)} highlight={sessionsRemaining === 0} />
               <StatBox icon={Activity} label={tCheck('sessions_used_total')} value={`${sessionsUsed} / ${totalSessions}`} />
               <StatBox icon={Activity} label={t('visits_this_month')} value={String(data.visits_this_month.length)} />
-              <StatBox icon={Calendar} label={tCheck('no_expiry')} value="∞" />
+              <StatBox icon={Calendar} label={tCheck('expires')} value={formatDate(membership!.expires_at, locale)} />
             </>
           ) : (
             <>

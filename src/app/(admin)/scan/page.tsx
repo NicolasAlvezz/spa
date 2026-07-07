@@ -29,6 +29,7 @@ type Phase =
   | 'renewing'
   | 'referral'
   | 'assigning'
+  | 'assign_pack'
   | 'confirming_split'
   | 'waiting_signature'
   | 'paying'
@@ -68,6 +69,7 @@ export default function ScanPage() {
   const [referralChecked, setReferralChecked] = useState(false)
   const [selectedService, setSelectedService] = useState<{ id: string; name_en: string; name_es: string; price_usd: number | null } | null>(null)
   const [preselectedPlanId, setPreselectedPlanId] = useState<string | null>(null)
+  const [packPlan, setPackPlan] = useState<PlanOption | null>(null)
 
   useEffect(() => {
     const stored = sessionStorage.getItem(THERAPIST_STORAGE_KEY)
@@ -95,6 +97,7 @@ export default function ScanPage() {
     setReferralChecked(false)
     setSelectedService(null)
     setPreselectedPlanId(null)
+    setPackPlan(null)
     setPhase('scanning')
   }, [])
 
@@ -480,6 +483,7 @@ export default function ScanPage() {
     phase === 'renewing' ||
     phase === 'referral' ||
     phase === 'assigning' ||
+    phase === 'assign_pack' ||
     phase === 'service_visit' ||
     phase === 'confirm_service' ||
     phase === 'confirming_split' ||
@@ -550,11 +554,17 @@ export default function ScanPage() {
                 onScanAgain={reset}
                 onContinue={(selection) => {
                   if (selection.type === 'plan') {
-                    setPreselectedPlanId(selection.planId)
-                    if (result.is_first_membership && !referralChecked) {
-                      setPhase('referral')
+                    if (selection.isPack && selection.plan) {
+                      // Packs: no contract needed — go directly to payment
+                      setPackPlan(selection.plan)
+                      setPhase('assign_pack')
                     } else {
-                      setPhase('assigning')
+                      setPreselectedPlanId(selection.planId)
+                      if (result.is_first_membership && !referralChecked) {
+                        setPhase('referral')
+                      } else {
+                        setPhase('assigning')
+                      }
                     }
                   } else {
                     setSelectedService(selection.service)
@@ -638,6 +648,17 @@ export default function ScanPage() {
               initialPlanId={preselectedPlanId}
               onSent={handleContractSent}
               onCancel={() => setPhase('result')}
+            />
+          </div>
+        )}
+
+        {phase === 'assign_pack' && result && packPlan && (
+          <div className="w-full max-w-md">
+            <AssignPackPanel
+              result={result}
+              plan={packPlan}
+              onConfirm={handleAssignConfirm}
+              onCancel={() => { setPackPlan(null); setPhase('result') }}
             />
           </div>
         )}
@@ -1347,7 +1368,8 @@ function RequestContractPanel({ result, initialPlanId, onSent, onCancel }: Reque
   useEffect(() => {
     fetch('/api/membership-plans')
       .then(r => r.json())
-      .then((data: PlanOption[]) => { setPlans(data); setLoadingPlans(false) })
+      // Contract flow is only for monthly plans — packs are assigned directly without contract
+      .then((data: PlanOption[]) => { setPlans(data.filter(p => p.plan_type !== 'pack')); setLoadingPlans(false) })
       .catch(() => setLoadingPlans(false))
   }, [])
 
@@ -1666,7 +1688,7 @@ function WaitingSignaturePanel({
 // ─── Unified Select Panel ─────────────────────────────────────────────────────
 
 type UnifiedSelection =
-  | { type: 'plan'; planId: string }
+  | { type: 'plan'; planId: string; isPack: boolean; plan: PlanOption | null }
   | { type: 'service'; service: { id: string; name_en: string; name_es: string; price_usd: number | null } }
 
 interface UnifiedSelectPanelProps {
@@ -1724,7 +1746,7 @@ function UnifiedSelectPanel({ result, onScanAgain, onContinue }: UnifiedSelectPa
                 return (
                   <button
                     key={plan.id}
-                    onClick={() => setSelection({ type: 'plan', planId: plan.id })}
+                    onClick={() => setSelection({ type: 'plan', planId: plan.id, isPack: plan.plan_type === 'pack', plan })}
                     className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-left transition-colors mb-1 ${
                       isSelected ? 'bg-brand-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
                     }`}
@@ -1866,6 +1888,95 @@ function ConfirmServicePanel({ result, service, therapistName, onTherapistChange
               ? `${tScan('confirm_visit')} — $${service.price_usd}`
               : tScan('confirm_visit')
           }
+        </button>
+        <button
+          onClick={onCancel}
+          disabled={submitting}
+          className="w-full h-12 rounded-xl bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-slate-300 text-base font-medium transition-colors"
+        >
+          {tCheck('cancel')}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─── Assign Pack Panel ────────────────────────────────────────────────────────
+
+interface AssignPackPanelProps {
+  result: CheckinResult
+  plan: PlanOption
+  onConfirm: (planId: string, amountUsd: number, splitPayment?: boolean, useCredit?: boolean) => Promise<void>
+  onCancel: () => void
+}
+
+function AssignPackPanel({ result, plan, onConfirm, onCancel }: AssignPackPanelProps) {
+  const tCheck = useTranslations('checkin')
+  const locale = useLocale() as 'en' | 'es'
+  const [submitting, setSubmitting] = useState(false)
+  const [useCredit, setUseCredit] = useState(false)
+
+  const planName = locale === 'es' ? plan.name_es : plan.name_en
+  const creditBalance = result.client.credit_balance
+  const creditApplied = useCredit ? Math.min(creditBalance, plan.price_usd) : 0
+  const paymentAmount = Math.max(0, plan.price_usd - creditApplied)
+
+  const handleConfirm = async () => {
+    if (submitting) return
+    setSubmitting(true)
+    await onConfirm(plan.id, plan.price_usd, false, useCredit)
+  }
+
+  return (
+    <div className="w-full flex flex-col gap-6">
+      <div className="flex items-center gap-3">
+        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-brand-500/20">
+          <Star size={18} className="text-brand-400" />
+        </div>
+        <span className="text-brand-400 text-lg font-semibold uppercase tracking-wide">
+          {locale === 'es' ? 'Comprar pack' : 'Buy pack'}
+        </span>
+      </div>
+
+      <h2 className="text-2xl md:text-4xl font-bold text-white leading-tight">
+        {result.client.first_name} {result.client.last_name}
+      </h2>
+
+      {/* Pack summary */}
+      <div className="bg-slate-800 rounded-xl p-4 flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <span className="font-semibold text-white">{planName}</span>
+          <span className="text-2xl font-bold text-brand-400">${plan.price_usd}</span>
+        </div>
+        {plan.total_sessions && (
+          <p className="text-slate-400 text-sm">
+            {plan.total_sessions} {tCheck('pack_sessions_total')} · {locale === 'es' ? 'Masajes post-operatorios' : 'Post-operative massages'} · {locale === 'es' ? 'Vence en 2 meses' : 'Expires in 2 months'}
+          </p>
+        )}
+      </div>
+
+      {/* Credit toggle */}
+      {creditBalance > 0 && (
+        <button
+          onClick={() => setUseCredit(v => !v)}
+          disabled={submitting}
+          className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 ${useCredit ? 'bg-green-600/30 border border-green-500/60 text-green-300' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
+        >
+          <span className="flex items-center gap-2">
+            <Gift size={16} className={useCredit ? 'text-green-400' : 'text-slate-400'} />
+            {tCheck('credit_use', { amount: creditBalance })}
+          </span>
+          {useCredit && <Check size={16} className="text-green-400 flex-shrink-0" />}
+        </button>
+      )}
+
+      <div className="flex flex-col gap-3 pt-2">
+        <button
+          onClick={handleConfirm}
+          disabled={submitting}
+          className="w-full h-16 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xl font-bold transition-colors"
+        >
+          {submitting ? tCheck('assigning') : `${tCheck('assign_confirm')} — $${paymentAmount}`}
         </button>
         <button
           onClick={onCancel}

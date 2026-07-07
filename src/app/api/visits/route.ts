@@ -96,7 +96,9 @@ export async function POST(req: Request) {
     use_credit?: boolean
   } = await req.json()
 
-  const { client_id, membership_id, service_type_id, amount_usd, notes, therapist_name, use_credit } = body
+  const { client_id, membership_id, amount_usd, notes, therapist_name, use_credit } = body
+  // service_type_id may be overridden later (e.g. auto-set to post_op for pack memberships)
+  let service_type_id = body.service_type_id
 
   if (!client_id) {
     return NextResponse.json({ error: 'client_id is required' }, { status: 400 })
@@ -162,6 +164,19 @@ export async function POST(req: Request) {
       const isPack = plan?.plan_type === 'pack'
 
       if (isPack) {
+        // Pack sessions are exclusively for post-operative massages.
+        // Automatically use the post_op service type for all pack visits.
+        if (!service_type_id) {
+          const { data: postOpType } = await supabase
+            .from('service_types')
+            .select('id')
+            .eq('slug', 'post_op')
+            .single()
+          if (postOpType) {
+            service_type_id = postOpType.id
+          }
+        }
+
         // Atomic decrement + threshold check via Postgres function.
         // Serializes concurrent visits on the same membership so we can't
         // burn a session twice for the same physical visit.
