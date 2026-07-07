@@ -43,7 +43,7 @@ export function QrScanner({ onScan, onCameraError, active }: Props) {
         const reader = new BrowserMultiFormatReader()
         readerRef.current = reader
 
-        reader.decodeFromVideoDevice(
+        await reader.decodeFromVideoDevice(
           null,
           videoRef.current,
           (result) => {

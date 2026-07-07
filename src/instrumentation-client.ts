@@ -40,7 +40,13 @@ Sentry.init({
   },
 
   // Also filter as an error event in case it surfaces via an unhandled rejection
-  ignoreErrors: ['refresh_token_not_found', 'Refresh Token Not Found', 'Invalid Refresh Token'],
+  ignoreErrors: [
+    'refresh_token_not_found',
+    'Refresh Token Not Found',
+    'Invalid Refresh Token',
+    // Camera permission denied by the user/device — handled in UI via onCameraError()
+    'NotAllowedError',
+  ],
 });
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
