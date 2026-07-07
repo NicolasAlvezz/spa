@@ -1,3 +1,7 @@
+-- Drop existing functions first to allow changing return types
+DROP FUNCTION IF EXISTS consume_pack_session(uuid);
+DROP FUNCTION IF EXISTS confirm_split_payment_atomic(uuid, text);
+
 -- ─── Pack session consumption ─────────────────────────────────────────────────
 -- Atomically decrements sessions_remaining on a pack membership and increments
 -- sessions_used_this_month (used for split-payment threshold tracking).
