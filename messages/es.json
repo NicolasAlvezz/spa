@@ -312,6 +312,8 @@
     "concept_additional": "Visita adicional",
     "concept_welcome": "Oferta de bienvenida",
     "concept_cancellation_fee": "Cargo por cancelación",
+    "concept_pack_purchase": "Pack de sesiones",
+    "concept_pack_split_second": "Pack de sesiones — 2do pago",
     "amount": "Monto (USD)",
     "method": "Método de pago",
     "date": "Fecha",

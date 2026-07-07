@@ -312,6 +312,8 @@
     "concept_additional": "Additional visit",
     "concept_welcome": "Welcome offer",
     "concept_cancellation_fee": "Cancellation fee",
+    "concept_pack_purchase": "Session pack",
+    "concept_pack_split_second": "Session pack — 2nd payment",
     "amount": "Amount (USD)",
     "method": "Payment method",
     "date": "Date",

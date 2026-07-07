@@ -73,6 +73,8 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
     additional_visit:   'concept_additional',
     welcome_offer:      'concept_welcome',
     cancellation_fee:   'concept_cancellation_fee',
+    pack_purchase:      'concept_pack_purchase',
+    pack_split_second:  'concept_pack_split_second',
   }
 
   const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount_usd), 0)
