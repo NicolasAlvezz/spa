@@ -408,7 +408,7 @@
     "delete_history_visits": "{count} visits",
     "delete_history_payments": "{count} payments",
     "delete_history_body": "Deleting this client will permanently remove all their data. This action cannot be undone.",
-    "delete_history_confirm_label": "Type the client's full name to confirm:",
+    "delete_history_confirm_label": "Type the client's phone number to confirm:",
     "delete_history_confirm_btn": "Delete permanently",
     "cancel": "Cancel",
     "danger_action_error": "Something went wrong. Please try again."

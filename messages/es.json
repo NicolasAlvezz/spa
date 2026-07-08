@@ -408,7 +408,7 @@
     "delete_history_visits": "{count} visitas",
     "delete_history_payments": "{count} pagos",
     "delete_history_body": "Eliminar este cliente borrará permanentemente todos sus datos. Esta acción no se puede deshacer.",
-    "delete_history_confirm_label": "Escribí el nombre completo del cliente para confirmar:",
+    "delete_history_confirm_label": "Escribí el número de teléfono del cliente para confirmar:",
     "delete_history_confirm_btn": "Eliminar permanentemente",
     "cancel": "Cancelar",
     "danger_action_error": "Algo salió mal. Intentá de nuevo."

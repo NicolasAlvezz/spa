@@ -13,13 +13,14 @@ import type { ClientHistorySummary } from '@/lib/supabase/queries/clients'
 interface Props {
   clientId: string
   clientName: string
+  clientPhone: string
   isActive: boolean
   history: ClientHistorySummary
 }
 
 type OpenDialog = 'deactivate' | 'reactivate' | 'delete' | null
 
-export function DangerZone({ clientId, clientName, isActive, history }: Props) {
+export function DangerZone({ clientId, clientName, clientPhone, isActive, history }: Props) {
   const t = useTranslations('clients')
   const [openDialog, setOpenDialog] = useState<OpenDialog>(null)
   const [confirmName, setConfirmName] = useState('')
@@ -243,8 +244,9 @@ export function DangerZone({ clientId, clientName, isActive, history }: Props) {
                     type="text"
                     value={confirmName}
                     onChange={(e) => setConfirmName(e.target.value)}
-                    placeholder={clientName}
+                    placeholder={clientPhone}
                     autoComplete="off"
+                    inputMode="tel"
                     className="w-full h-10 rounded-lg border border-gray-200 px-3 text-sm outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 transition-shadow"
                   />
                 </div>
@@ -257,7 +259,7 @@ export function DangerZone({ clientId, clientName, isActive, history }: Props) {
                   </button>
                   <button
                     onClick={handleDelete}
-                    disabled={isPending || confirmName.trim() !== clientName}
+                    disabled={isPending || confirmName.trim() !== clientPhone}
                     className="h-9 px-4 rounded-lg bg-red-700 hover:bg-red-600 text-white text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
                   >
                     {isPending && <Loader2 size={13} className="animate-spin" />}

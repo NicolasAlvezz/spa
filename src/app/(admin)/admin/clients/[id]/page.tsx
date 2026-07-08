@@ -453,6 +453,7 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
       <DangerZone
         clientId={client.id}
         clientName={`${client.first_name} ${client.last_name}`}
+        clientPhone={client.phone}
         isActive={client.is_active}
         history={history}
       />
