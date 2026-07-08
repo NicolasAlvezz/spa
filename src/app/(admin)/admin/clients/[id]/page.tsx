@@ -107,6 +107,13 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
             <h1 className="text-3xl font-bold text-gray-900">
               {client.first_name} {client.last_name}
             </h1>
+            <EditClientInfoButton
+              clientId={client.id}
+              firstName={client.first_name}
+              lastName={client.last_name}
+              phone={client.phone}
+              compact
+            />
             <MembershipBadge membership={membership} locale={locale} />
             {client.is_healthcare_worker && (
               <span className="text-xs bg-blue-50 text-blue-600 px-2.5 py-1 rounded-full font-semibold inline-flex items-center gap-1">

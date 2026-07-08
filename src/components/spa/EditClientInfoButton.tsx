@@ -10,9 +10,10 @@ interface Props {
   firstName: string
   lastName: string
   phone: string
+  compact?: boolean
 }
 
-export function EditClientInfoButton({ clientId, firstName, lastName, phone }: Props) {
+export function EditClientInfoButton({ clientId, firstName, lastName, phone, compact = false }: Props) {
   const t = useTranslations('clients')
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState({ first_name: firstName, last_name: lastName, phone })
@@ -54,11 +55,15 @@ export function EditClientInfoButton({ clientId, firstName, lastName, phone }: P
     <>
       <button
         onClick={openDialog}
-        className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-brand-600 transition-colors"
         title={t('edit_info')}
+        className={
+          compact
+            ? 'inline-flex items-center justify-center w-8 h-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:text-brand-600 hover:border-brand-200 hover:bg-brand-50 transition-colors'
+            : 'inline-flex items-center gap-1.5 h-7 px-2.5 rounded-lg border border-gray-200 bg-white text-xs font-medium text-gray-500 hover:text-brand-600 hover:border-brand-200 hover:bg-brand-50 transition-colors'
+        }
       >
-        <Pencil size={12} />
-        {t('edit_info')}
+        <Pencil size={13} />
+        {!compact && t('edit_info')}
       </button>
 
       {open && (
