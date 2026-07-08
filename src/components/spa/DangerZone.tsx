@@ -240,6 +240,9 @@ export function DangerZone({ clientId, clientName, clientPhone, isActive, histor
                   <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">
                     {t('delete_history_confirm_label')}
                   </label>
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono text-gray-700 select-all">
+                    {clientPhone}
+                  </div>
                   <input
                     type="text"
                     value={confirmName}
