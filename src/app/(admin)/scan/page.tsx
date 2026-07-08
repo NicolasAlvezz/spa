@@ -32,6 +32,7 @@ type Phase =
   | 'assign_pack'
   | 'confirming_split'
   | 'waiting_signature'
+  | 'membership_applied'
   | 'service_visit'
   | 'confirm_service'
   | 'registering_service'
@@ -467,8 +468,7 @@ export default function ScanPage() {
         setPhase('error')
         return
       }
-      setSuccessInfo({ title: tCheck('assign_title'), detail: contractPlanName })
-      setPhase('success')
+      setPhase('membership_applied')
     } catch {
       setErrorKey('network_error')
       setPhase('error')
@@ -509,6 +509,7 @@ export default function ScanPage() {
     phase === 'confirm_service' ||
     phase === 'confirming_split' ||
     phase === 'waiting_signature' ||
+    phase === 'membership_applied' ||
     phase === 'additional_visit' ||
     phase === 'success' ||
     phase === 'error'
@@ -680,6 +681,40 @@ export default function ScanPage() {
               onConfirm={handleAssignConfirm}
               onCancel={() => { setPackPlan(null); setPhase('result') }}
             />
+          </div>
+        )}
+
+        {phase === 'membership_applied' && result && (
+          <div className="w-full max-w-md flex flex-col items-center gap-6 text-center">
+            <div className="flex items-center justify-center w-20 h-20 rounded-full bg-green-500 shadow-lg shadow-green-900/40">
+              <CheckCircle2 size={40} className="text-white" />
+            </div>
+            <div>
+              <p className="text-green-400 text-sm font-semibold uppercase tracking-widest mb-1">
+                {locale === 'es' ? 'Membresía aplicada' : 'Membership applied'}
+              </p>
+              <h2 className="text-3xl font-bold text-white">
+                {result.client.first_name} {result.client.last_name}
+              </h2>
+              <p className="text-slate-400 text-base mt-1">{contractPlanName}</p>
+            </div>
+            <p className="text-slate-300 text-base">
+              {locale === 'es' ? '¿Querés registrar una visita ahora?' : 'Do you want to register a visit now?'}
+            </p>
+            <div className="w-full flex flex-col gap-3">
+              <button
+                onClick={handleRegisterVisit}
+                className="w-full h-16 rounded-xl bg-green-500 hover:bg-green-400 active:bg-green-600 text-white text-xl font-bold transition-colors"
+              >
+                {locale === 'es' ? 'Registrar visita' : 'Register visit'}
+              </button>
+              <button
+                onClick={reset}
+                className="w-full h-12 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-300 text-base font-medium transition-colors"
+              >
+                {locale === 'es' ? 'Escanear otro' : 'Scan another'}
+              </button>
+            </div>
           </div>
         )}
 
