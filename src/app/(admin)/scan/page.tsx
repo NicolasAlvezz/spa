@@ -32,7 +32,6 @@ type Phase =
   | 'assign_pack'
   | 'confirming_split'
   | 'waiting_signature'
-  | 'paying'
   | 'service_visit'
   | 'confirm_service'
   | 'registering_service'
@@ -64,8 +63,6 @@ export default function ScanPage() {
   const [contractExpiresAt, setContractExpiresAt] = useState<string | null>(null)
   const [contractPlanName, setContractPlanName] = useState<string>('')
   const [contractPlanPrice, setContractPlanPrice] = useState<number | null>(null)
-  const [contractAllowsSplit, setContractAllowsSplit] = useState(false)
-  const [contractSplitFirstAmount, setContractSplitFirstAmount] = useState<number | null>(null)
   const [referralChecked, setReferralChecked] = useState(false)
   const [selectedService, setSelectedService] = useState<{ id: string; name_en: string; name_es: string; price_usd: number | null } | null>(null)
   const [preselectedPlanId, setPreselectedPlanId] = useState<string | null>(null)
@@ -91,8 +88,6 @@ export default function ScanPage() {
     setContractExpiresAt(null)
     setContractPlanName('')
     setContractPlanPrice(null)
-    setContractAllowsSplit(false)
-    setContractSplitFirstAmount(null)
     setResultError(null)
     setReferralChecked(false)
     setSelectedService(null)
@@ -433,22 +428,52 @@ export default function ScanPage() {
     expiresAt: string,
     planName: string,
     planPrice: number,
-    allowsSplit: boolean,
-    splitFirstAmount: number | null,
   ) => {
     setPendingRequestId(requestId)
     setContractPlanId(planId)
     setContractExpiresAt(expiresAt)
     setContractPlanName(planName)
     setContractPlanPrice(planPrice)
-    setContractAllowsSplit(allowsSplit)
-    setContractSplitFirstAmount(splitFirstAmount)
     setPhase('waiting_signature')
   }, [])
 
-  const handleContractSigned = useCallback(() => {
-    setPhase('paying')
-  }, [])
+  const handleContractSigned = useCallback(async () => {
+    if (!result || !contractPlanId || contractPlanPrice === null || !pendingRequestId) {
+      setPhase('result')
+      return
+    }
+    setPhase('registering')
+    try {
+      const res = await fetch('/api/memberships/renew', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          client_id: result.client.id,
+          plan_id: contractPlanId,
+          amount_usd: contractPlanPrice,
+          split_payment: false,
+          confirm_lose_unused_sessions: false,
+          membership_request_id: pendingRequestId,
+          use_credit: false,
+        }),
+      })
+      setPendingRequestId(null)
+      setContractPlanId(null)
+      setContractExpiresAt(null)
+      setContractPlanName('')
+      setContractPlanPrice(null)
+      if (!res.ok) {
+        setErrorKey('network_error')
+        setPhase('error')
+        return
+      }
+      setSuccessInfo({ title: tCheck('assign_title'), detail: contractPlanName })
+      setPhase('success')
+    } catch {
+      setErrorKey('network_error')
+      setPhase('error')
+    }
+  }, [result, contractPlanId, contractPlanPrice, contractPlanName, pendingRequestId, tCheck])
 
   const handleContractDeclined = useCallback(() => {
     setPendingRequestId(null)
@@ -456,8 +481,6 @@ export default function ScanPage() {
     setContractExpiresAt(null)
     setContractPlanName('')
     setContractPlanPrice(null)
-    setContractAllowsSplit(false)
-    setContractSplitFirstAmount(null)
     setPhase('result')
   }, [])
 
@@ -467,8 +490,6 @@ export default function ScanPage() {
     setContractExpiresAt(null)
     setContractPlanName('')
     setContractPlanPrice(null)
-    setContractAllowsSplit(false)
-    setContractSplitFirstAmount(null)
     setSuccessInfo({
       title: tContract('expired_notify_title'),
       detail: tContract('expired_notify_body', { name: result?.client.first_name ?? '' }),
@@ -488,7 +509,6 @@ export default function ScanPage() {
     phase === 'confirm_service' ||
     phase === 'confirming_split' ||
     phase === 'waiting_signature' ||
-    phase === 'paying' ||
     phase === 'additional_visit' ||
     phase === 'success' ||
     phase === 'error'
@@ -677,23 +697,7 @@ export default function ScanPage() {
           </div>
         )}
 
-        {phase === 'paying' && result && contractPlanId && (
-          <div className="w-full max-w-md">
-            <ConfirmPaymentPanel
-              result={result}
-              planId={contractPlanId}
-              planName={contractPlanName}
-              planPrice={contractPlanPrice ?? 0}
-              allowsSplit={contractAllowsSplit}
-              splitFirstAmount={contractSplitFirstAmount}
-              creditBalance={result.client.credit_balance}
-              onConfirm={handleAssignConfirm}
-              onCancel={() => setPhase('result')}
-            />
-          </div>
-        )}
-
-        {phase === 'confirming_split' && result && (
+{phase === 'confirming_split' && result && (
           <div className="w-full max-w-md">
             <ConfirmSplitPanel
               result={result}
@@ -839,113 +843,6 @@ interface PlanOption {
   split_first_amount: number | null
 }
 
-interface ConfirmPaymentPanelProps {
-  result: CheckinResult
-  planId: string
-  planName: string
-  planPrice: number
-  allowsSplit: boolean
-  splitFirstAmount: number | null
-  creditBalance: number
-  onConfirm: (planId: string, amountUsd: number, splitPayment?: boolean, useCredit?: boolean) => Promise<void>
-  onCancel: () => void
-}
-
-function ConfirmPaymentPanel({ result, planId, planName, planPrice, allowsSplit, splitFirstAmount, creditBalance, onConfirm, onCancel }: ConfirmPaymentPanelProps) {
-  const t = useTranslations('checkin')
-  const tScan = useTranslations('scan')
-  const locale = useLocale() as 'en' | 'es'
-
-  const [useSplitPayment, setUseSplitPayment] = useState(false)
-  const [useCredit, setUseCredit] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
-
-  const baseAmount = useSplitPayment && splitFirstAmount ? splitFirstAmount : planPrice
-  const creditApplied = useCredit ? Math.min(creditBalance, baseAmount) : 0
-  const paymentAmount = Math.max(0, baseAmount - creditApplied)
-
-  const handleConfirm = async () => {
-    if (submitting) return
-    setSubmitting(true)
-    await onConfirm(planId, baseAmount, useSplitPayment, useCredit)
-  }
-
-  return (
-    <div className="w-full flex flex-col gap-6">
-      <div className="flex items-center gap-3">
-        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-brand-500/20">
-          <Star size={18} className="text-brand-400" />
-        </div>
-        <span className="text-brand-400 text-lg font-semibold uppercase tracking-wide">
-          {t('assign_title')}
-        </span>
-      </div>
-
-      <h2 className="text-2xl md:text-4xl font-bold text-white leading-tight">
-        {result.client.first_name} {result.client.last_name}
-      </h2>
-
-      {/* Plan — fixed, read-only */}
-      <div className="bg-brand-500 rounded-xl px-4 py-3 flex items-center justify-between">
-        <span className="font-semibold text-white">{planName}</span>
-        <span className="text-lg font-bold text-white ml-4 flex-shrink-0">
-          ${planPrice}
-          <span className="text-xs font-normal opacity-75 ml-1">{tScan('per_month_short')}</span>
-        </span>
-      </div>
-
-      {/* Split payment option (only for eligible packs) */}
-      {allowsSplit && splitFirstAmount && (
-        <div>
-          <div className="flex flex-col gap-2">
-            <button onClick={() => setUseSplitPayment(false)} disabled={submitting}
-              className={`w-full px-4 py-3 rounded-xl text-left text-sm font-medium transition-colors disabled:opacity-50 ${!useSplitPayment ? 'bg-brand-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
-              {t('pack_payment_full')} — ${planPrice}
-            </button>
-            <button onClick={() => setUseSplitPayment(true)} disabled={submitting}
-              className={`w-full px-4 py-3 rounded-xl text-left text-sm font-medium transition-colors disabled:opacity-50 ${useSplitPayment ? 'bg-brand-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
-              {t('pack_payment_split')} — ${splitFirstAmount} {tScan('split_now_suffix')}
-            </button>
-          </div>
-          {useSplitPayment && (
-            <p className="text-brand-400 text-xs mt-2 ml-1">
-              {locale === 'es'
-                ? `Cobrar ahora: $${splitFirstAmount} · 2do pago: $${planPrice - splitFirstAmount}`
-                : `Charge now: $${splitFirstAmount} · 2nd payment: $${planPrice - splitFirstAmount}`
-              }
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Credit toggle */}
-      {creditBalance > 0 && (
-        <button
-          onClick={() => setUseCredit(v => !v)}
-          disabled={submitting}
-          className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 ${useCredit ? 'bg-green-600/30 border border-green-500/60 text-green-300' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
-        >
-          <span className="flex items-center gap-2">
-            <Gift size={16} className={useCredit ? 'text-green-400' : 'text-slate-400'} />
-            {t('credit_use', { amount: creditBalance })}
-          </span>
-          {useCredit && <Check size={16} className="text-green-400 flex-shrink-0" />}
-        </button>
-      )}
-
-      <div className="flex flex-col gap-3 pt-2">
-        <button onClick={handleConfirm} disabled={submitting}
-          className="w-full h-16 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xl font-bold transition-colors">
-          {submitting ? t('assigning') : `${t('assign_confirm')} — $${paymentAmount}`}
-        </button>
-        <button onClick={onCancel} disabled={submitting}
-          className="w-full h-12 rounded-xl bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-slate-300 text-base font-medium transition-colors">
-          {t('cancel')}
-        </button>
-      </div>
-    </div>
-  )
-}
 
 // ─── Additional Visit Panel ───────────────────────────────────────────────────
 
@@ -1343,7 +1240,7 @@ function ServiceVisitPanel({ result, therapistName, onTherapistChange, onConfirm
 interface RequestContractPanelProps {
   result: CheckinResult
   initialPlanId?: string | null
-  onSent: (requestId: string, planId: string, expiresAt: string, planName: string, planPrice: number, allowsSplit: boolean, splitFirstAmount: number | null) => void
+  onSent: (requestId: string, planId: string, expiresAt: string, planName: string, planPrice: number) => void
   onCancel: () => void
 }
 
@@ -1407,7 +1304,7 @@ function RequestContractPanel({ result, initialPlanId, onSent, onCancel }: Reque
       }
       const data: { id: string; expires_at: string } = await res.json()
       const planName = loc === 'es' ? selectedPlan.name_es : selectedPlan.name_en
-      onSent(data.id, selectedPlanId, data.expires_at, planName, selectedPlan.price_usd, selectedPlan.allows_split_payment, selectedPlan.split_first_amount)
+      onSent(data.id, selectedPlanId, data.expires_at, planName, selectedPlan.price_usd)
     } catch {
       setError(tContract('error_send'))
       setSending(false)

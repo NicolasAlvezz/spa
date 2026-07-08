@@ -4,7 +4,7 @@ import { useState, useMemo, useTransition, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
-import { Search, ChevronRight, X, CreditCard, Loader2, FileText, Check } from 'lucide-react'
+import { Search, ChevronRight, X, CreditCard, Loader2, FileText } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import { MembershipBadge } from './MembershipBadge'
 import { getMembershipStatus, getCurrentMembership } from '@/lib/utils/membership'
@@ -332,7 +332,7 @@ function PortaledPlanPanel(props: Parameters<typeof PlanPanel>[0]) {
 
 // ── First-assignment contract flow ────────────────────────────────────────────
 
-type ContractPhase = 'select' | 'contract' | 'waiting' | 'paying'
+type ContractPhase = 'select' | 'contract' | 'waiting'
 
 function FirstAssignPanel({
   client,
@@ -365,9 +365,8 @@ function FirstAssignPanel({
   const [requestExpiresAt, setRequestExpiresAt] = useState<string | null>(null)
   const [secondsLeft, setSecondsLeft] = useState(0)
   const [cancelling, setCancelling] = useState(false)
-  const [useSplit, setUseSplit] = useState(false)
-  const [paying, setPaying] = useState(false)
-  const [payError, setPayError] = useState<string | null>(null)
+  const [autoAssigning, setAutoAssigning] = useState(false)
+  const [autoAssignError, setAutoAssignError] = useState<string | null>(null)
 
   // Countdown timer — only active when waiting
   useEffect(() => {
@@ -387,12 +386,45 @@ function FirstAssignPanel({
     const supabase = createClient()
     let active = true
 
+    async function doAutoAssign() {
+      if (!selectedPlan || !requestId) return
+      setAutoAssigning(true)
+      setAutoAssignError(null)
+      try {
+        const res = await fetch('/api/memberships/renew', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            client_id: client.id,
+            plan_id: selectedPlan.id,
+            amount_usd: selectedPlan.price_usd,
+            split_payment: false,
+            confirm_lose_unused_sessions: false,
+            membership_request_id: requestId,
+            use_credit: false,
+          }),
+        })
+        if (res.ok) {
+          onAssigned()
+          onCancel()
+        } else {
+          setAutoAssigning(false)
+          setAutoAssignError(locale === 'es' ? 'Error al crear la membresía.' : 'Failed to create membership.')
+          setPhase('select')
+        }
+      } catch {
+        setAutoAssigning(false)
+        setAutoAssignError(locale === 'es' ? 'Error de conexión.' : 'Connection error.')
+        setPhase('select')
+      }
+    }
+
     const channel = supabase
       .channel(`ct_panel_req:${requestId}`)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'membership_requests', filter: `id=eq.${requestId}` },
         (payload: { new: Record<string, unknown> }) => {
           const status = payload.new['status'] as string
-          if (status === 'signed') setPhase('paying')
+          if (status === 'signed') { active = false; void doAutoAssign() }
           if (status === 'declined' || status === 'expired') { setRequestId(null); setPhase('select') }
         }
       ).subscribe()
@@ -401,11 +433,12 @@ function FirstAssignPanel({
       if (!active) return
       const { data } = await supabase.from('membership_requests').select('status').eq('id', requestId!).single()
       if (!active) return
-      if (data?.status === 'signed') { active = false; setPhase('paying') }
+      if (data?.status === 'signed') { active = false; void doAutoAssign() }
       if (data?.status === 'declined' || data?.status === 'expired') { active = false; setRequestId(null); setPhase('select') }
     }, 2000)
 
     return () => { active = false; clearInterval(pollId); supabase.removeChannel(channel) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, requestId])
 
   // ── Handlers ──────────────────────────────────────────────────────────────
@@ -442,27 +475,6 @@ function FirstAssignPanel({
     setCancelling(false)
   }
 
-  async function handlePay() {
-    if (paying || !requestId || !selectedPlan) return
-    setPaying(true)
-    setPayError(null)
-    const splitFirst = selectedPlan.split_first_amount
-    const amount = useSplit && splitFirst ? splitFirst : selectedPlan.price_usd
-    try {
-      const res = await fetch('/api/memberships/renew', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ client_id: client.id, plan_id: selectedPlan.id, amount_usd: amount, split_payment: useSplit, membership_request_id: requestId }),
-      })
-      if (!res.ok) { setPayError(locale === 'es' ? 'Error al registrar el pago.' : 'Failed to record payment.'); setPaying(false); return }
-      onAssigned()
-      onCancel()
-    } catch {
-      setPayError(locale === 'es' ? 'Error de conexión.' : 'Connection error.')
-      setPaying(false)
-    }
-  }
-
   function formatCountdown(s: number) {
     const m = Math.floor(s / 60); const sec = s % 60
     return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
@@ -473,6 +485,9 @@ function FirstAssignPanel({
   if (phase === 'select') {
     return (
       <div className="space-y-4">
+        {autoAssignError && (
+          <p className="text-red-600 text-xs bg-red-50 border border-red-100 rounded-lg px-3 py-2">{autoAssignError}</p>
+        )}
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
           {locale === 'es' ? 'Seleccionar plan' : 'Select plan'}
         </p>
@@ -549,6 +564,16 @@ function FirstAssignPanel({
 
   if (phase === 'waiting') {
     const clientName = `${client.first_name} ${client.last_name}`
+    if (autoAssigning) {
+      return (
+        <div className="flex flex-col items-center gap-4 py-6 text-center">
+          <Loader2 size={32} className="text-brand-500 animate-spin" />
+          <p className="text-sm font-semibold text-gray-700">
+            {locale === 'es' ? 'Creando membresía…' : 'Creating membership…'}
+          </p>
+        </div>
+      )
+    }
     return (
       <div className="flex flex-col items-center gap-4 py-4 text-center">
         <div className="relative flex items-center justify-center w-16 h-16">
@@ -575,45 +600,7 @@ function FirstAssignPanel({
     )
   }
 
-  // phase === 'paying'
-  const plan = selectedPlan!
-  const splitFirstAmount = plan.split_first_amount
-  const baseAmount = useSplit && splitFirstAmount ? splitFirstAmount : plan.price_usd
-  const planName = locale === 'es' ? plan.name_es : plan.name_en
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2 text-green-600">
-        <Check size={16} />
-        <p className="text-xs font-semibold uppercase tracking-wide">{locale === 'es' ? 'Contrato firmado' : 'Contract signed'}</p>
-      </div>
-      <div className="bg-brand-50 border border-brand-200 rounded-xl px-4 py-3 flex items-center justify-between">
-        <span className="font-semibold text-brand-800 text-sm">{planName}</span>
-        <span className="font-bold text-brand-700">${plan.price_usd}<span className="text-xs font-normal text-gray-400 ml-1">{locale === 'es' ? '/mes' : '/mo'}</span></span>
-      </div>
-      {plan.allows_split_payment && splitFirstAmount && (
-        <button onClick={() => setUseSplit(v => !v)} disabled={paying}
-          className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl border text-sm transition-colors disabled:opacity-50 ${useSplit ? 'border-brand-400 bg-brand-50 text-brand-700' : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'}`}>
-          <span>{locale === 'es' ? 'Pago en cuotas' : 'Split payment'}</span>
-          <span className="font-semibold">{useSplit ? `$${splitFirstAmount} + $${plan.price_usd - splitFirstAmount}` : `$${plan.price_usd}`}</span>
-        </button>
-      )}
-
-      <div className="bg-gray-50 rounded-xl px-4 py-3 flex items-center justify-between">
-        <span className="text-sm text-gray-500">{locale === 'es' ? 'Total a cobrar hoy' : 'Charge today'}</span>
-        <span className="text-xl font-bold text-gray-900">${baseAmount}</span>
-      </div>
-
-      {payError && (
-        <p className="text-red-600 text-xs bg-red-50 border border-red-100 rounded-lg px-3 py-2">{payError}</p>
-      )}
-
-      <button onClick={handlePay} disabled={paying}
-        className="w-full h-10 rounded-xl bg-brand-500 hover:bg-brand-400 text-white text-sm font-semibold transition-colors disabled:opacity-40 flex items-center justify-center gap-2">
-        {paying ? <><Loader2 size={14} className="animate-spin" />{locale === 'es' ? 'Registrando…' : 'Registering…'}</> : locale === 'es' ? `Confirmar — $${baseAmount}` : `Confirm — $${baseAmount}`}
-      </button>
-    </div>
-  )
+  return null
 }
 
 // ── Main table ────────────────────────────────────────────────────────────────
