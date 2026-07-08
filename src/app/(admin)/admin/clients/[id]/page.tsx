@@ -10,6 +10,7 @@ import {
   type PaymentWithContract,
 } from '@/lib/supabase/queries/clients'
 import { DangerZone } from '@/components/spa/DangerZone'
+import { EditClientInfoButton } from '@/components/spa/EditClientInfoButton'
 import { CancelMembershipButton } from '@/components/spa/CancelMembershipButton'
 import { getCurrentMembership } from '@/lib/utils/membership'
 import { formatDate, formatDateTime } from '@/lib/utils/dates'
@@ -188,9 +189,17 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* ── Personal info ─────────────────────────────────────────────── */}
         <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-6 shadow-sm space-y-4">
-          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-            {t('personal_info')}
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              {t('personal_info')}
+            </h2>
+            <EditClientInfoButton
+              clientId={client.id}
+              firstName={client.first_name}
+              lastName={client.last_name}
+              phone={client.phone}
+            />
+          </div>
           <dl className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm">
             <InfoRow label={t('detail_phone')}      value={client.phone} />
             <InfoRow label={t('detail_email')}      value={client.email ?? '—'} />
