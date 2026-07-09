@@ -5,7 +5,7 @@ export const MEMBERSHIP_CONTRACT_VERSION = 'membership-v1.0'
 export const BASIC_CONTRACT_VERSION = 'basic-v1.0'
 export const BASIC_TEMPLATE_ID = 'basic'
 
-export const MEMBERSHIP_REQUEST_TTL_MS = 30 * 60 * 1000 // 30 minutes
+export const MEMBERSHIP_REQUEST_TTL_MS = 2 * 60 * 60 * 1000 // 2 hours — clients often sign remotely from /admin/clients
 
 export type ContractLanguage = 'en' | 'es'
 

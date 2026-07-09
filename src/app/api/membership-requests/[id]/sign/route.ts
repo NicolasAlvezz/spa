@@ -4,30 +4,10 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { BASIC_CONTRACT_VERSION } from '@/lib/constants/membership-contract'
 import { VERCEL_FUNCTION_REGION } from '@/lib/constants/infrastructure'
 import { assignMembershipAfterSign } from '@/lib/memberships/assign-after-sign'
+import { parseClientIp } from '@/lib/utils/client-ip'
 
 export const preferredRegion = VERCEL_FUNCTION_REGION
-
-/**
- * Extracts a valid IP address from proxy headers. Returns null if the header is
- * missing, empty, or malformed — storing an invalid value into the `inet` column
- * would make the whole signing UPDATE fail with a 500 (intermittent on mobile
- * networks where x-forwarded-for is sometimes empty or malformed).
- */
-function parseClientIp(req: Request): string | null {
-  const candidate =
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    req.headers.get('x-real-ip')?.trim() ||
-    ''
-
-  if (!candidate) return null
-
-  const ipv4 = /^(\d{1,3}\.){3}\d{1,3}$/
-  const ipv6 = /^[0-9a-fA-F:]+$/
-  if (ipv4.test(candidate) || (candidate.includes(':') && ipv6.test(candidate))) {
-    return candidate
-  }
-  return null
-}
+export const maxDuration = 30
 
 export async function POST(
   req: Request,

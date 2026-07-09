@@ -42,7 +42,7 @@ export function QrDisplay({ client, nextAppointment, recentVisits, hasActiveCons
   const locale = useLocale() as 'en' | 'es'
   const [consented, setConsented] = useState(hasActiveConsent)
   const [isAccepting, setIsAccepting] = useState(false)
-  const [acceptError, setAcceptError] = useState(false)
+  const [acceptError, setAcceptError] = useState<string | null>(null)
   const [signature, setSignature] = useState<string | null>(null)
   const [signatureError, setSignatureError] = useState(false)
   const [qrSize, setQrSize] = useState(200)
@@ -63,26 +63,72 @@ export function QrDisplay({ client, nextAppointment, recentVisits, hasActiveCons
     }
     setSignatureError(false)
     setIsAccepting(true)
-    setAcceptError(false)
-    try {
-      // Only send what we're signing (client_id + language). The consent text
-      // snapshot is taken server-side so it cannot be tampered with from here.
-      const res = await fetch('/api/consent-acceptances', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          client_id: client.id,
-          language: locale,
-          signature_image: signature,
-        }),
-      })
-      if (!res.ok) throw new Error('failed')
-      setConsented(true)
-    } catch {
-      setAcceptError(true)
-    } finally {
-      setIsAccepting(false)
+    setAcceptError(null)
+
+    const bodyStr = JSON.stringify({
+      client_id: client.id,
+      language: locale,
+      signature_image: signature,
+    })
+    const MAX_ATTEMPTS = 3
+    const ATTEMPT_TIMEOUT_MS = 20000
+
+    async function postConsentOnce(): Promise<Response> {
+      const controller = new AbortController()
+      const timer = setTimeout(() => controller.abort(), ATTEMPT_TIMEOUT_MS)
+      try {
+        return await fetch('/api/consent-acceptances', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: bodyStr,
+          signal: controller.signal,
+        })
+      } finally {
+        clearTimeout(timer)
+      }
     }
+
+    let res: Response | null = null
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      try {
+        res = await postConsentOnce()
+        break
+      } catch {
+        if (attempt === MAX_ATTEMPTS) {
+          setAcceptError(`${enMessages.consent.error_network} / ${esMessages.consent.error_network}`)
+          setIsAccepting(false)
+          return
+        }
+        await new Promise(resolve => setTimeout(resolve, attempt * 1500))
+      }
+    }
+
+    if (!res) {
+      setAcceptError(`${enMessages.consent.error_network} / ${esMessages.consent.error_network}`)
+      setIsAccepting(false)
+      return
+    }
+
+    if (res.ok) {
+      setConsented(true)
+      setIsAccepting(false)
+      return
+    }
+
+    const data = (await res.json().catch(() => ({}))) as { error?: string; detail?: string }
+    console.error('[my-qr/consent]', {
+      status: res.status,
+      error: data.error,
+      detail: data.detail,
+      client_id: client.id,
+    })
+
+    if (res.status === 401) {
+      setAcceptError(`${enMessages.consent.error_session} / ${esMessages.consent.error_session}`)
+    } else {
+      setAcceptError(`${enMessages.consent.error_generic} / ${esMessages.consent.error_generic}`)
+    }
+    setIsAccepting(false)
   }, [client.id, locale, signature])
 
   const membership = getCurrentMembership(client.memberships)
@@ -157,7 +203,7 @@ export function QrDisplay({ client, nextAppointment, recentVisits, hasActiveCons
         {/* Error message — shown bilingual by design, same as the consent text */}
         {acceptError && (
           <p className="text-center text-sm text-red-500 -mb-1">
-            {enMessages.consent.error_generic} / {esMessages.consent.error_generic}
+            {acceptError}
           </p>
         )}
 

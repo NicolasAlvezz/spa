@@ -220,11 +220,20 @@ function PendingContractCard({
       return
     }
 
-    const data = (await res.json().catch(() => ({}))) as { error?: string }
+    const data = (await res.json().catch(() => ({}))) as { error?: string; detail?: string }
+    console.error('[memberships/sign]', {
+      status: res.status,
+      error: data.error,
+      detail: data.detail,
+      request_id: request.id,
+    })
     setContractState('pending')
     switch (res.status) {
       case 401:
         setError(t('error_sign_session'))
+        break
+      case 403:
+        setError(t('error_sign_forbidden'))
         break
       case 409:
         setError(t('error_sign_already'))

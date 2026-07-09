@@ -518,6 +518,8 @@
     "agreement_body": "Estoy de acuerdo en participar en los servicios de terapia de masajes que me realizarán hoy en VM Integral Massage Inc.",
     "accept_button": "Acepto",
     "error_generic": "Ocurrió un error. Intentá de nuevo.",
+    "error_network": "Problema de conexión. Revisá tu internet e intentá de nuevo.",
+    "error_session": "Tu sesión expiró. Iniciá sesión de nuevo y reintentá.",
     "pdf": {
       "doc_title": "Consentimiento y descargo — Registro firmado",
       "section_client": "Cliente",
@@ -615,6 +617,7 @@
     "error_sign": "No se pudo firmar el contrato. Intentá de nuevo.",
     "error_sign_network": "Problema de conexión. Revisá tu internet e intentá de nuevo.",
     "error_sign_session": "Tu sesión expiró. Iniciá sesión de nuevo y reintentá.",
+    "error_sign_forbidden": "Este contrato no está vinculado a tu cuenta. Contactá al spa.",
     "error_sign_already": "Este contrato ya fue firmado.",
     "error_sign_fields": "Faltan campos obligatorios o son inválidos. Revisalos e intentá de nuevo.",
     "error_sign_server": "Hubo un problema de nuestro lado. Probá de nuevo en un momento.",

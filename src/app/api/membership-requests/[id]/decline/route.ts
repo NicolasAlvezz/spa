@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { VERCEL_FUNCTION_REGION } from '@/lib/constants/infrastructure'
+
+export const preferredRegion = VERCEL_FUNCTION_REGION
 
 export async function POST(
   _req: Request,

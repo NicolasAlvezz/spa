@@ -5,6 +5,11 @@ import {
   getConsentSnapshot,
   type ConsentLanguage,
 } from '@/lib/constants/consent'
+import { VERCEL_FUNCTION_REGION } from '@/lib/constants/infrastructure'
+import { parseClientIp } from '@/lib/utils/client-ip'
+
+export const preferredRegion = VERCEL_FUNCTION_REGION
+export const maxDuration = 30
 
 const VALID_LANGUAGES: readonly ConsentLanguage[] = ['en', 'es'] as const
 
@@ -18,7 +23,8 @@ export async function POST(req: Request) {
   // The client only sends *what* it's signing, never *what the text says*.
   // The snapshot of the legal text is taken server-side from messages/*.json,
   // so a tampered browser can never falsify the stored evidence.
-  const body: { client_id?: string; language?: ConsentLanguage; signature_image?: string } = await req.json()
+  const body: { client_id?: string; language?: ConsentLanguage; signature_image?: string } =
+    await req.json().catch(() => ({}))
   const { client_id, language, signature_image } = body
 
   if (!client_id || !language || !VALID_LANGUAGES.includes(language)) {
@@ -40,10 +46,7 @@ export async function POST(req: Request) {
 
   const snapshot = getConsentSnapshot(language)
 
-  const ip =
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-    req.headers.get('x-real-ip') ??
-    null
+  const ip = parseClientIp(req)
   const userAgent = req.headers.get('user-agent') ?? null
 
   const { data, error } = await supabase
@@ -64,8 +67,16 @@ export async function POST(req: Request) {
     .single()
 
   if (error || !data) {
-    console.error('[POST /api/consent-acceptances]', error)
-    return NextResponse.json({ error: 'failed_to_save' }, { status: 500 })
+    console.error('[POST /api/consent-acceptances]', {
+      client_id,
+      code: error?.code,
+      message: error?.message,
+      details: error?.details,
+    })
+    return NextResponse.json(
+      { error: 'failed_to_save', detail: error?.message },
+      { status: 500 }
+    )
   }
 
   return NextResponse.json({ id: data.id, accepted_at: data.accepted_at })

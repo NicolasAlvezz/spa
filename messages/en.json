@@ -518,6 +518,8 @@
     "agreement_body": "I agree to participate in the massage therapy services that will be performed on me today at VM Integral Massage Inc.",
     "accept_button": "I Accept",
     "error_generic": "Something went wrong. Please try again.",
+    "error_network": "Connection problem. Check your internet and try again.",
+    "error_session": "Your session expired. Please log in again and retry.",
     "pdf": {
       "doc_title": "Consent & Waiver — Signed Record",
       "section_client": "Client",
@@ -615,6 +617,7 @@
     "error_sign": "Could not sign the contract. Please try again.",
     "error_sign_network": "Connection problem. Check your internet and try again.",
     "error_sign_session": "Your session expired. Please log in again and retry.",
+    "error_sign_forbidden": "This contract is not linked to your account. Please contact the spa.",
     "error_sign_already": "This contract was already signed.",
     "error_sign_fields": "Some required fields are missing or invalid. Please review and try again.",
     "error_sign_server": "Something went wrong on our side. Please try again in a moment.",

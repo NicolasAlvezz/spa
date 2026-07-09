@@ -68,7 +68,8 @@ export async function updateSession(request: NextRequest) {
   const isClientRoute =
     pathname.startsWith('/my-qr') ||
     pathname.startsWith('/profile') ||
-    pathname.startsWith('/visits')
+    pathname.startsWith('/visits') ||
+    pathname.startsWith('/memberships')
 
   if (isClientRoute && role !== 'client') {
     if (!user) return NextResponse.redirect(new URL('/login', request.url))
