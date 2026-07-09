@@ -253,6 +253,7 @@
   },
   "checkin": {
     "register_visit": "Register Visit",
+    "register_other_visit": "Register another type of visit",
     "renew": "Renew Membership",
     "expires": "Expires",
     "expired_on": "Expired on",

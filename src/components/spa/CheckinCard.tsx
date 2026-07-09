@@ -206,14 +206,21 @@ export function CheckinCard({
               {tCheck('register_visit')}
             </button>
           )}
-          {onChangePlan && (
+          {isPack && onRegisterServiceVisit ? (
+            <button
+              onClick={onRegisterServiceVisit}
+              className="w-full h-12 rounded-xl bg-slate-600 hover:bg-slate-500 active:bg-slate-700 text-white text-sm font-semibold transition-colors"
+            >
+              {tCheck('register_other_visit')}
+            </button>
+          ) : onChangePlan ? (
             <button
               onClick={onChangePlan}
               className="w-full h-12 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 text-white text-sm font-semibold transition-colors shadow-lg shadow-brand-900/30"
             >
               {locale === 'es' ? 'Cambiar plan' : 'Change Plan'}
             </button>
-          )}
+          ) : null}
           <button
             onClick={onScanAgain}
             className="w-full h-11 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium transition-colors"
