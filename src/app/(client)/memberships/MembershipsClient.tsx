@@ -355,11 +355,11 @@ function PendingContractCard({
               <div className="bg-gray-50 rounded-xl p-4 mb-3 space-y-1">
                 <div className="flex justify-between text-xs">
                   <span className="text-gray-500">{template.slide6_type_label}</span>
-                  <span className="font-semibold text-gray-800">{template.slide6_type_value}</span>
+                  <span className="font-semibold text-gray-800">{planName}</span>
                 </div>
                 <div className="flex justify-between text-xs">
                   <span className="text-gray-500">{template.slide6_monthly_label}</span>
-                  <span className="font-semibold text-gray-800">{template.slide6_monthly_value}</span>
+                  <span className="font-semibold text-gray-800">${plan.price_usd.toFixed(2)}</span>
                 </div>
               </div>
 
