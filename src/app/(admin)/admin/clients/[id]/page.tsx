@@ -370,11 +370,16 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
                     <SessionTypeBadge label={sessionTypeLabel[v.session_type] ?? v.session_type} type={v.session_type} />
                   </td>
                   <td className="px-6 py-3.5 text-gray-700 text-sm font-medium">
-                    {v.session_type === 'additional'
-                      ? `$${v.memberships?.membership_plans?.additional_price_usd ?? v.memberships?.membership_plans?.price_usd ?? '—'}`
-                      : v.session_type === 'post_op' && v.service_types?.price_usd != null
-                        ? `$${v.service_types.price_usd}`
-                        : <span className="text-gray-300">—</span>}
+                    {(() => {
+                      if (v.session_type === 'additional') {
+                        const price = v.memberships?.membership_plans?.additional_price_usd ?? v.memberships?.membership_plans?.price_usd
+                        return price != null ? `$${price}` : <span className="text-gray-300">—</span>
+                      }
+                      if (v.session_type === 'post_op' && v.service_types?.price_usd != null) {
+                        return `$${v.service_types.price_usd}`
+                      }
+                      return <span className="text-gray-300">—</span>
+                    })()}
                   </td>
                   <td className="px-6 py-3.5 text-gray-400 text-xs">{v.notes ?? '—'}</td>
                   <td className="px-6 py-3.5">
