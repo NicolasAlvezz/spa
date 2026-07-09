@@ -45,7 +45,6 @@ function PlanPanel({
   const plan = membership?.membership_plans
 
   const [selectedPlanId, setSelectedPlanId] = useState(plans[0]?.id ?? '')
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'debit' | 'credit'>('cash')
   const [amount, setAmount] = useState(() => {
     const first = plans[0]
     return first ? String(first.price_usd ?? '') : ''
@@ -70,7 +69,6 @@ function PlanPanel({
         body: JSON.stringify({
           client_id: client.id,
           plan_id: selectedPlanId,
-          payment_method: paymentMethod,
           amount_usd: Number(amount),
         }),
       })
@@ -87,20 +85,6 @@ function PlanPanel({
       setSubmitting(false)
     }
   }
-
-  const methodBtn = (method: 'cash' | 'debit' | 'credit', label: string) => (
-    <button
-      type="button"
-      onClick={() => setPaymentMethod(method)}
-      className={`flex-1 h-9 rounded-lg border text-sm font-medium transition-colors ${
-        paymentMethod === method
-          ? 'border-brand-500 bg-brand-50 text-brand-700'
-          : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
-      }`}
-    >
-      {label}
-    </button>
-  )
 
   return (
     <>
@@ -131,7 +115,7 @@ function PlanPanel({
         <div className="flex-1 overflow-y-auto p-5 space-y-5">
 
           {/* Current plan */}
-          {plan && membership ? (
+          {membership?.status === 'active' && plan ? (
             <div className="space-y-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -200,7 +184,6 @@ function PlanPanel({
                   onPlanChange={handlePlanChange}
                   onAmountChange={setAmount}
                   onSubmit={handleAssign}
-                  methodBtn={methodBtn}
                   label={locale === 'es' ? 'Renovar / cambiar plan' : 'Renew / change plan'}
                 />
               </div>
@@ -241,7 +224,7 @@ function Row({ label, value }: { label: string; value: string }) {
 
 function AssignForm({
   plans, locale, selectedPlanId, amount, submitting, error,
-  onPlanChange, onAmountChange, onSubmit, methodBtn, label,
+  onPlanChange, onAmountChange, onSubmit, label,
 }: {
   plans: DbMembershipPlan[]
   locale: 'en' | 'es'
@@ -252,7 +235,6 @@ function AssignForm({
   onPlanChange: (id: string) => void
   onAmountChange: (v: string) => void
   onSubmit: (e: React.FormEvent) => void
-  methodBtn: (m: 'cash' | 'debit' | 'credit', label: string) => React.ReactNode
   label: string
 }) {
   const inputCls = 'w-full h-9 rounded-lg border border-gray-200 px-3 text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-shadow bg-white'
@@ -276,15 +258,6 @@ function AssignForm({
             </option>
           ))}
         </select>
-      </div>
-
-      <div>
-        <label className={fieldLabel}>{locale === 'es' ? 'Método de pago' : 'Payment method'}</label>
-        <div className="flex gap-2">
-          {methodBtn('cash', locale === 'es' ? 'Efectivo' : 'Cash')}
-          {methodBtn('debit', locale === 'es' ? 'Débito' : 'Debit')}
-          {methodBtn('credit', locale === 'es' ? 'Crédito' : 'Credit')}
-        </div>
       </div>
 
       <div>
