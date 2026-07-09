@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server'
+import { waitUntil } from '@vercel/functions'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { BASIC_CONTRACT_VERSION } from '@/lib/constants/membership-contract'
-import { calculateRollover } from '@/lib/utils/membership'
-import { MONTHLY_PLAN_MIN_MONTHS } from '@/lib/constants/membership'
-import { todayInSpaTz } from '@/lib/utils/dates'
+import { VERCEL_FUNCTION_REGION } from '@/lib/constants/infrastructure'
+import { assignMembershipAfterSign } from '@/lib/memberships/assign-after-sign'
+
+export const preferredRegion = VERCEL_FUNCTION_REGION
 
 /**
  * Extracts a valid IP address from proxy headers. Returns null if the header is
@@ -154,103 +156,19 @@ export async function POST(
     )
   }
 
-  // Auto-create the membership server-side so it works even if the admin
-  // navigated away from the page before the client signed.
-  // `updated` is null when a concurrent request already flipped this one to
-  // 'signed'; skipping the block then prevents creating a duplicate membership.
+  // Auto-create the membership in the background so the HTTP response returns
+  // as soon as the signature is saved. US mobile clients on cellular data often
+  // drop connections when the server holds the response open too long.
   if (updated && request.plan_id) {
-    try {
-      const { data: plan } = await supabase
-        .from('membership_plans')
-        .select('price_usd, plan_type, total_sessions, sessions_per_month')
-        .eq('id', request.plan_id)
-        .single()
-
-      if (plan) {
-        const isPack = plan.plan_type === 'pack'
-        const todayStr = todayInSpaTz()
-
-        const { data: currentMembership } = await supabase
-          .from('memberships')
-          .select('id, status, expires_at, sessions_used_this_month, months_completed, sessions_remaining, membership_plans(sessions_per_month, plan_type)')
-          .eq('client_id', request.client_id)
-          .neq('status', 'cancelled')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle()
-
-        let started_at: string
-        let expires_at: string
-        let rollover_sessions = 0
-
-        if (isPack) {
-          started_at = todayStr
-          const packExpiry = new Date(todayStr + 'T12:00:00Z')
-          packExpiry.setUTCMonth(packExpiry.getUTCMonth() + 2)
-          expires_at = packExpiry.toISOString().split('T')[0]
-        } else {
-          const currentExpiry = currentMembership?.expires_at
-          if (currentExpiry && currentExpiry >= todayStr) {
-            started_at = currentExpiry
-            const d = new Date(currentExpiry + 'T12:00:00Z')
-            d.setUTCMonth(d.getUTCMonth() + 1)
-            expires_at = d.toISOString().split('T')[0]
-          } else {
-            started_at = todayStr
-            const d = new Date(todayStr + 'T12:00:00Z')
-            d.setUTCMonth(d.getUTCMonth() + 1)
-            expires_at = d.toISOString().split('T')[0]
-          }
-          const prevPlan = currentMembership?.membership_plans as unknown as { sessions_per_month: number; plan_type: string } | null
-          if (prevPlan && prevPlan.plan_type !== 'pack') {
-            rollover_sessions = calculateRollover(
-              currentMembership?.sessions_used_this_month ?? 0,
-              prevPlan.sessions_per_month,
-              0,
-            )
-          }
-        }
-
-        const { data: newMembership } = await supabase
-          .from('memberships')
-          .insert({
-            client_id: request.client_id,
-            plan_id: request.plan_id,
-            started_at,
-            expires_at,
-            status: 'active',
-            sessions_used_this_month: 0,
-            rollover_sessions: isPack ? 0 : rollover_sessions,
-            months_committed: isPack ? 0 : MONTHLY_PLAN_MIN_MONTHS,
-            months_completed: isPack ? 0 : (currentMembership?.months_completed ?? 0) + 1,
-            sessions_remaining: isPack ? (plan.total_sessions ?? null) : null,
-            split_payment_pending: false,
-            membership_request_id: request.id,
-          })
-          .select('id')
-          .single()
-
-        if (newMembership) {
-          await supabase.from('payments').insert({
-            client_id: request.client_id,
-            membership_id: newMembership.id,
-            amount_usd: Number(plan.price_usd),
-            method: null,
-            concept: isPack ? 'pack_purchase' : 'monthly_membership',
-          })
-
-          if (currentMembership?.status === 'active') {
-            await supabase
-              .from('memberships')
-              .update({ status: 'expired' })
-              .eq('id', currentMembership.id)
-          }
-        }
-      }
-    } catch (autoAssignErr) {
-      // Non-fatal: the signature is recorded. Admin can create the membership manually.
-      console.error('[sign] auto-assign failed:', autoAssignErr)
-    }
+    waitUntil(
+      assignMembershipAfterSign({
+        requestId: request.id,
+        clientId: request.client_id,
+        planId: request.plan_id,
+      }).catch(err => {
+        console.error('[sign] auto-assign failed:', err)
+      })
+    )
   }
 
   return NextResponse.json({ id: params.id, signed_at: signedAt })

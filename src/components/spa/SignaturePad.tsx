@@ -9,6 +9,24 @@ interface Props {
   onSignature: (dataUrl: string | null) => void
 }
 
+const SIGNATURE_UPLOAD_MAX_WIDTH = 300
+
+/** Downscale + JPEG keeps the upload small on flaky US cellular connections. */
+function compressSignatureForUpload(source: HTMLCanvasElement): string {
+  const scale = Math.min(1, SIGNATURE_UPLOAD_MAX_WIDTH / source.width)
+  const width = Math.round(source.width * scale)
+  const height = Math.round(source.height * scale)
+  const output = document.createElement('canvas')
+  output.width = width
+  output.height = height
+  const ctx = output.getContext('2d')
+  if (!ctx) return source.toDataURL('image/jpeg', 0.82)
+  ctx.fillStyle = '#ffffff'
+  ctx.fillRect(0, 0, width, height)
+  ctx.drawImage(source, 0, 0, width, height)
+  return output.toDataURL('image/jpeg', 0.82)
+}
+
 export function SignaturePad({ label, clearLabel, onSignature }: Props) {
   const padRef = useRef<ReactSignatureCanvas>(null)
   const [isEmpty, setIsEmpty] = useState(true)
@@ -18,9 +36,10 @@ export function SignaturePad({ label, clearLabel, onSignature }: Props) {
     if (!isDrawingRef.current || !padRef.current) return
     isDrawingRef.current = false
     setIsEmpty(false)
-    // getTrimmedCanvas() relies on trim-canvas which doesn't bundle correctly
-    // in Next.js production builds — use getCanvas() directly instead.
-    onSignature(padRef.current.getCanvas().toDataURL('image/png'))
+    const source = padRef.current.getCanvas()
+    // Compress to JPEG before upload — a full PNG from a 600px canvas can be
+    // 100–300 KB over cellular, which US mobile carriers often drop mid-request.
+    onSignature(compressSignatureForUpload(source))
   }, [onSignature])
 
   useEffect(() => {

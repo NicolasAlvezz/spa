@@ -6,6 +6,9 @@ import {
   getPlanContractSnapshot,
   type ContractLanguage,
 } from '@/lib/constants/membership-contract'
+import { VERCEL_FUNCTION_REGION } from '@/lib/constants/infrastructure'
+
+export const preferredRegion = VERCEL_FUNCTION_REGION
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const VALID_LANGUAGES: ContractLanguage[] = ['en', 'es']
