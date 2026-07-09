@@ -20,7 +20,6 @@ export function VisitActions({
   visitId,
   clientId,
   visitDate,
-  sessionType,
   isStandalone,
   activeMembershipId,
 }: Props) {
