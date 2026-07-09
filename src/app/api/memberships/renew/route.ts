@@ -40,6 +40,28 @@ export async function POST(req: Request) {
     .eq('id', plan_id)
     .single()
 
+  // Idempotency: the sign route auto-creates the membership server-side, so if
+  // the admin's browser also calls renew (because they were watching), skip creation.
+  if (membership_request_id) {
+    const { data: alreadyCreated } = await supabase
+      .from('memberships')
+      .select('id, started_at, expires_at, rollover_sessions, sessions_remaining, split_payment_pending')
+      .eq('membership_request_id', membership_request_id)
+      .maybeSingle()
+
+    if (alreadyCreated) {
+      return NextResponse.json({
+        membership_id: alreadyCreated.id,
+        started_at: alreadyCreated.started_at,
+        expires_at: alreadyCreated.expires_at,
+        rollover_sessions: alreadyCreated.rollover_sessions,
+        sessions_remaining: alreadyCreated.sessions_remaining,
+        split_payment_pending: alreadyCreated.split_payment_pending,
+        is_pack: plan?.plan_type === 'pack',
+      })
+    }
+  }
+
   const isPack = plan?.plan_type === 'pack'
 
   // Get the most recent non-cancelled membership for rollover calculation
