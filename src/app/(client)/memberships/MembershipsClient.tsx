@@ -165,27 +165,89 @@ function PendingContractCard({
       body.card_last4 = cardLast4
     }
 
-    const res = await fetch(`/api/membership-requests/${request.id}/sign`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
+    // Mobile networks frequently drop the request or its response mid-flight,
+    // which used to surface as a generic "could not sign" even when the
+    // signature had actually been saved. The sign endpoint is idempotent, so
+    // retrying the same request is safe: a repeat on an already-signed contract
+    // returns success. We retry a few times (with a timeout per attempt) before
+    // giving up, which makes signing resilient to flaky cellular connections.
+    const bodyStr = JSON.stringify(body)
+    const MAX_ATTEMPTS = 3
+    const ATTEMPT_TIMEOUT_MS = 20000
+
+    async function postSignOnce(): Promise<Response> {
+      const controller = new AbortController()
+      const timer = setTimeout(() => controller.abort(), ATTEMPT_TIMEOUT_MS)
+      try {
+        return await fetch(`/api/membership-requests/${request.id}/sign`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: bodyStr,
+          signal: controller.signal,
+        })
+      } finally {
+        clearTimeout(timer)
+      }
+    }
+
+    let res: Response | null = null
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      try {
+        res = await postSignOnce()
+        break
+      } catch {
+        if (attempt === MAX_ATTEMPTS) {
+          setError(t('error_sign_network'))
+          setContractState('pending')
+          return
+        }
+        await new Promise(resolve => setTimeout(resolve, attempt * 1500))
+      }
+    }
+
+    if (!res) {
+      setError(t('error_sign_network'))
+      setContractState('pending')
+      return
+    }
+
     if (res.ok) {
       setContractState('signed')
-    } else if (res.status === 410) {
+      return
+    }
+    if (res.status === 410) {
       setContractState('expired')
-    } else {
-      setError(t('error_sign'))
-      setContractState('pending')
+      return
+    }
+
+    const data = (await res.json().catch(() => ({}))) as { error?: string }
+    setContractState('pending')
+    switch (res.status) {
+      case 401:
+        setError(t('error_sign_session'))
+        break
+      case 409:
+        setError(t('error_sign_already'))
+        break
+      case 400:
+        setError(t('error_sign_fields'))
+        break
+      default:
+        setError(data.error === 'failed_to_sign' ? t('error_sign_server') : t('error_sign'))
     }
   }
 
   async function handleDecline() {
     setError(null)
     setContractState('declining')
-    const res = await fetch(`/api/membership-requests/${request.id}/decline`, { method: 'POST' })
-    if (res.ok) setContractState('declined')
-    else { setError(t('error_decline')); setContractState('pending') }
+    try {
+      const res = await fetch(`/api/membership-requests/${request.id}/decline`, { method: 'POST' })
+      if (res.ok) setContractState('declined')
+      else { setError(t('error_decline')); setContractState('pending') }
+    } catch {
+      setError(t('error_sign_network'))
+      setContractState('pending')
+    }
   }
 
   async function handleDownloadPdf() {
@@ -200,6 +262,8 @@ function PendingContractCard({
       a.download = 'membership-contract.pdf'
       a.click()
       URL.revokeObjectURL(url)
+    } catch {
+      /* network error downloading — user can retry */
     } finally {
       setDownloadingPdf(false)
     }

@@ -5,9 +5,20 @@ import type { Database } from '@/types/database'
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  // On preview deployments without Supabase env vars, creating the client throws
+  // and crashes every request in middleware. Bypass auth instead of 500ing —
+  // without Supabase there is no session to read anyway.
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.warn('[middleware] Supabase env vars missing — skipping auth checks')
+    return supabaseResponse
+  }
+
   const supabase = createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll() {

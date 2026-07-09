@@ -22,6 +22,10 @@ export async function generateMetadata(): Promise<Metadata> {
       icon: '/images/logo.png',
     },
     other: {
+      // The app is fully bilingual via next-intl. Browser auto-translation
+      // (Chrome/Google Translate) rewrites React-managed text nodes and causes
+      // NotFoundError insertBefore/removeChild crashes, so we opt out of it.
+      google: 'notranslate',
       ...Sentry.getTraceData(),
     },
   }
@@ -35,7 +39,7 @@ export default async function RootLayout({
   const messages = await getMessages()
 
   return (
-    <html lang="en" className={outfit.variable}>
+    <html lang="en" translate="no" className={`notranslate ${outfit.variable}`}>
       <body className="bg-gray-50 text-gray-900 antialiased">
         <NextIntlClientProvider messages={messages}>
           {children}

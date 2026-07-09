@@ -5,6 +5,28 @@ import { calculateRollover } from '@/lib/utils/membership'
 import { MONTHLY_PLAN_MIN_MONTHS } from '@/lib/constants/membership'
 import { todayInSpaTz } from '@/lib/utils/dates'
 
+/**
+ * Extracts a valid IP address from proxy headers. Returns null if the header is
+ * missing, empty, or malformed — storing an invalid value into the `inet` column
+ * would make the whole signing UPDATE fail with a 500 (intermittent on mobile
+ * networks where x-forwarded-for is sometimes empty or malformed).
+ */
+function parseClientIp(req: Request): string | null {
+  const candidate =
+    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    req.headers.get('x-real-ip')?.trim() ||
+    ''
+
+  if (!candidate) return null
+
+  const ipv4 = /^(\d{1,3}\.){3}\d{1,3}$/
+  const ipv6 = /^[0-9a-fA-F:]+$/
+  if (ipv4.test(candidate) || (candidate.includes(':') && ipv6.test(candidate))) {
+    return candidate
+  }
+  return null
+}
+
 export async function POST(
   req: Request,
   { params }: { params: { id: string } }
@@ -20,7 +42,7 @@ export async function POST(
   // Fetch the request and verify it belongs to this user's client
   const { data: request } = await supabase
     .from('membership_requests')
-    .select('id, client_id, plan_id, status, expires_at, version')
+    .select('id, client_id, plan_id, status, expires_at, version, signed_at')
     .eq('id', params.id)
     .single()
 
@@ -38,6 +60,13 @@ export async function POST(
 
   if (!client) {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 })
+  }
+
+  // Idempotency: if it's already signed, treat a repeat submit as success.
+  // This prevents a double-tap (or a retry after a lost/slow response) from
+  // showing an error even though the contract was actually signed.
+  if (request.status === 'signed') {
+    return NextResponse.json({ id: params.id, signed_at: request.signed_at, already_signed: true })
   }
 
   // Lazy expiry check
@@ -89,14 +118,11 @@ export async function POST(
     }
   }
 
-  const ip =
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-    req.headers.get('x-real-ip') ??
-    null
+  const ip = parseClientIp(req)
   const userAgent = req.headers.get('user-agent') ?? null
   const signedAt = new Date().toISOString()
 
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from('membership_requests')
     .update({
       status:            'signed',
@@ -111,15 +137,28 @@ export async function POST(
       } : {}),
     })
     .eq('id', params.id)
+    .eq('status', 'pending')
+    .select('id')
+    .maybeSingle()
 
   if (error) {
-    console.error('[POST /api/membership-requests/[id]/sign]', error)
-    return NextResponse.json({ error: 'failed_to_sign' }, { status: 500 })
+    console.error('[POST /api/membership-requests/[id]/sign]', {
+      request_id: params.id,
+      code: error.code,
+      message: error.message,
+      details: error.details,
+    })
+    return NextResponse.json(
+      { error: 'failed_to_sign', detail: error.message },
+      { status: 500 }
+    )
   }
 
   // Auto-create the membership server-side so it works even if the admin
   // navigated away from the page before the client signed.
-  if (request.plan_id) {
+  // `updated` is null when a concurrent request already flipped this one to
+  // 'signed'; skipping the block then prevents creating a duplicate membership.
+  if (updated && request.plan_id) {
     try {
       const { data: plan } = await supabase
         .from('membership_plans')
