@@ -215,6 +215,7 @@ export interface Database {
           id: string
           client_id: string
           membership_id: string | null
+          visit_id: string | null
           amount_usd: number
           method: string | null
           concept: 'monthly_membership' | 'additional_visit' | 'welcome_offer' | 'pack_purchase' | 'pack_split_second' | 'post_op_visit' | 'cancellation_fee'
@@ -226,6 +227,7 @@ export interface Database {
           id?: string
           client_id: string
           membership_id?: string | null
+          visit_id?: string | null
           amount_usd: number
           method?: string | null
           concept: 'monthly_membership' | 'additional_visit' | 'welcome_offer' | 'pack_purchase' | 'pack_split_second' | 'post_op_visit' | 'cancellation_fee'
@@ -234,6 +236,10 @@ export interface Database {
           created_at?: string
         }
         Update: {
+          amount_usd?: number
+          membership_id?: string | null
+          visit_id?: string | null
+          concept?: 'monthly_membership' | 'additional_visit' | 'welcome_offer' | 'pack_purchase' | 'pack_split_second' | 'post_op_visit' | 'cancellation_fee'
           notes?: string | null
         }
         Relationships: Relationship[]
@@ -306,7 +312,9 @@ export interface Database {
           created_at?: string
         }
         Update: {
+          membership_id?: string | null
           service_type_id?: string | null
+          session_type?: 'included' | 'rollover' | 'additional' | 'welcome_offer' | 'post_op'
           notes?: string | null
           payment_method?: string | null
           therapist_name?: string | null

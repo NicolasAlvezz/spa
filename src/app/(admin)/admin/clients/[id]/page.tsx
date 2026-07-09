@@ -11,6 +11,7 @@ import {
 } from '@/lib/supabase/queries/clients'
 import { DangerZone } from '@/components/spa/DangerZone'
 import { EditClientInfoButton } from '@/components/spa/EditClientInfoButton'
+import { VisitActions } from '@/components/spa/VisitActions'
 import { CancelMembershipButton } from '@/components/spa/CancelMembershipButton'
 import { getCurrentMembership } from '@/lib/utils/membership'
 import { formatDate, formatDateTime } from '@/lib/utils/dates'
@@ -348,6 +349,7 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
                 <th className="px-6 py-3 font-medium">{locale === 'es' ? 'Precio' : 'Price'}</th>
                 <th className="px-6 py-3 font-medium">{t('visit_col_notes')}</th>
                 <th className="px-6 py-3 font-medium">{t('visit_col_contract')}</th>
+                <th className="px-2 py-3"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -391,6 +393,16 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
                     ) : (
                       <span className="text-gray-300 text-xs">—</span>
                     )}
+                  </td>
+                  <td className="px-2 py-3">
+                    <VisitActions
+                      visitId={v.id}
+                      clientId={client.id}
+                      visitDate={formatDateTime(v.visited_at, locale)}
+                      sessionType={v.session_type}
+                      isStandalone={v.membership_id === null}
+                      activeMembershipId={membership?.status === 'active' ? membership.id : null}
+                    />
                   </td>
                 </tr>
               ))}

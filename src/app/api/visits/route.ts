@@ -278,6 +278,7 @@ export async function POST(req: Request) {
       .insert({
         client_id,
         membership_id: membership_id ?? null,
+        visit_id: visit.id,
         amount_usd: finalAmount,
         method: null,
         concept: 'additional_visit',
