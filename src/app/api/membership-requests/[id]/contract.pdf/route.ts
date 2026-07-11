@@ -17,9 +17,11 @@ export async function GET(
   const authClient = await createClient()
   const { data: { user } } = await authClient.auth.getUser()
 
-  // Allow both admin and the owning client to download
+  // Allow admins only to download signed membership contracts
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
-  const isAdmin = user.app_metadata?.role === 'admin'
+  if (user.app_metadata?.role !== 'admin') {
+    return NextResponse.json({ error: 'forbidden' }, { status: 403 })
+  }
 
   const supabase = createServiceClient()
 
@@ -40,11 +42,6 @@ export async function GET(
 
   if (error || !request) return NextResponse.json({ error: 'not_found' }, { status: 404 })
   if (!request.signed_at) return NextResponse.json({ error: 'not_yet_signed' }, { status: 422 })
-
-  // Auth check: admin can always download; client can only download their own
-  if (!isAdmin && request.clients.user_id !== user.id) {
-    return NextResponse.json({ error: 'forbidden' }, { status: 403 })
-  }
 
   const language = request.language as ContractLanguage
   const client = request.clients

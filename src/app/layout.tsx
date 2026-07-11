@@ -4,6 +4,7 @@ import { Outfit } from 'next/font/google'
 import { NextIntlClientProvider } from 'next-intl'
 import { getMessages } from 'next-intl/server'
 import * as Sentry from '@sentry/nextjs'
+import { PORTAL_ROOT_ID } from '@/lib/portal-root'
 import './globals.css'
 
 const outfit = Outfit({ subsets: ['latin'], variable: '--font-sans' })
@@ -40,10 +41,11 @@ export default async function RootLayout({
 
   return (
     <html lang="en" translate="no" className={`notranslate ${outfit.variable}`}>
-      <body className="bg-gray-50 text-gray-900 antialiased">
+      <body className="notranslate bg-gray-50 text-gray-900 antialiased" translate="no">
         <NextIntlClientProvider messages={messages}>
           {children}
         </NextIntlClientProvider>
+        <div id={PORTAL_ROOT_ID} translate="no" className="notranslate" />
         <Analytics />
       </body>
     </html>

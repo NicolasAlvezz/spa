@@ -96,7 +96,6 @@ function PendingContractCard({
   const [secondsLeft, setSecondsLeft] = useState(0)
   const [signature, setSignature] = useState<string | null>(null)
   const [signatureError, setSignatureError] = useState(false)
-  const [downloadingPdf, setDownloadingPdf] = useState(false)
 
   // Editable fields — pre-filled from client profile
   const [fullName, setFullName] = useState(
@@ -259,25 +258,6 @@ function PendingContractCard({
     }
   }
 
-  async function handleDownloadPdf() {
-    setDownloadingPdf(true)
-    try {
-      const res = await fetch(`/api/membership-requests/${request.id}/contract.pdf`)
-      if (!res.ok) return
-      const blob = await res.blob()
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = 'membership-contract.pdf'
-      a.click()
-      URL.revokeObjectURL(url)
-    } catch {
-      /* network error downloading — user can retry */
-    } finally {
-      setDownloadingPdf(false)
-    }
-  }
-
   if (contractState === 'signed') {
     return (
       <div className="bg-green-50 border border-green-200 rounded-2xl p-5 flex flex-col gap-4">
@@ -288,14 +268,6 @@ function PendingContractCard({
             <p className="text-sm text-green-700 mt-0.5">{t('signed_body')}</p>
           </div>
         </div>
-        <button
-          onClick={handleDownloadPdf}
-          disabled={downloadingPdf}
-          className="h-10 w-full rounded-xl border border-green-300 bg-green-50 hover:bg-green-100 text-green-800 text-sm font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-        >
-          {downloadingPdf ? <Loader2 size={14} className="animate-spin" /> : null}
-          {t('download_pdf')}
-        </button>
       </div>
     )
   }

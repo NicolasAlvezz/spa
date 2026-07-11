@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useTransition, useEffect } from 'react'
 import { createPortal } from 'react-dom'
+import { getPortalContainer } from '@/lib/portal-root'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { Search, ChevronRight, X, CreditCard, Loader2, FileText } from 'lucide-react'
@@ -298,9 +299,13 @@ function AssignForm({
 
 function PortaledPlanPanel(props: Parameters<typeof PlanPanel>[0]) {
   const [mounted, setMounted] = useState(false)
-  useEffect(() => { setMounted(true) }, [])
-  if (!mounted) return null
-  return createPortal(<PlanPanel {...props} />, document.body)
+  const [container, setContainer] = useState<HTMLElement | null>(null)
+  useEffect(() => {
+    setMounted(true)
+    setContainer(getPortalContainer() ?? document.body)
+  }, [])
+  if (!mounted || !container) return null
+  return createPortal(<PlanPanel {...props} />, container)
 }
 
 // ── First-assignment contract flow ────────────────────────────────────────────
@@ -834,7 +839,7 @@ export function ClientsTable({ clients, plans }: Props) {
         )}
       </p>
 
-      {/* Plan panel — rendered via portal to document.body */}
+      {/* Plan panel — rendered via portal to #app-portal-root */}
       {planClient && (
         <PortaledPlanPanel
           client={planClient}

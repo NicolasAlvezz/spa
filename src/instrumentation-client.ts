@@ -4,6 +4,15 @@
 
 import * as Sentry from "@sentry/nextjs";
 
+function isDomTranslationNoise(message: string): boolean {
+  return (
+    message.includes("Failed to execute 'insertBefore' on 'Node'") ||
+    message.includes("Failed to execute 'removeChild' on 'Node'") ||
+    message.includes('The node to be removed is not a child of this node') ||
+    message.includes('The node before which the new node is to be inserted is not a child of this node')
+  )
+}
+
 Sentry.init({
   dsn: "https://a79c485e658283b2b94d7b594f66ddac@o4511637938044928.ingest.us.sentry.io/4511637942370304",
 
@@ -28,6 +37,14 @@ Sentry.init({
   replaysOnErrorSampleRate: 1.0,
 
   sendDefaultPii: true,
+
+  beforeSend(event) {
+    const message = event.exception?.values?.[0]?.value ?? event.message ?? ''
+    if (typeof message === 'string' && isDomTranslationNoise(message)) {
+      return null
+    }
+    return event
+  },
 
   // Supabase logs a console.error when a session's refresh token is expired/invalid.
   // The middleware already handles this by redirecting to /login — not a bug.
