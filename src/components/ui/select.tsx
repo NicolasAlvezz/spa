@@ -4,6 +4,7 @@ import * as React from "react"
 import { Select as SelectPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
+import { getPortalContainer } from "@/lib/portal-root"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { UnfoldMoreIcon, Tick02Icon, ArrowUp01Icon, ArrowDown01Icon } from "@hugeicons/core-free-icons"
 
@@ -58,6 +59,22 @@ function SelectTrigger({
   )
 }
 
+function SelectPortal({
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.Portal>) {
+  const [container, setContainer] = React.useState<HTMLElement | undefined>(undefined)
+  React.useEffect(() => {
+    setContainer(getPortalContainer())
+  }, [])
+  return (
+    <SelectPrimitive.Portal
+      data-slot="select-portal"
+      container={container}
+      {...props}
+    />
+  )
+}
+
 function SelectContent({
   className,
   children,
@@ -66,7 +83,7 @@ function SelectContent({
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Content>) {
   return (
-    <SelectPrimitive.Portal>
+    <SelectPortal>
       <SelectPrimitive.Content
         data-slot="select-content"
         data-align-trigger={position === "item-aligned"}
@@ -87,7 +104,7 @@ function SelectContent({
         </SelectPrimitive.Viewport>
         <SelectScrollDownButton />
       </SelectPrimitive.Content>
-    </SelectPrimitive.Portal>
+    </SelectPortal>
   )
 }
 

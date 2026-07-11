@@ -13,6 +13,10 @@ function isDomTranslationNoise(message: string): boolean {
   )
 }
 
+function isNetworkNoise(message: string): boolean {
+  return message === 'Load failed' || message.includes('NetworkError') || message.includes('Failed to fetch')
+}
+
 Sentry.init({
   dsn: "https://a79c485e658283b2b94d7b594f66ddac@o4511637938044928.ingest.us.sentry.io/4511637942370304",
 
@@ -40,7 +44,7 @@ Sentry.init({
 
   beforeSend(event) {
     const message = event.exception?.values?.[0]?.value ?? event.message ?? ''
-    if (typeof message === 'string' && isDomTranslationNoise(message)) {
+    if (typeof message === 'string' && (isDomTranslationNoise(message) || isNetworkNoise(message))) {
       return null
     }
     return event
@@ -70,6 +74,10 @@ Sentry.init({
     "Failed to execute 'removeChild' on 'Node'",
     'The node to be removed is not a child of this node',
     'The node before which the new node is to be inserted is not a child of this node',
+    // Safari/mobile fetch aborts on flaky networks — UI already handles retries
+    'Load failed',
+    'Failed to fetch',
+    'NetworkError',
   ],
 });
 
