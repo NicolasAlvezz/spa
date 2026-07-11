@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
-import { ArrowLeft, Printer, Calendar, CreditCard, Activity, TrendingUp, BadgeCheck, FileText, Gift } from 'lucide-react'
+import { ArrowLeft, Printer, Calendar, CreditCard, Activity, TrendingUp, BadgeCheck, FileText, Gift, Star } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
 import {
   getClientById,
@@ -15,7 +15,7 @@ import { DangerZone } from '@/components/spa/DangerZone'
 import { EditClientInfoButton } from '@/components/spa/EditClientInfoButton'
 import { VisitActions } from '@/components/spa/VisitActions'
 import { CancelMembershipButton } from '@/components/spa/CancelMembershipButton'
-import { getCurrentMembership } from '@/lib/utils/membership'
+import { getCurrentMembership, getPackExpiryDate, getPackServiceLabel } from '@/lib/utils/membership'
 import { formatDate, formatDateTime } from '@/lib/utils/dates'
 import { MembershipBadge } from '@/components/spa/MembershipBadge'
 import { InviteClientButton } from '@/components/spa/InviteClientButton'
@@ -97,9 +97,9 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
       {/* Back */}
       <Link
         href="/admin/clients"
-        className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 transition-colors"
+        className="inline-flex items-center gap-2 h-9 px-3.5 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900 transition-colors"
       >
-        <ArrowLeft size={14} />
+        <ArrowLeft size={16} className="text-gray-500" />
         {t('back_to_clients')}
       </Link>
 
@@ -241,16 +241,30 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
           {membership && plan ? (
             <div className="space-y-4">
               <div className="flex items-start justify-between gap-2">
-                <div>
-                  <p className="font-semibold text-gray-900 text-base">
+                <div className="min-w-0">
+                  {isPack && (
+                    <span className="inline-flex items-center rounded-md bg-violet-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-700 mb-2">
+                      Pack
+                    </span>
+                  )}
+                  <p className="font-semibold text-gray-900 text-base leading-snug">
                     {locale === 'es' ? plan.name_es : plan.name_en}
                   </p>
-                  <p className="text-2xl font-bold text-brand-600 mt-1">
-                    USD {plan.price_usd}
-                    <span className="text-sm font-normal text-gray-400">
-                      /{locale === 'es' ? 'mes' : 'mo'}
-                    </span>
-                  </p>
+                  {isPack && (
+                    <p className="text-xs font-medium text-orange-600 mt-1">
+                      {tCheck('pack_post_op_only')}
+                    </p>
+                  )}
+                  <div className="mt-3 inline-flex flex-col rounded-xl bg-brand-50 border border-brand-100 px-3.5 py-2.5">
+                    <p className="text-2xl font-bold text-brand-700 tabular-nums">
+                      USD {Number(plan.price_usd).toFixed(0)}
+                    </p>
+                    <p className="text-xs font-medium text-brand-600/80 mt-0.5">
+                      {isPack
+                        ? tCheck('pack_price_once')
+                        : `${locale === 'es' ? 'por mes' : 'per month'}`}
+                    </p>
+                  </div>
                 </div>
                 {membership.status === 'active' && (
                   <CancelMembershipButton
@@ -261,46 +275,30 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
                 )}
               </div>
 
-              <div className="space-y-2.5 text-sm border-t border-gray-100 pt-3">
-                {isPack ? (
-                  <>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">{tCheck('sessions_used')}</span>
-                      <span className="font-medium text-gray-700">
-                        {(plan.total_sessions ?? 0) - (membership.sessions_remaining ?? 0)} / {plan.total_sessions}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">{tCheck('sessions_remaining')}</span>
-                      <span className="font-medium text-gray-700">{membership.sessions_remaining}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">{tCheck('no_expiry')}</span>
-                      <span className="font-medium text-gray-700">∞</span>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">{tCheck('expires')}</span>
-                      <span className="font-medium text-gray-700">
-                        {formatDate(membership.expires_at, locale)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">{tCheck('sessions_used')}</span>
-                      <span className="font-medium text-gray-700">
-                        {membership.sessions_used_this_month} / {plan.sessions_per_month}
-                      </span>
-                    </div>
-                    {membership.rollover_sessions > 0 && (
-                      <p className="text-xs text-brand-600 font-medium pt-1">
-                        {tCheck('rollover')}
-                      </p>
-                    )}
-                  </>
-                )}
-              </div>
+              {isPack ? (
+                <PackMembershipDetails
+                  plan={plan}
+                  membership={membership}
+                  locale={locale}
+                  tCheck={tCheck}
+                />
+              ) : (
+                <div className="space-y-2.5 text-sm border-t border-gray-100 pt-3">
+                  <MembershipMetric
+                    label={tCheck('expires')}
+                    value={formatDate(membership.expires_at, locale)}
+                  />
+                  <MembershipMetric
+                    label={tCheck('sessions_used')}
+                    value={`${membership.sessions_used_this_month} / ${plan.sessions_per_month}`}
+                  />
+                  {membership.rollover_sessions > 0 && (
+                    <p className="text-xs text-brand-600 font-medium pt-1">
+                      {tCheck('rollover')}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-6 text-center">
@@ -505,6 +503,84 @@ function InfoRow({ label, value }: { label: string; value: string }) {
       <dt className="text-gray-400 text-xs uppercase tracking-wide">{label}</dt>
       <dd className="text-gray-800 font-medium text-sm">{value}</dd>
     </>
+  )
+}
+
+function MembershipMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-gray-400">{label}</span>
+      <span className="font-semibold text-gray-800 tabular-nums">{value}</span>
+    </div>
+  )
+}
+
+function PackMembershipDetails({
+  plan,
+  membership,
+  locale,
+  tCheck,
+}: {
+  plan: NonNullable<ReturnType<typeof getCurrentMembership>>['membership_plans']
+  membership: NonNullable<ReturnType<typeof getCurrentMembership>>
+  locale: 'en' | 'es'
+  tCheck: (key: string) => string
+}) {
+  const total = plan?.total_sessions ?? 0
+  const remaining = membership.sessions_remaining ?? 0
+  const used = Math.max(0, total - remaining)
+  const progress = total > 0 ? Math.round((used / total) * 100) : 0
+
+  return (
+    <div className="space-y-3 border-t border-gray-100 pt-3">
+      <div className="rounded-xl bg-orange-50 border border-orange-100 px-3.5 py-3">
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-orange-600">
+          {tCheck('pack_service_included')}
+        </p>
+        <p className="text-sm font-semibold text-orange-900 mt-1">
+          {getPackServiceLabel(locale)}
+        </p>
+      </div>
+
+      <div className="rounded-xl bg-gray-50 border border-gray-100 px-3.5 py-3 space-y-2.5">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <Star size={14} className="text-brand-500" />
+            {tCheck('sessions_used_total')}
+          </div>
+          <span className="text-sm font-bold text-gray-900 tabular-nums">
+            {used} / {total}
+          </span>
+        </div>
+        <div className="h-2 rounded-full bg-gray-200 overflow-hidden">
+          <div
+            className="h-full rounded-full bg-brand-500 transition-all"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+        <p className="text-xs text-gray-500">
+          {tCheck('sessions_remaining')}:{' '}
+          <span className="font-bold text-gray-800 tabular-nums">{remaining}</span>
+        </p>
+      </div>
+
+      <div className="rounded-xl bg-amber-50 border border-amber-100 px-3.5 py-3 flex items-start gap-3">
+        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-amber-100 flex-shrink-0">
+          <Calendar size={15} className="text-amber-700" />
+        </div>
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+            {tCheck('expires')}
+          </p>
+          <p className="text-sm font-bold text-amber-900 mt-0.5">
+            {formatDate(getPackExpiryDate(membership), locale)}
+          </p>
+          <p className="text-xs text-amber-700/80 mt-1">
+            {tCheck('pack_expires_in_2_months')}
+          </p>
+        </div>
+      </div>
+    </div>
   )
 }
 

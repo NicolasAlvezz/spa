@@ -1380,7 +1380,7 @@ function RequestContractPanel({ result, initialPlanId, onSent, onCancel }: Reque
                     </span>
                     {isPack && (
                       <span className={`text-xs ${isSelected ? 'text-brand-100' : 'text-slate-400'}`}>
-                        {plan.total_sessions} {t('pack_sessions_total')} · {t('pack_no_expiry')}
+                        {t('pack_sessions_post_op', { count: plan.total_sessions ?? 0 })} · {t('pack_expires_in_2_months')}
                       </span>
                     )}
                   </div>
@@ -1687,7 +1687,7 @@ function UnifiedSelectPanel({ result, onScanAgain, onContinue }: UnifiedSelectPa
                       <span className="font-semibold block">{locale === 'es' ? plan.name_es : plan.name_en}</span>
                       {isPack && plan.total_sessions && (
                         <span className={`text-xs ${isSelected ? 'text-brand-100' : 'text-slate-400'}`}>
-                          {plan.total_sessions} {t('pack_sessions_total')}
+                          {t('pack_sessions_post_op', { count: plan.total_sessions })}
                         </span>
                       )}
                     </div>
@@ -1882,7 +1882,7 @@ function AssignPackPanel({ result, plan, onConfirm, onCancel }: AssignPackPanelP
         </div>
         {plan.total_sessions && (
           <p className="text-slate-400 text-sm">
-            {plan.total_sessions} {tCheck('pack_sessions_total')} · {locale === 'es' ? 'Masajes post-operatorios' : 'Post-operative massages'} · {locale === 'es' ? 'Vence en 2 meses' : 'Expires in 2 months'}
+            {tCheck('pack_sessions_post_op', { count: plan.total_sessions })} · {tCheck('pack_expires_in_2_months')}
           </p>
         )}
       </div>

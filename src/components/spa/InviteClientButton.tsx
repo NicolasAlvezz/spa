@@ -3,8 +3,8 @@
 import { useState, useTransition, useEffect, useRef } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
-import { Smartphone, Loader2, CheckCircle2, MessageSquare } from 'lucide-react'
-import { linkClientToAuth, unlinkClientFromAuth } from '@/app/(admin)/admin/clients/[id]/link-auth-action'
+import { Smartphone, CheckCircle2, MessageSquare } from 'lucide-react'
+import { linkClientToAuth } from '@/app/(admin)/admin/clients/[id]/link-auth-action'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -65,28 +65,8 @@ export function InviteClientButton({ clientId, clientPhone, isLinked, className 
     })
   }
 
-  function handleUnlink() {
-    if (!confirm(t('confirm_remove'))) return
-
-    startTransition(async () => {
-      await unlinkClientFromAuth(clientId)
-      router.refresh()
-    })
-  }
-
   if (isLinked) {
-    return (
-      <Button
-        variant="outline"
-        size="lg"
-        onClick={handleUnlink}
-        disabled={isPending}
-        className={`h-9 text-xs px-3 text-red-600 border-red-200 hover:bg-red-50 gap-1.5 ${className ?? ''}`}
-      >
-        {isPending ? <Loader2 size={13} className="animate-spin" /> : null}
-        {isPending ? t('removing') : t('remove_access')}
-      </Button>
-    )
+    return null
   }
 
   return (

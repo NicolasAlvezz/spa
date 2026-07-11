@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation'
 import { Search, ChevronRight, X, CreditCard, Loader2, FileText } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import { MembershipBadge } from './MembershipBadge'
-import { getMembershipStatus, getCurrentMembership } from '@/lib/utils/membership'
+import { getMembershipStatus, getCurrentMembership, getPackExpiryDate, getPackServiceLabel } from '@/lib/utils/membership'
 import { formatDate } from '@/lib/utils/dates'
 import { createClient } from '@/lib/supabase/client'
 import { getBasicContractTemplate } from '@/lib/constants/membership-contract-templates'
@@ -123,11 +123,23 @@ function PlanPanel({
                   <p className="font-semibold text-gray-900 text-base">
                     {locale === 'es' ? plan.name_es : plan.name_en}
                   </p>
+                  {plan.plan_type === 'pack' && (
+                    <p className="text-xs font-medium text-orange-600 mt-0.5">
+                      {locale === 'es' ? 'Masajes post-operatorios únicamente' : 'Post-operative massages only'}
+                    </p>
+                  )}
                   <p className="text-2xl font-bold text-brand-600 mt-0.5">
                     USD {plan.price_usd}
-                    <span className="text-sm font-normal text-gray-400">
-                      /{locale === 'es' ? 'mes' : 'mo'}
-                    </span>
+                    {plan.plan_type !== 'pack' && (
+                      <span className="text-sm font-normal text-gray-400">
+                        /{locale === 'es' ? 'mes' : 'mo'}
+                      </span>
+                    )}
+                    {plan.plan_type === 'pack' && (
+                      <span className="text-sm font-normal text-gray-400 ml-1">
+                        · {locale === 'es' ? 'pago único' : 'one-time'}
+                      </span>
+                    )}
                   </p>
                 </div>
                 <MembershipBadge membership={membership} locale={locale} />
@@ -137,8 +149,12 @@ function PlanPanel({
                 {plan.plan_type === 'pack' ? (
                   <>
                     <Row
+                      label={locale === 'es' ? 'Servicio' : 'Service'}
+                      value={getPackServiceLabel(locale)}
+                    />
+                    <Row
                       label={locale === 'es' ? 'Vence' : 'Expires'}
-                      value="∞"
+                      value={formatDate(getPackExpiryDate(membership), locale)}
                     />
                     <Row
                       label={locale === 'es' ? 'Sesiones restantes' : 'Sessions remaining'}
@@ -790,7 +806,9 @@ export function ClientsTable({ clients, plans }: Props) {
                       {/* Expires */}
                       <td className="hidden xl:table-cell px-5 py-3.5 text-gray-500 tabular-nums">
                         {membership
-                          ? (plan?.plan_type === 'pack' ? '∞' : formatDate(membership.expires_at, locale))
+                          ? (plan?.plan_type === 'pack'
+                              ? formatDate(getPackExpiryDate(membership), locale)
+                              : formatDate(membership.expires_at, locale))
                           : <span className="text-gray-300">—</span>}
                       </td>
                       {/* Visits */}

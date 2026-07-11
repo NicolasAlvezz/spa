@@ -2,8 +2,40 @@ import type { DbMembership, MembershipWithPlan } from '@/types'
 
 export type MembershipStatus = 'active' | 'expired' | 'cancelled' | 'no_membership'
 
-export function isPack(membership: Pick<DbMembership, 'sessions_remaining'> & { membership_plans: { plan_type: string } | null }): boolean {
+export const PACK_VALIDITY_MONTHS = 2
+
+export function isPackPlan(plan: { plan_type: string } | null | undefined): boolean {
+  return plan?.plan_type === 'pack'
+}
+
+export function getPackExpiryDate(
+  membership: Pick<DbMembership, 'expires_at' | 'started_at'>
+): string {
+  if (membership.expires_at) {
+    return membership.expires_at.split('T')[0]
+  }
+  const expiry = new Date(membership.started_at + 'T12:00:00Z')
+  expiry.setUTCMonth(expiry.getUTCMonth() + PACK_VALIDITY_MONTHS)
+  return expiry.toISOString().split('T')[0]
+}
+
+export function getPackServiceLabel(locale: 'en' | 'es'): string {
+  return locale === 'es'
+    ? 'Masajes post-operatorios (60 min)'
+    : 'Post-operative massages (60 min)'
+}
+
+export function isPackMembership(
+  membership: Pick<DbMembership, 'sessions_remaining'> & { membership_plans: { plan_type: string } | null }
+): boolean {
   return membership.membership_plans?.plan_type === 'pack'
+}
+
+/** @deprecated Use isPackMembership */
+export function isPack(
+  membership: Pick<DbMembership, 'sessions_remaining'> & { membership_plans: { plan_type: string } | null }
+): boolean {
+  return isPackMembership(membership)
 }
 
 /**
@@ -13,14 +45,18 @@ export function isPack(membership: Pick<DbMembership, 'sessions_remaining'> & { 
  * The `status` column in the DB can lag — always prefer this function.
  */
 export function getMembershipStatus(
-  membership: Pick<DbMembership, 'expires_at' | 'status' | 'sessions_remaining'> & { membership_plans?: { plan_type: string } | null } | null
+  membership: Pick<DbMembership, 'expires_at' | 'status' | 'sessions_remaining' | 'started_at'> & { membership_plans?: { plan_type: string } | null } | null
 ): MembershipStatus {
   if (!membership) return 'no_membership'
   if (membership.status === 'cancelled') return 'cancelled'
   if (membership.status === 'expired') return 'expired'
 
   if (membership.membership_plans?.plan_type === 'pack') {
-    return (membership.sessions_remaining ?? 0) > 0 ? 'active' : 'expired'
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const expiresAt = new Date(getPackExpiryDate(membership) + 'T12:00:00Z')
+    if (expiresAt < today || (membership.sessions_remaining ?? 0) <= 0) return 'expired'
+    return 'active'
   }
 
   const today = new Date()
@@ -82,7 +118,10 @@ export function getCurrentMembership(
     if (m.status === 'cancelled') return false
     if (m.status === 'expired') return false
     if (m.membership_plans?.plan_type === 'pack') {
-      return (m.sessions_remaining ?? 0) > 0
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const expiresAt = new Date(getPackExpiryDate(m) + 'T12:00:00Z')
+      return expiresAt >= today && (m.sessions_remaining ?? 0) > 0
     }
     return new Date(m.expires_at) >= today
   })

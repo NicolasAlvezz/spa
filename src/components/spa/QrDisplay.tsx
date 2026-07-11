@@ -16,7 +16,7 @@ const SignaturePad = dynamic(
 import { CalendarDays, Activity, RotateCcw, Clock, ChevronRight, ExternalLink } from 'lucide-react'
 import { MembershipBadge } from './MembershipBadge'
 import { formatDate, formatDateTime } from '@/lib/utils/dates'
-import { getCurrentMembership } from '@/lib/utils/membership'
+import { getCurrentMembership, getPackExpiryDate } from '@/lib/utils/membership'
 import type { ClientDetail } from '@/types'
 import type { ClientNextAppointment, ClientVisitRow } from '@/lib/supabase/queries/client-portal'
 
@@ -264,15 +264,22 @@ export function QrDisplay({ client, nextAppointment, recentVisits, hasActiveCons
             <p className="text-sm font-semibold text-gray-800">
               {locale === 'es' ? plan.name_es : plan.name_en}
             </p>
+            {isPack && (
+              <p className="text-xs font-medium text-orange-600 mt-0.5">
+                {tCheck('pack_post_op_only')}
+              </p>
+            )}
           </div>
           <div className="divide-y divide-gray-50">
             <div className="flex items-center justify-between px-5 py-3">
               <div className="flex items-center gap-2 text-sm text-gray-400">
                 <CalendarDays size={14} />
-                {isPack ? tCheck('no_expiry') : tCheck('expires')}
+                {tCheck('expires')}
               </div>
               <span className="text-sm font-semibold text-gray-700">
-                {isPack ? '∞' : formatDate(membership.expires_at, locale)}
+                {isPack
+                  ? formatDate(getPackExpiryDate(membership), locale)
+                  : formatDate(membership.expires_at, locale)}
               </span>
             </div>
             <div className="flex items-center justify-between px-5 py-3">

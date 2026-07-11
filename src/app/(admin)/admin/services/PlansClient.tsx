@@ -217,7 +217,7 @@ function PlanFormModal({ plan, onClose, onSaved }: FormModalProps) {
             <>
               <div>
                 <label className={labelCls}>Total sessions in pack *</label>
-                <p className={hintCls}>How many sessions are included. Once all are used, the pack is finished.</p>
+                <p className={hintCls}>Post-operative massages only. How many 60-minute sessions are included. Once all are used or 2 months pass, the pack is finished.</p>
                 <input type="number" min={1} value={form.total_sessions}
                   onChange={(e) => set('total_sessions', parseInt(e.target.value, 10))}
                   required disabled={isPending} className={inputCls} />
@@ -431,7 +431,7 @@ export function PlansClient({ initialPlans }: Props) {
           {sorted.map((p) => {
             const isPack = p.plan_type === 'pack'
             const sessionsLabel = isPack
-              ? `${p.total_sessions ?? '—'} total`
+              ? `${p.total_sessions ?? '—'} post-op`
               : `${p.sessions_per_month}/month`
 
             return (
