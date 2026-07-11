@@ -26,7 +26,7 @@
 | Precio | USD 80 / mes |
 | Target | Trabajadores de la salud |
 | Masaje incluido | 1 masaje de 60 minutos por mes |
-| Masajes adicionales | USD 80 c/u |
+| Masajes adicionales | USD 100 c/u |
 | Enfoque | Estrés, tensión y dolor muscular |
 | Oferta bienvenida | Primer masaje a USD 70 (con membresía activa, cupos limitados) |
 

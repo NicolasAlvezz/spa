@@ -67,7 +67,7 @@ docs/
 
 | Plan | Precio | Incluye |
 |---|---|---|
-| Healthcare Relief – Basic | USD 80/mes | 1 masaje 60min · adicionales a $80 |
+| Healthcare Relief – Basic | USD 80/mes | 1 masaje 60min · adicionales a $100 |
 | Healthcare 95 | USD 95/mes | 1 masaje 60min + Aromaterapia + Hot Stones + Recuperación muscular |
 
 Ambos planes son exclusivos para trabajadores de la salud (mínimo 3 meses de compromiso).
