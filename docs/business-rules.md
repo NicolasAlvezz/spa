@@ -61,7 +61,7 @@
 ## Reglas generales de membresía
 
 - **Pago mensual automático** (a futuro — en v1 es registro manual)
-- **Membresía mínima de 3 meses** — el cliente se compromete al inscribirse
+- **Membresía de 6 meses** — el cliente se compromete por 6 meses al inscribirse
 - **1 sesión incluida por mes** — no acumulable; rollover máximo de 1 mes
 - **Cancelaciones** requieren mínimo 24 horas de aviso
 - **No reembolsable**
@@ -90,7 +90,8 @@ NO_PLAN     → el cliente existe pero nunca tuvo membresía
 
 ## Reglas de vencimiento
 
-- La membresía dura exactamente 1 mes calendario desde la fecha de inicio
+- La membresía dura exactamente 6 meses calendario desde la fecha de inicio
+- Dentro de esos 6 meses el cliente tiene 1 sesión disponible por mes (6 sesiones en total)
 - Si el cliente renueva con membresía vencida, el nuevo período empieza desde el día del pago
 - Si renueva antes de que venza, el nuevo período empieza desde la fecha de vencimiento actual
 

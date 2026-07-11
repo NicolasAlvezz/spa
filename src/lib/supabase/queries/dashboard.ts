@@ -186,6 +186,54 @@ export async function getTodayVisits(): Promise<TodayVisit[]> {
   }))
 }
 
+// ---------------------------------------------------------------------------
+// Memberships expiring in the next 30 days
+// ---------------------------------------------------------------------------
+
+export interface ExpiringMembership {
+  membershipId: string
+  clientId: string
+  clientFirstName: string
+  clientLastName: string
+  planNameEn: string
+  planNameEs: string
+  expiresAt: string   // YYYY-MM-DD
+  daysLeft: number
+}
+
+export async function getExpiringMemberships(daysAhead = 30): Promise<ExpiringMembership[]> {
+  const supabase = createServiceClient()
+  const now = new Date()
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(now)
+  const future = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(
+    new Date(now.getTime() + daysAhead * 86_400_000)
+  )
+
+  const { data } = await supabase
+    .from('memberships')
+    .select('id, expires_at, clients(id, first_name, last_name), membership_plans(name_en, name_es)')
+    .eq('status', 'active')
+    .gte('expires_at', today)
+    .lte('expires_at', future)
+    .order('expires_at', { ascending: true })
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data ?? []).map((r: any) => {
+    const msLeft = new Date(r.expires_at + 'T12:00:00Z').getTime() - new Date(today + 'T12:00:00Z').getTime()
+    const daysLeft = Math.round(msLeft / 86_400_000)
+    return {
+      membershipId:    r.id,
+      clientId:        r.clients.id,
+      clientFirstName: r.clients.first_name,
+      clientLastName:  r.clients.last_name,
+      planNameEn:      r.membership_plans.name_en,
+      planNameEs:      r.membership_plans.name_es,
+      expiresAt:       r.expires_at,
+      daysLeft,
+    }
+  })
+}
+
 export async function getTodayAppointments(): Promise<TodayAppointment[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabase = createServiceClient() as any

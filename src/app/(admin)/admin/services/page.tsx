@@ -2,6 +2,8 @@ import { getAllServiceTypes, getAllMembershipPlans } from '@/lib/supabase/querie
 import { ServicesClient } from './ServicesClient'
 import { PlansClient } from './PlansClient'
 
+export const dynamic = 'force-dynamic'
+
 export default async function ServicesPage() {
   const [services, plans] = await Promise.all([
     getAllServiceTypes(),

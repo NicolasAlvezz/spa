@@ -3,4 +3,4 @@
 export const PACK_SPLIT_PAYMENT_THRESHOLD = 4
 
 // Default months of commitment when assigning a new monthly membership.
-export const MONTHLY_PLAN_MIN_MONTHS = 3
+export const MONTHLY_PLAN_MIN_MONTHS = 6

@@ -2,6 +2,8 @@ import { getTranslations } from 'next-intl/server'
 import { getAllServiceTypes } from '@/lib/supabase/queries/clients'
 import { ServiceTypeRow } from './ServiceTypeRow'
 
+export const dynamic = 'force-dynamic'
+
 export default async function ServiceTypesPage() {
   const [t, serviceTypes] = await Promise.all([
     getTranslations('nav'),

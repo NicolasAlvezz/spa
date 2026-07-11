@@ -12,6 +12,8 @@ import {
 } from '@/components/spa/StatsCharts'
 import { InfoPopover } from '@/components/spa/InfoPopover'
 
+export const dynamic = 'force-dynamic'
+
 interface Props {
   searchParams: { period?: string }
 }

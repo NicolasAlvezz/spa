@@ -65,7 +65,14 @@
     "appointment_fallback": "Turno",
     "select_client_error": "Seleccioná un cliente",
     "select_service_error": "Seleccioná un tipo de servicio",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "expiring_soon_section": "Próximos a vencer",
+    "expiring_soon_subtitle": "Membresías que vencen en los próximos 30 días",
+    "expiring_soon_empty": "No hay membresías por vencer en los próximos 30 días",
+    "days_left_one": "{count} día restante",
+    "days_left_other": "{count} días restantes",
+    "expires_on": "Vence el {date}",
+    "view_client": "Ver cliente"
   },
   "stats": {
     "title": "Estadísticas",

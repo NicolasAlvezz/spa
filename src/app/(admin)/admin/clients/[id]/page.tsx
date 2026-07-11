@@ -1,5 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+
+export const dynamic = 'force-dynamic'
 import { ArrowLeft, Printer, Calendar, CreditCard, Activity, TrendingUp, BadgeCheck, FileText, Gift } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
 import {

@@ -4,9 +4,7 @@ import QRCode from 'react-qr-code'
 import { Smartphone } from 'lucide-react'
 
 export function LoginQrCard() {
-  const loginUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}/login`
-    : '/login'
+  const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin}/login`
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">

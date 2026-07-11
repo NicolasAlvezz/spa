@@ -112,12 +112,12 @@ export async function POST(req: Request) {
       if (currentExpiry >= todayStr) {
         started_at = currentExpiry
         const d = new Date(currentExpiry + 'T12:00:00Z')
-        d.setUTCMonth(d.getUTCMonth() + 1)
+        d.setUTCMonth(d.getUTCMonth() + 6)
         expires_at = d.toISOString().split('T')[0]
       } else {
         started_at = todayStr
         const d = new Date(todayStr + 'T12:00:00Z')
-        d.setUTCMonth(d.getUTCMonth() + 1)
+        d.setUTCMonth(d.getUTCMonth() + 6)
         expires_at = d.toISOString().split('T')[0]
       }
 
@@ -135,7 +135,7 @@ export async function POST(req: Request) {
     } else {
       started_at = todayStr
       const d = new Date(todayStr + 'T12:00:00Z')
-      d.setUTCMonth(d.getUTCMonth() + 1)
+      d.setUTCMonth(d.getUTCMonth() + 6)
       expires_at = d.toISOString().split('T')[0]
     }
   }

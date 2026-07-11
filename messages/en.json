@@ -65,7 +65,14 @@
     "appointment_fallback": "Appointment",
     "select_client_error": "Please select a client",
     "select_service_error": "Please select a service type",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "expiring_soon_section": "Expiring soon",
+    "expiring_soon_subtitle": "Memberships expiring in the next 30 days",
+    "expiring_soon_empty": "No memberships expiring in the next 30 days",
+    "days_left_one": "{count} day left",
+    "days_left_other": "{count} days left",
+    "expires_on": "Expires {date}",
+    "view_client": "View client"
   },
   "stats": {
     "title": "Statistics",

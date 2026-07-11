@@ -1,8 +1,12 @@
 import { getTranslations, getLocale } from 'next-intl/server'
-import { Users, Activity, DollarSign, AlertTriangle } from 'lucide-react'
+import { Users, Activity, DollarSign, AlertTriangle, Clock, ChevronRight } from 'lucide-react'
+import Link from 'next/link'
+
+export const dynamic = 'force-dynamic'
 import {
   getDashboardStats,
   getTodayVisits,
+  getExpiringMemberships,
 } from '@/lib/supabase/queries/dashboard'
 import { DashboardDateFilter } from '@/components/spa/DashboardDateFilter'
 import { InfoPopover } from '@/components/spa/InfoPopover'
@@ -20,12 +24,13 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
   const from = searchParams.from ?? defaultFrom
   const to   = searchParams.to   ?? defaultTo
 
-  const [t, tNav, locale, stats, visits] = await Promise.all([
+  const [t, tNav, locale, stats, visits, expiring] = await Promise.all([
     getTranslations('dashboard'),
     getTranslations('nav'),
     getLocale(),
     getDashboardStats({ from, to }),
     getTodayVisits(),
+    getExpiringMemberships(30),
   ])
 
   const sessionLabels: Record<string, string> = {
@@ -149,6 +154,92 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
 
         {/* Right: Login QR */}
         <LoginQrCard />
+      </div>
+
+      {/* ── Expiring soon ───────────────────────────────────────────────── */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <div className="flex items-center gap-2">
+            <Clock size={14} className="text-gray-400" />
+            <h2 className="text-sm font-semibold text-gray-700">{t('expiring_soon_section')}</h2>
+            <span className="text-xs text-gray-400">{t('expiring_soon_subtitle')}</span>
+          </div>
+          {expiring.length > 0 && (
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+              expiring.some(m => m.daysLeft <= 14)
+                ? 'bg-red-50 text-red-600'
+                : 'bg-amber-50 text-amber-600'
+            }`}>
+              {expiring.length}
+            </span>
+          )}
+        </div>
+
+        {expiring.length === 0 ? (
+          <div className="px-5 py-10 text-center">
+            <p className="text-sm text-gray-400">{t('expiring_soon_empty')}</p>
+          </div>
+        ) : (
+          <ul className="divide-y divide-gray-50">
+            {expiring.map((m) => {
+              const urgency = m.daysLeft <= 7
+                ? 'red'
+                : m.daysLeft <= 14
+                  ? 'orange'
+                  : 'amber'
+              const avatarColors = {
+                red:    'bg-red-100 text-red-700',
+                orange: 'bg-orange-100 text-orange-700',
+                amber:  'bg-amber-100 text-amber-700',
+              } as const
+              const badgeColors = {
+                red:    'bg-red-50 text-red-600 border border-red-200',
+                orange: 'bg-orange-50 text-orange-600 border border-orange-200',
+                amber:  'bg-amber-50 text-amber-600 border border-amber-200',
+              } as const
+              const initials = `${m.clientFirstName[0]}${m.clientLastName[0]}`.toUpperCase()
+              const planName = locale === 'es' ? m.planNameEs : m.planNameEn
+              const expiryLabel = new Date(m.expiresAt + 'T12:00:00Z').toLocaleDateString(
+                locale === 'es' ? 'es-US' : 'en-US',
+                { month: 'short', day: 'numeric', year: 'numeric' }
+              )
+              const daysLabel = m.daysLeft === 1
+                ? t('days_left_one', { count: 1 })
+                : t('days_left_other', { count: m.daysLeft })
+
+              return (
+                <li key={m.membershipId}>
+                  <Link
+                    href={`/admin/clients/${m.clientId}`}
+                    className="flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors group"
+                  >
+                    {/* Avatar */}
+                    <div className={`flex items-center justify-center w-9 h-9 rounded-full text-sm font-bold flex-shrink-0 ${avatarColors[urgency]}`}>
+                      {initials}
+                    </div>
+
+                    {/* Name + plan */}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-gray-900 truncate">
+                        {m.clientFirstName} {m.clientLastName}
+                      </p>
+                      <p className="text-xs text-gray-400 truncate">
+                        {planName} · {t('expires_on', { date: expiryLabel })}
+                      </p>
+                    </div>
+
+                    {/* Days left badge */}
+                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full flex-shrink-0 ${badgeColors[urgency]}`}>
+                      {daysLabel}
+                    </span>
+
+                    <ChevronRight size={14} className="text-gray-300 flex-shrink-0 group-hover:text-gray-500 transition-colors" />
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
+        )}
       </div>
     </div>
   )

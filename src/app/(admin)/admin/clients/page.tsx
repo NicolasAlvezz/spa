@@ -4,6 +4,8 @@ import { getTranslations } from 'next-intl/server'
 import { getClients, getActivePlans } from '@/lib/supabase/queries/clients'
 import { ClientsTable } from '@/components/spa/ClientsTable'
 
+export const dynamic = 'force-dynamic'
+
 export default async function ClientsPage() {
   const [clients, plans, t] = await Promise.all([getClients({ includeInactive: true }), getActivePlans(), getTranslations('clients')])
 

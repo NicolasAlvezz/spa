@@ -56,12 +56,12 @@ export async function assignMembershipAfterSign({
     if (currentExpiry && currentExpiry >= todayStr) {
       started_at = currentExpiry
       const d = new Date(currentExpiry + 'T12:00:00Z')
-      d.setUTCMonth(d.getUTCMonth() + 1)
+      d.setUTCMonth(d.getUTCMonth() + 6)
       expires_at = d.toISOString().split('T')[0]
     } else {
       started_at = todayStr
       const d = new Date(todayStr + 'T12:00:00Z')
-      d.setUTCMonth(d.getUTCMonth() + 1)
+      d.setUTCMonth(d.getUTCMonth() + 6)
       expires_at = d.toISOString().split('T')[0]
     }
     const prevPlan = currentMembership?.membership_plans as unknown as { sessions_per_month: number; plan_type: string } | null
