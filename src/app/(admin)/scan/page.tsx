@@ -128,6 +128,16 @@ export default function ScanPage() {
     }
   }, [])
 
+  const fetchCheckin = useCallback(async (clientId: string): Promise<CheckinResult | null> => {
+    try {
+      const res = await fetch(`/api/clients/${encodeURIComponent(clientId)}/checkin`)
+      if (!res.ok) return null
+      return await res.json() as CheckinResult
+    } catch {
+      return null
+    }
+  }, [])
+
   const handleCameraError = useCallback(() => {
     setPhase('camera_error')
   }, [])
@@ -148,12 +158,26 @@ export default function ScanPage() {
     setResultError(null)
     setPhase('registering')
     try {
+      const freshData = await fetchCheckin(result.client.id)
+      if (!freshData) {
+        setErrorKey('network_error')
+        setPhase('error')
+        return
+      }
+      setResult(freshData)
+
+      if (!freshData.has_active_consent) {
+        setErrorKey('consent_required')
+        setPhase('error')
+        return
+      }
+
       const res = await fetch('/api/visits', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          client_id: result.client.id,
-          membership_id: result.membership?.id ?? null,
+          client_id: freshData.client.id,
+          membership_id: freshData.membership?.id ?? null,
           therapist_name: therapistName,
         }),
       })
@@ -167,8 +191,8 @@ export default function ScanPage() {
       if (!res.ok) {
         const key = await parseVisitApiError(res)
         if (key === 'consent_required') {
-          setResultError(key)
-          setPhase('result')
+          setErrorKey('consent_required')
+          setPhase('error')
           return
         }
         setErrorKey(key)
@@ -191,7 +215,7 @@ export default function ScanPage() {
         welcome_offer: tCheck('session_welcome_offer'),
       }
 
-      const isPack = result.membership?.membership_plans?.plan_type === 'pack'
+      const isPack = freshData.membership?.membership_plans?.plan_type === 'pack'
       const detail = isPack && data.sessions_remaining !== null && data.sessions_remaining !== undefined
         ? `${tCheck('sessions_remaining')}: ${data.sessions_remaining}`
         : `${tCheck('session_type_label')}: ${sessionLabels[data.session_type] ?? data.session_type}`
@@ -205,7 +229,7 @@ export default function ScanPage() {
       setErrorKey('network_error')
       setPhase('error')
     }
-  }, [result, tCheck, therapistName])
+  }, [result, tCheck, therapistName, fetchCheckin])
 
   const handleAdditionalVisitConfirm = useCallback(async (useCredit = false) => {
     if (!result?.membership) return
@@ -468,12 +492,16 @@ export default function ScanPage() {
         setPhase('error')
         return
       }
+      const freshData = await fetchCheckin(result.client.id)
+      if (freshData) {
+        setResult(freshData)
+      }
       setPhase('membership_applied')
     } catch {
       setErrorKey('network_error')
       setPhase('error')
     }
-  }, [result, contractPlanId, contractPlanPrice, contractPlanName, pendingRequestId, tCheck])
+  }, [result, contractPlanId, contractPlanPrice, pendingRequestId, fetchCheckin])
 
   const handleContractDeclined = useCallback(() => {
     setPendingRequestId(null)
@@ -701,10 +729,19 @@ export default function ScanPage() {
             <p className="text-slate-300 text-base">
               {locale === 'es' ? '¿Querés registrar una visita ahora?' : 'Do you want to register a visit now?'}
             </p>
+            {!result.has_active_consent && (
+              <div className="w-full bg-amber-950/40 border border-amber-700/60 rounded-xl p-4 flex items-start gap-3 text-left">
+                <AlertTriangle size={18} className="text-amber-400 flex-shrink-0 mt-0.5" />
+                <p className="text-amber-300 text-sm leading-relaxed">
+                  {scanErrorMessage('consent_required')}
+                </p>
+              </div>
+            )}
             <div className="w-full flex flex-col gap-3">
               <button
                 onClick={handleRegisterVisit}
-                className="w-full h-16 rounded-xl bg-green-500 hover:bg-green-400 active:bg-green-600 text-white text-xl font-bold transition-colors"
+                disabled={!result.has_active_consent}
+                className="w-full h-16 rounded-xl bg-green-500 hover:bg-green-400 active:bg-green-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xl font-bold transition-colors"
               >
                 {locale === 'es' ? 'Registrar visita' : 'Register visit'}
               </button>

@@ -3,6 +3,7 @@
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
 import * as Sentry from "@sentry/nextjs";
+import { shouldReportErrorEvent } from "@/lib/sentry/should-report-event";
 
 function isDomTranslationNoise(message: string): boolean {
   return (
@@ -19,6 +20,8 @@ function isNetworkNoise(message: string): boolean {
 
 Sentry.init({
   dsn: "https://a79c485e658283b2b94d7b594f66ddac@o4511637938044928.ingest.us.sentry.io/4511637942370304",
+
+  enabled: process.env.NODE_ENV === "production",
 
   integrations: [
     Sentry.browserTracingIntegration(),
@@ -43,6 +46,7 @@ Sentry.init({
   sendDefaultPii: true,
 
   beforeSend(event) {
+    if (!shouldReportErrorEvent(event)) return null
     const message = event.exception?.values?.[0]?.value ?? event.message ?? ''
     if (typeof message === 'string' && (isDomTranslationNoise(message) || isNetworkNoise(message))) {
       return null

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { CONSENT_WINDOW_MS } from '@/lib/constants/consent'
 import { isValidTherapistName } from '@/lib/constants/therapists'
+import { resolveMembershipIdForVisit } from '@/lib/visits/resolve-membership-id'
 import type { SessionType } from '@/types'
 
 type VisitInsertRow = {
@@ -96,7 +97,7 @@ export async function POST(req: Request) {
     use_credit?: boolean
   } = await req.json()
 
-  const { client_id, membership_id, amount_usd, notes, therapist_name, use_credit } = body
+  const { client_id, amount_usd, notes, therapist_name, use_credit } = body
   // service_type_id may be overridden later (e.g. auto-set to post_op for pack memberships)
   let service_type_id = body.service_type_id
 
@@ -109,6 +110,10 @@ export async function POST(req: Request) {
   }
 
   const supabase = createServiceClient()
+  const membership_id = await resolveMembershipIdForVisit(supabase, client_id, body.membership_id ?? null, {
+    sessionType: body.session_type,
+    serviceTypeId: service_type_id,
+  })
 
   // Require active consent before registering any visit
   const consentId = await getActiveConsent(supabase, client_id)
