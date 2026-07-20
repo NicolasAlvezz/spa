@@ -24,7 +24,7 @@ export async function POST(
   // Fetch the request and verify it belongs to this user's client
   const { data: request } = await supabase
     .from('membership_requests')
-    .select('id, client_id, plan_id, status, expires_at, version, signed_at')
+    .select('id, client_id, plan_id, status, expires_at, version, signed_at, use_credit')
     .eq('id', params.id)
     .single()
 
@@ -145,6 +145,7 @@ export async function POST(
         requestId: request.id,
         clientId: request.client_id,
         planId: request.plan_id,
+        useCredit: request.use_credit === true,
       }).catch(err => {
         console.error('[sign] auto-assign failed:', err)
       })

@@ -421,6 +421,7 @@ export interface Database {
           } | null
           payment_method: 'credit' | 'debit' | null
           card_last4: string | null
+          use_credit: boolean
         }
         Insert: {
           id?: string
@@ -444,6 +445,7 @@ export interface Database {
           contract_fields?: Record<string, string> | null
           payment_method?: 'credit' | 'debit' | null
           card_last4?: string | null
+          use_credit?: boolean
         }
         Update: {
           status?: 'pending' | 'signed' | 'declined' | 'cancelled' | 'expired'
@@ -457,6 +459,7 @@ export interface Database {
           contract_fields?: Record<string, string> | null
           payment_method?: 'credit' | 'debit' | null
           card_last4?: string | null
+          use_credit?: boolean
         }
         Relationships: Relationship[]
       }

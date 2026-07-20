@@ -7,6 +7,7 @@ interface AssignMembershipParams {
   requestId: string
   clientId: string
   planId: string
+  useCredit?: boolean
 }
 
 /**
@@ -19,6 +20,7 @@ export async function assignMembershipAfterSign({
   requestId,
   clientId,
   planId,
+  useCredit = false,
 }: AssignMembershipParams): Promise<void> {
   const supabase = createServiceClient()
 
@@ -95,12 +97,34 @@ export async function assignMembershipAfterSign({
 
   if (!newMembership) return
 
+  // Apply credit if the admin chose to when sending the contract: use only up to
+  // the amount owed and keep the rest.
+  let paymentAmount = Number(plan.price_usd)
+  let creditApplied = 0
+  if (useCredit) {
+    const { data: clientRow } = await supabase
+      .from('clients')
+      .select('credit_balance')
+      .eq('id', clientId)
+      .single()
+    const creditBalance = Number(clientRow?.credit_balance ?? 0)
+    creditApplied = Math.min(creditBalance, paymentAmount)
+    if (creditApplied > 0) {
+      paymentAmount = paymentAmount - creditApplied
+      await supabase
+        .from('clients')
+        .update({ credit_balance: creditBalance - creditApplied })
+        .eq('id', clientId)
+    }
+  }
+
   await supabase.from('payments').insert({
     client_id: clientId,
     membership_id: newMembership.id,
-    amount_usd: Number(plan.price_usd),
+    amount_usd: paymentAmount,
     method: null,
     concept: isPack ? 'pack_purchase' : 'monthly_membership',
+    ...(creditApplied > 0 ? { notes: `Credit applied: $${creditApplied}` } : {}),
   })
 
   if (currentMembership?.status === 'active') {

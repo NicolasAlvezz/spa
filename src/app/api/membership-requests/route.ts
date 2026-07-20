@@ -25,8 +25,9 @@ export async function POST(req: Request) {
     plan_id?: string
     language?: string
     admin_signature_image?: string | null
+    use_credit?: boolean
   } = await req.json()
-  const { client_id, plan_id, language, admin_signature_image } = body
+  const { client_id, plan_id, language, admin_signature_image, use_credit } = body
 
   if (
     !client_id || !UUID_RE.test(client_id) ||
@@ -86,6 +87,7 @@ export async function POST(req: Request) {
       expires_at:           expiresAt,
       admin_signature_image,
       admin_signed_at:      new Date().toISOString(),
+      use_credit:           use_credit === true,
     })
     .select('id, client_id, plan_id, status, expires_at, created_at')
     .single()

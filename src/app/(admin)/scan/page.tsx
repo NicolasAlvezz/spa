@@ -387,7 +387,7 @@ export default function ScanPage() {
     }
   }, [result, tCheck, locale])
 
-  const handleServiceVisit = useCallback(async (serviceTypeId: string, serviceName: string, priceUsd: number | null) => {
+  const handleServiceVisit = useCallback(async (serviceTypeId: string, serviceName: string, priceUsd: number | null, useCredit = false) => {
     if (!result) return
     setResultError(null)
     setPhase('registering_service')
@@ -400,7 +400,7 @@ export default function ScanPage() {
           membership_id: null,
           service_type_id: serviceTypeId,
           therapist_name: therapistName,
-          ...(priceUsd !== null && priceUsd > 0 ? { amount_usd: priceUsd } : {}),
+          ...(priceUsd !== null && priceUsd > 0 ? { amount_usd: priceUsd, use_credit: useCredit } : {}),
         }),
       })
 
@@ -646,7 +646,7 @@ export default function ScanPage() {
               service={selectedService}
               therapistName={therapistName}
               onTherapistChange={setTherapistName}
-              onConfirm={() => handleServiceVisit(selectedService.id, locale === 'es' ? selectedService.name_es : selectedService.name_en, selectedService.price_usd)}
+              onConfirm={(useCredit) => handleServiceVisit(selectedService.id, locale === 'es' ? selectedService.name_es : selectedService.name_en, selectedService.price_usd, useCredit)}
               onCancel={() => { setSelectedService(null); setPhase('result') }}
             />
           </div>
@@ -1194,7 +1194,7 @@ interface ServiceVisitPanelProps {
   result: CheckinResult
   therapistName: string
   onTherapistChange: (name: string) => void
-  onConfirm: (serviceTypeId: string, serviceName: string, priceUsd: number | null) => Promise<void>
+  onConfirm: (serviceTypeId: string, serviceName: string, priceUsd: number | null, useCredit: boolean) => Promise<void>
   onCancel: () => void
 }
 
@@ -1207,6 +1207,8 @@ function ServiceVisitPanel({ result, therapistName, onTherapistChange, onConfirm
   const [loading, setLoading] = useState(true)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [useCredit, setUseCredit] = useState(false)
+  const creditBalance = result.client.credit_balance
 
   useEffect(() => {
     fetch('/api/service-types')
@@ -1220,8 +1222,11 @@ function ServiceVisitPanel({ result, therapistName, onTherapistChange, onConfirm
     const service = services.find(s => s.id === selectedId)
     if (!service) return
     setSubmitting(true)
-    await onConfirm(selectedId, locale === 'es' ? service.name_es : service.name_en, service.price_usd)
+    await onConfirm(selectedId, locale === 'es' ? service.name_es : service.name_en, service.price_usd, useCredit)
   }
+
+  const selectedService = services.find(s => s.id === selectedId)
+  const showCredit = creditBalance > 0 && !!selectedService?.price_usd && selectedService.price_usd > 0
 
   return (
     <div className="w-full flex flex-col gap-6">
@@ -1287,6 +1292,20 @@ function ServiceVisitPanel({ result, therapistName, onTherapistChange, onConfirm
         )}
       </div>
 
+      {showCredit && (
+        <button
+          onClick={() => setUseCredit(v => !v)}
+          disabled={submitting}
+          className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 ${useCredit ? 'bg-green-600/30 border border-green-500/60 text-green-300' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
+        >
+          <span className="flex items-center gap-2">
+            <Gift size={16} className={useCredit ? 'text-green-400' : 'text-slate-400'} />
+            {t('credit_use', { amount: creditBalance })}
+          </span>
+          {useCredit && <Check size={16} className="text-green-400 flex-shrink-0" />}
+        </button>
+      )}
+
       <div className="flex flex-col gap-3 pt-2">
         <button
           onClick={handleConfirm}
@@ -1333,6 +1352,8 @@ function RequestContractPanel({ result, initialPlanId, onSent, onCancel }: Reque
   const [adminSigError, setAdminSigError] = useState(false)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [useCredit, setUseCredit] = useState(false)
+  const creditBalance = result.client.credit_balance
 
   useEffect(() => {
     fetch('/api/membership-plans')
@@ -1362,6 +1383,7 @@ function RequestContractPanel({ result, initialPlanId, onSent, onCancel }: Reque
           plan_id: selectedPlanId,
           language,
           admin_signature_image: adminSignature,
+          use_credit: useCredit,
         }),
       })
       if (res.status === 409) {
@@ -1446,6 +1468,21 @@ function RequestContractPanel({ result, initialPlanId, onSent, onCancel }: Reque
           ))}
         </div>
       </div>
+
+      {/* Credit toggle */}
+      {creditBalance > 0 && selectedPlan && (
+        <button
+          onClick={() => setUseCredit(v => !v)}
+          disabled={sending}
+          className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 ${useCredit ? 'bg-green-600/30 border border-green-500/60 text-green-300' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
+        >
+          <span className="flex items-center gap-2">
+            <Gift size={16} className={useCredit ? 'text-green-400' : 'text-slate-400'} />
+            {t('credit_use', { amount: creditBalance })}
+          </span>
+          {useCredit && <Check size={16} className="text-green-400 flex-shrink-0" />}
+        </button>
+      )}
 
       {/* Contract preview (collapsible) */}
       {selectedPlan && (
@@ -1799,7 +1836,7 @@ interface ConfirmServicePanelProps {
   service: { id: string; name_en: string; name_es: string; price_usd: number | null }
   therapistName: string
   onTherapistChange: (name: string) => void
-  onConfirm: () => void
+  onConfirm: (useCredit: boolean) => void
   onCancel: () => void
 }
 
@@ -1808,13 +1845,16 @@ function ConfirmServicePanel({ result, service, therapistName, onTherapistChange
   const tCheck = useTranslations('checkin')
   const locale = useLocale() as 'en' | 'es'
   const [submitting, setSubmitting] = useState(false)
+  const [useCredit, setUseCredit] = useState(false)
+  const creditBalance = result.client.credit_balance
+  const showCredit = creditBalance > 0 && service.price_usd !== null && service.price_usd > 0
 
   const serviceName = locale === 'es' ? service.name_es : service.name_en
 
   const handleConfirm = () => {
     if (submitting) return
     setSubmitting(true)
-    onConfirm()
+    onConfirm(useCredit)
   }
 
   return (
@@ -1844,6 +1884,20 @@ function ConfirmServicePanel({ result, service, therapistName, onTherapistChange
         onChange={onTherapistChange}
         disabled={submitting}
       />
+
+      {showCredit && (
+        <button
+          onClick={() => setUseCredit(v => !v)}
+          disabled={submitting}
+          className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 ${useCredit ? 'bg-green-600/30 border border-green-500/60 text-green-300' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
+        >
+          <span className="flex items-center gap-2">
+            <Gift size={16} className={useCredit ? 'text-green-400' : 'text-slate-400'} />
+            {tCheck('credit_use', { amount: creditBalance })}
+          </span>
+          {useCredit && <Check size={16} className="text-green-400 flex-shrink-0" />}
+        </button>
+      )}
 
       <div className="flex flex-col gap-3 pt-2">
         <button
