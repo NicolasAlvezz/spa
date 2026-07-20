@@ -268,12 +268,13 @@ export async function POST(req: Request) {
         .select('credit_balance')
         .eq('id', client_id)
         .single()
-      creditApplied = Number(clientRow?.credit_balance ?? 0)
+      const creditBalance = Number(clientRow?.credit_balance ?? 0)
+      creditApplied = Math.min(creditBalance, amount_usd)
       if (creditApplied > 0) {
-        finalAmount = Math.max(0, amount_usd - creditApplied)
+        finalAmount = amount_usd - creditApplied
         await supabase
           .from('clients')
-          .update({ credit_balance: 0 })
+          .update({ credit_balance: creditBalance - creditApplied })
           .eq('id', client_id)
       }
     }
