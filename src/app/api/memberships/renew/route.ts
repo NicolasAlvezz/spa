@@ -168,7 +168,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'failed_to_create_membership' }, { status: 500 })
   }
 
-  // Apply credit if requested: deduct full credit_balance, reset to 0
+  // Apply credit if requested: use only up to the amount owed and keep the rest.
   let finalAmount = amount_usd
   let creditApplied = 0
   if (use_credit) {
@@ -177,12 +177,13 @@ export async function POST(req: Request) {
       .select('credit_balance')
       .eq('id', client_id)
       .single()
-    creditApplied = Number(clientRow?.credit_balance ?? 0)
+    const creditBalance = Number(clientRow?.credit_balance ?? 0)
+    creditApplied = Math.min(creditBalance, amount_usd)
     if (creditApplied > 0) {
-      finalAmount = Math.max(0, amount_usd - creditApplied)
+      finalAmount = amount_usd - creditApplied
       await supabase
         .from('clients')
-        .update({ credit_balance: 0 })
+        .update({ credit_balance: creditBalance - creditApplied })
         .eq('id', client_id)
     }
   }
