@@ -298,7 +298,6 @@ export default function ScanPage() {
     planId: string,
     amountUsd: number,
     splitPayment?: boolean,
-    useCredit?: boolean,
   ) => {
     if (!result) return
 
@@ -313,7 +312,6 @@ export default function ScanPage() {
           split_payment: splitPayment ?? false,
           confirm_lose_unused_sessions: confirmLose,
           membership_request_id: pendingRequestId ?? null,
-          use_credit: useCredit ?? false,
         }),
       })
 
@@ -1875,7 +1873,7 @@ function ConfirmServicePanel({ result, service, therapistName, onTherapistChange
 interface AssignPackPanelProps {
   result: CheckinResult
   plan: PlanOption
-  onConfirm: (planId: string, amountUsd: number, splitPayment?: boolean, useCredit?: boolean) => Promise<void>
+  onConfirm: (planId: string, amountUsd: number, splitPayment?: boolean) => Promise<void>
   onCancel: () => void
 }
 
@@ -1883,17 +1881,13 @@ function AssignPackPanel({ result, plan, onConfirm, onCancel }: AssignPackPanelP
   const tCheck = useTranslations('checkin')
   const locale = useLocale() as 'en' | 'es'
   const [submitting, setSubmitting] = useState(false)
-  const [useCredit, setUseCredit] = useState(false)
 
   const planName = locale === 'es' ? plan.name_es : plan.name_en
-  const creditBalance = result.client.credit_balance
-  const creditApplied = useCredit ? Math.min(creditBalance, plan.price_usd) : 0
-  const paymentAmount = Math.max(0, plan.price_usd - creditApplied)
 
   const handleConfirm = async () => {
     if (submitting) return
     setSubmitting(true)
-    await onConfirm(plan.id, plan.price_usd, false, useCredit)
+    await onConfirm(plan.id, plan.price_usd, false)
   }
 
   return (
@@ -1924,28 +1918,13 @@ function AssignPackPanel({ result, plan, onConfirm, onCancel }: AssignPackPanelP
         )}
       </div>
 
-      {/* Credit toggle */}
-      {creditBalance > 0 && (
-        <button
-          onClick={() => setUseCredit(v => !v)}
-          disabled={submitting}
-          className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 ${useCredit ? 'bg-green-600/30 border border-green-500/60 text-green-300' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
-        >
-          <span className="flex items-center gap-2">
-            <Gift size={16} className={useCredit ? 'text-green-400' : 'text-slate-400'} />
-            {tCheck('credit_use', { amount: creditBalance })}
-          </span>
-          {useCredit && <Check size={16} className="text-green-400 flex-shrink-0" />}
-        </button>
-      )}
-
       <div className="flex flex-col gap-3 pt-2">
         <button
           onClick={handleConfirm}
           disabled={submitting}
           className="w-full h-16 rounded-xl bg-brand-500 hover:bg-brand-400 active:bg-brand-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xl font-bold transition-colors"
         >
-          {submitting ? tCheck('assigning') : `${tCheck('assign_confirm')} — $${paymentAmount}`}
+          {submitting ? tCheck('assigning') : `${tCheck('assign_confirm')} — $${plan.price_usd}`}
         </button>
         <button
           onClick={onCancel}
