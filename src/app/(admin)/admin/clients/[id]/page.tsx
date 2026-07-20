@@ -21,6 +21,7 @@ import { formatDate, formatDateTime } from '@/lib/utils/dates'
 import { buildVisitPaymentMap, getVisitDisplayPriceUsd } from '@/lib/utils/visit-display-price'
 import { MembershipBadge } from '@/components/spa/MembershipBadge'
 import { InviteClientButton } from '@/components/spa/InviteClientButton'
+import { AddCreditButton } from '@/components/spa/AddCreditButton'
 
 interface Props {
   params: { id: string }
@@ -190,14 +191,23 @@ export default async function ClientDetailPage({ params, searchParams }: Props) 
         />
       </div>
 
-      {(client.credit_balance ?? 0) > 0 && (
-        <div className="bg-green-50 border border-green-200 rounded-xl px-5 py-4 flex items-center gap-3">
-          <Gift size={18} className="text-green-600 flex-shrink-0" />
-          <p className="text-green-800 text-sm font-semibold">
-            {t('credit_balance_label')}: <span className="font-bold">USD {Number(client.credit_balance).toFixed(2)}</span>
-          </p>
+      <div className="bg-white border border-gray-200 shadow-sm rounded-xl px-5 py-4 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-green-50 flex-shrink-0">
+            <Gift size={17} className="text-green-600" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs text-gray-400 uppercase tracking-wide">{t('credit_balance_label')}</p>
+            <p className="text-lg font-bold text-gray-900 tabular-nums">
+              USD {Number(client.credit_balance ?? 0).toFixed(2)}
+            </p>
+          </div>
         </div>
-      )}
+        <AddCreditButton
+          clientId={client.id}
+          currentBalance={Number(client.credit_balance ?? 0)}
+        />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* ── Personal info ─────────────────────────────────────────────── */}
