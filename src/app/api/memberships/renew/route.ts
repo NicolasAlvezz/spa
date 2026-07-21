@@ -3,6 +3,7 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { calculateRollover } from '@/lib/utils/membership'
 import { MONTHLY_PLAN_MIN_MONTHS } from '@/lib/constants/membership'
 import { todayInSpaTz } from '@/lib/utils/dates'
+import { addOneMonth } from '@/lib/memberships/session-cycle'
 export async function POST(req: Request) {
   const authClient = await createClient()
   const { data: { user }, error: authError } = await authClient.auth.getUser()
@@ -158,6 +159,7 @@ export async function POST(req: Request) {
       months_completed: isPack ? 0 : (currentMembership?.months_completed ?? 0) + 1,
       sessions_remaining: isPack ? (plan?.total_sessions ?? null) : null,
       split_payment_pending: usingSplitPayment,
+      next_session_reset_at: isPack ? null : addOneMonth(started_at),
       ...(membership_request_id ? { membership_request_id } : {}),
     })
     .select('id, started_at, expires_at, rollover_sessions, sessions_remaining, split_payment_pending')
