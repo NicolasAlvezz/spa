@@ -10,7 +10,6 @@ import {
 } from '@/lib/supabase/queries/dashboard'
 import { DashboardDateFilter } from '@/components/spa/DashboardDateFilter'
 import { InfoPopover } from '@/components/spa/InfoPopover'
-import { LoginQrCard } from '@/components/spa/LoginQrCard'
 
 interface Props {
   searchParams: { from?: string; to?: string }
@@ -109,51 +108,44 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
         />
       </div>
 
-      {/* ── Today's calendar ────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-        {/* Left: Visits today */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-            <div className="flex items-center gap-2">
-              <Activity size={14} className="text-gray-400" />
-              <h2 className="text-sm font-semibold text-gray-700">{t('today_visits')}</h2>
-            </div>
-            <span className="text-xs font-semibold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
-              {visits.length}
-            </span>
+      {/* ── Today's visits ──────────────────────────────────────────────── */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <div className="flex items-center gap-2">
+            <Activity size={14} className="text-gray-400" />
+            <h2 className="text-sm font-semibold text-gray-700">{t('today_visits')}</h2>
           </div>
-
-          {visits.length === 0 ? (
-            <div className="px-5 py-10 text-center">
-              <p className="text-sm text-gray-400">{t('no_visits_today')}</p>
-            </div>
-          ) : (
-            <ul className="divide-y divide-gray-50">
-              {visits.map((v) => (
-                <li key={v.id} className="flex items-center gap-3 px-5 py-3.5">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-green-50 flex-shrink-0">
-                    <Activity size={14} className="text-green-500" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {v.client.first_name} {v.client.last_name}
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      {(locale === 'es' ? v.service?.name_es : v.service?.name_en) ?? t('service_session')} · {sessionLabels[v.session_type] ?? v.session_type}
-                    </p>
-                  </div>
-                  <time className="text-xs text-gray-400 tabular-nums flex-shrink-0">
-                    {formatTime(v.visited_at)}
-                  </time>
-                </li>
-              ))}
-            </ul>
-          )}
+          <span className="text-xs font-semibold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+            {visits.length}
+          </span>
         </div>
 
-        {/* Right: Login QR */}
-        <LoginQrCard />
+        {visits.length === 0 ? (
+          <div className="px-5 py-10 text-center">
+            <p className="text-sm text-gray-400">{t('no_visits_today')}</p>
+          </div>
+        ) : (
+          <ul className="divide-y divide-gray-50">
+            {visits.map((v) => (
+              <li key={v.id} className="flex items-center gap-3 px-5 py-3.5">
+                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-green-50 flex-shrink-0">
+                  <Activity size={14} className="text-green-500" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {v.client.first_name} {v.client.last_name}
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    {(locale === 'es' ? v.service?.name_es : v.service?.name_en) ?? t('service_session')} · {sessionLabels[v.session_type] ?? v.session_type}
+                  </p>
+                </div>
+                <time className="text-xs text-gray-400 tabular-nums flex-shrink-0">
+                  {formatTime(v.visited_at)}
+                </time>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       {/* ── Expiring soon ───────────────────────────────────────────────── */}
