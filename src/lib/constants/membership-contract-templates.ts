@@ -84,6 +84,7 @@ export const BASIC_CONTRACT_ES: BasicContractTemplate = {
   slide4_benefits:
     'Masaje Mensual\n' +
     '• Un (1) masajes terapéuticos de 60 minutos por mes.\n' +
+    '• La sesión mensual se renueva un mes después de la fecha de compra o del último pago (no el día 1 de cada mes calendario). Por ejemplo, si compra su membresía el 15 de julio, su próxima sesión incluida estará disponible a partir del 15 de agosto.\n' +
     '• Precio preferencial de $100 para masajes terapéuticos adicionales durante el mismo mes.\n\n' +
     '2. Acceso a Promociones Especiales\n' +
     '• 5% de descuento adicional sobre promociones, paquetes y eventos especiales realizados por VM Integral Massage, durante el año.\n\n' +
@@ -176,6 +177,7 @@ export const BASIC_CONTRACT_EN: BasicContractTemplate = {
   slide4_benefits:
     '1. Monthly Massage\n' +
     '• One (1) 60-minute therapeutic massage per month.\n' +
+    '• The monthly session renews one month after your purchase date or last payment date (not on the 1st of each calendar month). For example, if you purchase your membership on July 15, your next included session becomes available starting August 15.\n' +
     '• Preferred rate of $100 for additional therapeutic massages during the same month.\n\n' +
     '2. Access to Special Promotions\n' +
     '• An additional 5% discount on promotions, packages, and special events offered by VM Integral Massage throughout the year.\n\n' +
