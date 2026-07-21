@@ -2,6 +2,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { calculateRollover } from '@/lib/utils/membership'
 import { MONTHLY_PLAN_MIN_MONTHS } from '@/lib/constants/membership'
 import { todayInSpaTz } from '@/lib/utils/dates'
+import { addOneMonth } from '@/lib/memberships/session-cycle'
 
 interface AssignMembershipParams {
   requestId: string
@@ -89,6 +90,7 @@ export async function assignMembershipAfterSign({
       sessions_remaining: isPack ? (plan.total_sessions ?? null) : null,
       split_payment_pending: false,
       membership_request_id: requestId,
+      next_session_reset_at: isPack ? null : addOneMonth(started_at),
     })
     .select('id')
     .single()

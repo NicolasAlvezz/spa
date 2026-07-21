@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getMembershipStatus, getCurrentMembership } from '@/lib/utils/membership'
+import { reconcileSessionCycle } from '@/lib/memberships/session-cycle'
 import { CONSENT_WINDOW_MS } from '@/lib/constants/consent'
 import { todayInSpaTz, spaTzOffset } from '@/lib/utils/dates'
 import type { CheckinResult, MembershipWithPlan } from '@/types'
@@ -52,6 +53,25 @@ export async function GET(
   const startOfMonth = `${monthStartNY}T00:00:00${offset}`
   const todayStart = `${todayNY}T00:00:00${offset}`
   const todayEnd = `${todayNY}T23:59:59.999${offset}`
+
+  // The included monthly session renews one month after the purchase date
+  // (anniversary), not on the calendar month — reconcile it here so the scan
+  // screen always shows the correct count, even if the client hasn't had a
+  // visit registered since their anniversary passed.
+  if (membership && membership.membership_plans?.plan_type !== 'pack') {
+    const cycleUpdate = await reconcileSessionCycle(
+      supabase,
+      membership.id,
+      {
+        sessions_used_this_month: membership.sessions_used_this_month,
+        rollover_sessions: membership.rollover_sessions,
+        next_session_reset_at: membership.next_session_reset_at,
+      },
+      membership.membership_plans?.sessions_per_month ?? 1,
+      todayNY,
+    )
+    if (cycleUpdate) Object.assign(membership, cycleUpdate)
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabaseAny = supabase as any

@@ -3,6 +3,8 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { CONSENT_WINDOW_MS } from '@/lib/constants/consent'
 import { isValidTherapistName } from '@/lib/constants/therapists'
 import { resolveMembershipIdForVisit } from '@/lib/visits/resolve-membership-id'
+import { computeSessionCycleReset } from '@/lib/memberships/session-cycle'
+import { todayInSpaTz } from '@/lib/utils/dates'
 import type { SessionType } from '@/types'
 
 type VisitInsertRow = {
@@ -156,7 +158,7 @@ export async function POST(req: Request) {
     // Peek at plan_type so we can dispatch to the pack RPC (atomic) or the monthly path.
     const { data: membership } = await supabase
       .from('memberships')
-      .select('sessions_used_this_month, rollover_sessions, membership_plans(sessions_per_month, plan_type)')
+      .select('sessions_used_this_month, rollover_sessions, next_session_reset_at, membership_plans(sessions_per_month, plan_type)')
       .eq('id', membership_id)
       .single()
 
@@ -211,20 +213,39 @@ export async function POST(req: Request) {
         updatedSessionsRemaining = row.sessions_remaining as number
         splitPaymentWarning = !!row.split_payment_warning
       } else {
-        // Monthly plan logic
+        // Monthly plan logic — the included session renews one month after the
+        // purchase date (anniversary), not on the calendar month. Reconcile the
+        // cycle first so a client who hasn't visited since their anniversary
+        // gets their included session back instead of being charged as additional.
         const sessionsPerMonth = plan?.sessions_per_month ?? 1
+        const cycleReset = computeSessionCycleReset(
+          {
+            sessions_used_this_month: membership.sessions_used_this_month,
+            rollover_sessions: membership.rollover_sessions,
+            next_session_reset_at: membership.next_session_reset_at,
+          },
+          sessionsPerMonth,
+          todayInSpaTz(),
+        )
+        const effectiveSessionsUsed = cycleReset ? cycleReset.sessions_used_this_month : membership.sessions_used_this_month
+        const effectiveRollover = cycleReset ? cycleReset.rollover_sessions : membership.rollover_sessions
 
-        if (membership.sessions_used_this_month < sessionsPerMonth) {
+        if (effectiveSessionsUsed < sessionsPerMonth) {
           session_type = 'included'
-        } else if (membership.rollover_sessions > 0) {
+        } else if (effectiveRollover > 0) {
           session_type = 'rollover'
         }
 
-        const updates: { sessions_used_this_month: number; rollover_sessions?: number } = {
-          sessions_used_this_month: membership.sessions_used_this_month + 1,
+        const updates: { sessions_used_this_month: number; rollover_sessions?: number; next_session_reset_at?: string } = {
+          sessions_used_this_month: effectiveSessionsUsed + 1,
         }
         if (session_type === 'rollover') {
-          updates.rollover_sessions = membership.rollover_sessions - 1
+          updates.rollover_sessions = effectiveRollover - 1
+        } else if (cycleReset) {
+          updates.rollover_sessions = effectiveRollover
+        }
+        if (cycleReset) {
+          updates.next_session_reset_at = cycleReset.next_session_reset_at
         }
 
         const { error: monthlyUpdateError } = await supabase
