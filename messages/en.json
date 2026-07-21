@@ -19,7 +19,8 @@
     "memberships": "Memberships",
     "dashboard": "Dashboard",
     "stats": "Statistics",
-    "services": "Services"
+    "services": "Services",
+    "qr_access": "QR Access"
   },
   "admin": {
     "welcome": "Welcome, Maria Victoria",

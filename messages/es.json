@@ -19,7 +19,8 @@
     "memberships": "Membresías",
     "dashboard": "Inicio",
     "stats": "Estadísticas",
-    "services": "Servicios"
+    "services": "Servicios",
+    "qr_access": "Acceso QR"
   },
   "admin": {
     "welcome": "Bienvenida, Maria Victoria",
