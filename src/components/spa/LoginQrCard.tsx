@@ -3,7 +3,7 @@
 import QRCode from 'react-qr-code'
 import { Smartphone } from 'lucide-react'
 
-export function LoginQrCard() {
+export function LoginQrCard({ size = 180 }: { size?: number }) {
   const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin}/login`
 
   return (
@@ -17,7 +17,7 @@ export function LoginQrCard() {
         <div className="p-4 bg-white border-2 border-gray-900 rounded-2xl">
           <QRCode
             value={loginUrl}
-            size={180}
+            size={size}
             bgColor="#ffffff"
             fgColor="#0f172a"
           />
